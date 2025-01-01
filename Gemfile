@@ -1,3 +1,5 @@
+# frozen_string_literal: true  
+
 # Specify the source for gem installations  
 source 'https://rubygems.org'  
 
@@ -61,11 +63,7 @@ end
 
 # Gems for both development and test environments  
 group :development, :test do  
-  # Debugging tools specifically for MRI Ruby and Windows  
-  gem 'debug', platforms: %i[mri windows]  
-
-  # RSpec for testing capabilities  
-  gem 'rspec-rails', '~> 6.0.0'  
+  # No need to specify debug or rspec-rails here since they are already included above  
 end  
 
 # Static code analysis and formatting tool  

@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_01_235022) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_02_123715) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "suppliers", force: :cascade do |t|
+    t.string "supplier_name"
+    t.string "supplier_category"
+    t.integer "total_years_in_saudi_market"
+    t.string "phone"
+    t.string "supplier_email"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "users", force: :cascade do |t|
     t.string "first_name", default: "", null: false

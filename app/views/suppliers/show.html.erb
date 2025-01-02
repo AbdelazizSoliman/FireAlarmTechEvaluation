@@ -1,0 +1,29 @@
+<div class="container mx-auto mt-10 px-4">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-red-700 font-bold text-xl">Supplier Profile</h1>
+    <%= link_to "Edit", edit_supplier_path, data: { turbo_frame: "modal" }, class: "bg-buttonRed text-white py-2 px-4 rounded ml-4" %>
+  </div>
+  <div class="mt-10" data-controller="tabs">
+    <div class="flex space-x-4 mb-4">
+      <button data-action="click->tabs#switchTab" data-tab="general"
+              class="flex-1 py-2 bg-red-700 text-white font-semibold rounded-lg focus:outline-none">
+        Supplier Details
+      </button>
+
+      <button data-action="click->tabs#switchTab" data-tab="projects"
+              class="flex-1 py-2 bg-gray-200 text-gray-600 font-semibold rounded-lg focus:outline-none">
+        Projects
+      </button>
+    </div>
+
+    <div class="w-full">
+      <div data-tabs-target="tabContent" data-tabs-tab-content="general">
+        <%= render partial: 'supplier_details' %>
+      </div>
+
+      <div data-tabs-target="tabContent" data-tabs-tab-content="projects" class="hidden">
+        <%= render partial: 'projects' %>
+      </div>
+    </div>
+  </div>
+</div>

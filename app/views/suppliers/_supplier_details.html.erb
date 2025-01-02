@@ -1,0 +1,18 @@
+<div class="tabContent" data-tabs-target="tabContent" data-tabs-tab-content="general">
+  <div class="flex justify-between space-x-4">
+    <!-- General Information Card -->
+    <div class="w-1/2 bg-gray-200 p-4 rounded-lg border border-gray-300">
+      <div class='border-b border-gray-400 pb-2'>
+        <h2 class="text-xl font-bold text-red-700 mb-4">General Information</h2>
+      </div>
+      <div class="grid grid-cols-1 gap-y-2 pt-4">
+        <div class="flex justify-between"><span class="text-gray-800 font-bold pt-4">Supplier Name:</span> <span class="text-gray-800"><%= @supplier.supplier_name %></span></div>
+        <div class="flex justify-between"><span class="text-gray-800 font-bold">Supplier Category:</span> <span class="text-gray-800"><%= @supplier.supplier_category %></span></div>
+        <div class="flex justify-between"><span class="text-gray-800 font-bold">Total Years In Saudi Market:</span> <span class="text-gray-800"><%= @supplier.total_years_in_saudi_market %></span></div>
+        <div class="flex justify-between"><span class="text-gray-800 font-bold">Phone:</span> <span class="text-gray-800"><%= @supplier.phone %></span></div>
+        <div class="flex justify-between"><span class="text-gray-800 font-bold">Supplier Email:</span> <span class="text-gray-800"><%= @supplier.supplier_email %></span></div>
+      </div>
+    </div>
+   
+  </div>
+</div>

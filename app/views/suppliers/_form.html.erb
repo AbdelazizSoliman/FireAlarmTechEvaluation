@@ -1,0 +1,47 @@
+<%= form_with(model: supplier, local: true, class: "space-y-8") do |form| %>
+  <% if supplier.errors.any? %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+      <h2 class="font-bold mb-2"><%= pluralize(supplier.errors.count, "error") %> prohibited this supplier from being saved:</h2>
+      <ul class="list-disc list-inside">
+        <% supplier.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="bg-white p-8 rounded-lg shadow-md">
+    <h2 class="text-xl font-bold text-red-700 mb-4">Supplier Information</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- General Information fields -->
+      <div class="relative">
+        <%= form.text_field :supplier_name, placeholder: "Enter supplier name", class: input_class %>
+        <%= form.label :supplier_name, "Supplier Name", class: label_class %>
+      </div>
+
+      <div class="relative">
+        <%= form.text_field :supplier_category, placeholder: "Enter category", class: input_class %>
+        <%= form.label :supplier_category, "Supplier Category", class: label_class %>
+      </div>
+
+      <div class="relative">
+        <%= form.number_field :total_years_in_saudi_market, placeholder: "Enter years", class: input_class %>
+        <%= form.label :total_years_in_saudi_market, "Years in Saudi Market", class: label_class %>
+      </div>
+
+      <div class="relative" data-controller="phone-format">
+        <%= form.text_field :phone, placeholder: "Enter phone number", class: "#{input_class} phone-input", data: { target: "phone-format.input" } %>
+        <%= form.label :phone, "Phone", class: label_class %>
+      </div>
+
+      <div class="relative">
+        <%= form.email_field :supplier_email, placeholder: "Enter email", class: input_class %>
+        <%= form.label :supplier_email, "Email", class: label_class %>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end mt-6">
+    <%= form.submit "Save", class: form_button_class %>
+  </div>
+<% end %>

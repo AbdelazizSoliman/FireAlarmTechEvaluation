@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html class="h-full">
+  <head>
+    <title>MXI</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+  </head>
+
+  <body class="h-full" data-controller="toggle">
+
+
+    <div class="flex h-screen bg-gray-50">
+
+      <!-- sidebar -->
+      <%= render 'layouts/sidebar' %>
+      <!-- Main content -->
+      <div class="flex flex-col flex-1 overflow-y-auto">
+        <%= render 'layouts/header' %>
+        <div class="container mx-auto p-2">
+          <% if notice %>
+            <%= render 'layouts/notice' %>
+          <% end %>
+          <% if alert %>
+            <%= render 'layouts/alert' %>
+          <% end %>
+
+          <%= yield %>
+          <%= turbo_frame_tag "modal" %>
+        </div>
+      </div>
+
+
+    
+    </div>
+  </body>
+</html>

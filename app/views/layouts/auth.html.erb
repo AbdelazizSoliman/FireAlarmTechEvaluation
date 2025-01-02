@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-50">
+  <head>
+    <title>MXI</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+  </head>
+
+  <body class="h-full">
+    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <%= image_tag "fat-logo.png", class:"mx-auto h-12 w-auto", alt:'logo' %>
+        <%= yield(:auth_header) if content_for?(:auth_header) %>
+      </div>
+
+      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <p class="notice"><%= notice %></p>
+          <p class="alert"><%= alert %></p>
+
+          <%= yield %>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

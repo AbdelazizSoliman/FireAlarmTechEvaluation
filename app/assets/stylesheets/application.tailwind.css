@@ -1,0 +1,16 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import 'tom-select/dist/css/tom-select.css';
+@import './tom-select.css';
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.flex-item {
+  flex: 1 1 calc(50% - 16px);
+  margin-bottom: 16px;
+}

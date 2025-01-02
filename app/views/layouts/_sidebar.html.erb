@@ -1,0 +1,23 @@
+<!-- app/views/layouts/application.html.erb -->
+<aside class="h-screen md:flex flex-col w-64 bg-sidebarBg" data-controller="sidebar">
+  <nav class="h-full flex flex-col border-r border-sidebarBorder shadow-sm" data-sidebar-target="toggleable" data-css-class="collapsed-sidebar">
+
+    <div class="p-4 pb-2 my-2 flex justify-center items-center h-16">
+      <%= link_to root_path do %>
+        <%= image_tag 'fat-logo.png', alt: 'FAT Logo', class: 'h-12' %>
+      <% end %>
+    </div>
+    <hr class="border-t border-gray-200 mx-2">
+    <div class="flex flex-col flex-1 overflow-y-auto">
+      <nav class="flex-1 px-2 py-4">
+        <a href="/" class="flex items-center px-4 py-2 <%= active_class('/') %>">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          Dashboard
+        </a>
+
+      </nav>
+    </div>
+  </nav>
+</aside>

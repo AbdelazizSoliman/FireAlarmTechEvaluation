@@ -1,0 +1,43 @@
+.ts-wrapper.single {
+  appearance: none; /* Removes default select styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff; /* Ensures the background matches the form */
+  padding-right: 2.5rem; /* Makes space for the arrow */
+}
+
+.ts-wrapper.single::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: 15px;
+  height: 15px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='size-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.ts-wrapper.single .ts-control {
+  border-radius: 0.375rem; /* Matches border radius */
+  border: none;
+  padding: 0;
+  padding-top: 2px; /* Makes space for the arrow */
+  padding-bottom: 2px; /* Makes space for the arrow */
+}
+
+.ts-wrapper .option:hover {
+  background-color: #e5f3ff; /* Similar to light blue */
+  color: #000000; /* Text color */
+}
+
+.ts-control .item {
+  padding: 8px 16px;
+  border: 1px solid #d32f2f !important; /* Red border color */
+  border-radius: 20px; /* Rounded corners for the pill shape */
+  color: #d32f2f !important; /* Red text color */
+  font-size: 14px; /* Adjust the font size as needed */
+  font-weight: bold; /* Bold text */
+}

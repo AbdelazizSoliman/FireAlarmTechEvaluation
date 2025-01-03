@@ -1,9 +1,9 @@
 class Supplier < ApplicationRecord
-    has_many :project, dependent: :destroy
+    # has_many :project, dependent: :destroy
    
     
     # accepts_nested_attributes_for :sites, allow_destroy: true, reject_if: :all_blank
-    accepts_nested_attributes_for :project
+    # accepts_nested_attributes_for :project
  
  
     # Validates the presence

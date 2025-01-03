@@ -42,7 +42,7 @@ class SuppliersController < ApplicationController
     # DELETE /suppliers/1
     def destroy
         @supplier.destroy!
-      redirect_to clients_url, notice: "Supplier was successfully destroyed.", status: :see_other
+      redirect_to suppliers_url, notice: "Supplier was successfully destroyed.", status: :see_other
     end
   
     private

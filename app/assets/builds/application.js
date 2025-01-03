@@ -1,35 +1,12 @@
-var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 
 // node_modules/@rails/actioncable/src/adapters.js
 var adapters_default;
@@ -614,1955 +591,6 @@ var init_src = __esm({
     init_subscription_guarantor();
     init_adapters();
     init_logger();
-  }
-});
-
-// node_modules/slim-select/dist/slimselect.js
-var require_slimselect = __commonJS({
-  "node_modules/slim-select/dist/slimselect.js"(exports, module) {
-    (function(global, factory) {
-      typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, global.SlimSelect = factory());
-    })(exports, function() {
-      "use strict";
-      class CssClasses {
-        constructor(classes) {
-          if (!classes) {
-            classes = {};
-          }
-          this.main = classes.main || "ss-main";
-          this.placeholder = classes.placeholder || "ss-placeholder";
-          this.values = classes.values || "ss-values";
-          this.single = classes.single || "ss-single";
-          this.max = classes.max || "ss-max";
-          this.value = classes.value || "ss-value";
-          this.valueText = classes.valueText || "ss-value-text";
-          this.valueDelete = classes.valueDelete || "ss-value-delete";
-          this.valueOut = classes.valueOut || "ss-value-out";
-          this.deselect = classes.deselect || "ss-deselect";
-          this.deselectPath = classes.deselectPath || "M10,10 L90,90 M10,90 L90,10";
-          this.arrow = classes.arrow || "ss-arrow";
-          this.arrowClose = classes.arrowClose || "M10,30 L50,70 L90,30";
-          this.arrowOpen = classes.arrowOpen || "M10,70 L50,30 L90,70";
-          this.content = classes.content || "ss-content";
-          this.openAbove = classes.openAbove || "ss-open-above";
-          this.openBelow = classes.openBelow || "ss-open-below";
-          this.search = classes.search || "ss-search";
-          this.searchHighlighter = classes.searchHighlighter || "ss-search-highlight";
-          this.searching = classes.searching || "ss-searching";
-          this.addable = classes.addable || "ss-addable";
-          this.addablePath = classes.addablePath || "M50,10 L50,90 M10,50 L90,50";
-          this.list = classes.list || "ss-list";
-          this.optgroup = classes.optgroup || "ss-optgroup";
-          this.optgroupLabel = classes.optgroupLabel || "ss-optgroup-label";
-          this.optgroupLabelText = classes.optgroupLabelText || "ss-optgroup-label-text";
-          this.optgroupActions = classes.optgroupActions || "ss-optgroup-actions";
-          this.optgroupSelectAll = classes.optgroupSelectAll || "ss-selectall";
-          this.optgroupSelectAllBox = classes.optgroupSelectAllBox || "M60,10 L10,10 L10,90 L90,90 L90,50";
-          this.optgroupSelectAllCheck = classes.optgroupSelectAllCheck || "M30,45 L50,70 L90,10";
-          this.optgroupClosable = classes.optgroupClosable || "ss-closable";
-          this.option = classes.option || "ss-option";
-          this.optionDelete = classes.optionDelete || "M10,10 L90,90 M10,90 L90,10";
-          this.highlighted = classes.highlighted || "ss-highlighted";
-          this.open = classes.open || "ss-open";
-          this.close = classes.close || "ss-close";
-          this.selected = classes.selected || "ss-selected";
-          this.error = classes.error || "ss-error";
-          this.disabled = classes.disabled || "ss-disabled";
-          this.hide = classes.hide || "ss-hide";
-        }
-      }
-      function generateID() {
-        return Math.random().toString(36).substring(2, 10);
-      }
-      function hasClassInTree(element, className) {
-        function hasClass(e, c) {
-          if (c && e && e.classList && e.classList.contains(c)) {
-            return e;
-          }
-          if (c && e && e.dataset && e.dataset.id && e.dataset.id === className) {
-            return e;
-          }
-          return null;
-        }
-        function parentByClass(e, c) {
-          if (!e || e === document) {
-            return null;
-          } else if (hasClass(e, c)) {
-            return e;
-          } else {
-            return parentByClass(e.parentNode, c);
-          }
-        }
-        return hasClass(element, className) || parentByClass(element, className);
-      }
-      function debounce2(func, wait = 50, immediate = false) {
-        let timeout2;
-        return function(...args) {
-          const context = self;
-          const later = () => {
-            timeout2 = null;
-            if (!immediate) {
-              func.apply(context, args);
-            }
-          };
-          const callNow = immediate && !timeout2;
-          clearTimeout(timeout2);
-          timeout2 = setTimeout(later, wait);
-          if (callNow) {
-            func.apply(context, args);
-          }
-        };
-      }
-      function isEqual(a, b) {
-        return JSON.stringify(a) === JSON.stringify(b);
-      }
-      function kebabCase(str) {
-        const result = str.replace(/[A-Z\u00C0-\u00D6\u00D8-\u00DE]/g, (match) => "-" + match.toLowerCase());
-        return str[0] === str[0].toUpperCase() ? result.substring(1) : result;
-      }
-      class Optgroup {
-        constructor(optgroup) {
-          this.id = !optgroup.id || optgroup.id === "" ? generateID() : optgroup.id;
-          this.label = optgroup.label || "";
-          this.selectAll = optgroup.selectAll === void 0 ? false : optgroup.selectAll;
-          this.selectAllText = optgroup.selectAllText || "Select All";
-          this.closable = optgroup.closable || "off";
-          this.options = [];
-          if (optgroup.options) {
-            for (const o of optgroup.options) {
-              this.options.push(new Option(o));
-            }
-          }
-        }
-      }
-      class Option {
-        constructor(option) {
-          this.id = !option.id || option.id === "" ? generateID() : option.id;
-          this.value = option.value === void 0 ? option.text : option.value;
-          this.text = option.text || "";
-          this.html = option.html || "";
-          this.selected = option.selected !== void 0 ? option.selected : false;
-          this.display = option.display !== void 0 ? option.display : true;
-          this.disabled = option.disabled !== void 0 ? option.disabled : false;
-          this.mandatory = option.mandatory !== void 0 ? option.mandatory : false;
-          this.placeholder = option.placeholder !== void 0 ? option.placeholder : false;
-          this.class = option.class || "";
-          this.style = option.style || "";
-          this.data = option.data || {};
-        }
-      }
-      class Store {
-        constructor(type, data) {
-          this.selectType = "single";
-          this.data = [];
-          this.selectedOrder = [];
-          this.selectType = type;
-          this.setData(data);
-        }
-        validateDataArray(data) {
-          if (!Array.isArray(data)) {
-            return new Error("Data must be an array");
-          }
-          for (let dataObj of data) {
-            if (dataObj instanceof Optgroup || "label" in dataObj) {
-              if (!("label" in dataObj)) {
-                return new Error("Optgroup must have a label");
-              }
-              if ("options" in dataObj && dataObj.options) {
-                for (let option of dataObj.options) {
-                  const validationError = this.validateOption(option);
-                  if (validationError) {
-                    return validationError;
-                  }
-                }
-              }
-            } else if (dataObj instanceof Option || "text" in dataObj) {
-              const validationError = this.validateOption(dataObj);
-              if (validationError) {
-                return validationError;
-              }
-            } else {
-              return new Error("Data object must be a valid optgroup or option");
-            }
-          }
-          return null;
-        }
-        validateOption(option) {
-          if (!("text" in option)) {
-            return new Error("Option must have a text");
-          }
-          return null;
-        }
-        partialToFullData(data) {
-          let dataFinal = [];
-          data.forEach((dataObj) => {
-            if (dataObj instanceof Optgroup || "label" in dataObj) {
-              let optOptions = [];
-              if ("options" in dataObj && dataObj.options) {
-                dataObj.options.forEach((option) => {
-                  optOptions.push(new Option(option));
-                });
-              }
-              if (optOptions.length > 0) {
-                dataFinal.push(new Optgroup(dataObj));
-              }
-            }
-            if (dataObj instanceof Option || "text" in dataObj) {
-              dataFinal.push(new Option(dataObj));
-            }
-          });
-          return dataFinal;
-        }
-        setData(data) {
-          this.data = this.partialToFullData(data);
-          if (this.selectType === "single") {
-            this.setSelectedBy("id", this.getSelected());
-          }
-        }
-        getData() {
-          return this.filter(null, true);
-        }
-        getDataOptions() {
-          return this.filter(null, false);
-        }
-        addOption(option, addToStart = false) {
-          if (addToStart) {
-            let data = [new Option(option)];
-            this.setData(data.concat(this.getData()));
-          } else {
-            this.setData(this.getData().concat(new Option(option)));
-          }
-        }
-        setSelectedBy(selectedType, selectedValues) {
-          let firstOption = null;
-          let hasSelected = false;
-          const selectedObjects = [];
-          for (let dataObj of this.data) {
-            if (dataObj instanceof Optgroup) {
-              for (let option of dataObj.options) {
-                if (!firstOption) {
-                  firstOption = option;
-                }
-                option.selected = hasSelected ? false : selectedValues.includes(option[selectedType]);
-                if (option.selected) {
-                  selectedObjects.push(option);
-                  if (this.selectType === "single") {
-                    hasSelected = true;
-                  }
-                }
-              }
-            }
-            if (dataObj instanceof Option) {
-              if (!firstOption) {
-                firstOption = dataObj;
-              }
-              dataObj.selected = hasSelected ? false : selectedValues.includes(dataObj[selectedType]);
-              if (dataObj.selected) {
-                selectedObjects.push(dataObj);
-                if (this.selectType === "single") {
-                  hasSelected = true;
-                }
-              }
-            }
-          }
-          if (this.selectType === "single" && firstOption && !hasSelected) {
-            firstOption.selected = true;
-            selectedObjects.push(firstOption);
-          }
-          const selectedIds = selectedValues.map((value) => {
-            var _a;
-            return ((_a = selectedObjects.find((option) => option[selectedType] === value)) === null || _a === void 0 ? void 0 : _a.id) || "";
-          });
-          this.selectedOrder = selectedIds;
-        }
-        getSelected() {
-          return this.getSelectedOptions().map((option) => option.id);
-        }
-        getSelectedValues() {
-          return this.getSelectedOptions().map((option) => option.value);
-        }
-        getSelectedOptions() {
-          return this.filter((opt) => {
-            return opt.selected;
-          }, false);
-        }
-        getOptgroupByID(id) {
-          for (let dataObj of this.data) {
-            if (dataObj instanceof Optgroup && dataObj.id === id) {
-              return dataObj;
-            }
-          }
-          return null;
-        }
-        getOptionByID(id) {
-          let options = this.filter((opt) => {
-            return opt.id === id;
-          }, false);
-          return options.length ? options[0] : null;
-        }
-        getSelectType() {
-          return this.selectType;
-        }
-        getFirstOption() {
-          let option = null;
-          for (let dataObj of this.data) {
-            if (dataObj instanceof Optgroup) {
-              option = dataObj.options[0];
-            } else if (dataObj instanceof Option) {
-              option = dataObj;
-            }
-            if (option) {
-              break;
-            }
-          }
-          return option;
-        }
-        search(search, searchFilter) {
-          search = search.trim();
-          if (search === "") {
-            return this.getData();
-          }
-          return this.filter((opt) => {
-            return searchFilter(opt, search);
-          }, true);
-        }
-        filter(filter, includeOptgroup) {
-          const dataSearch = [];
-          this.data.forEach((dataObj) => {
-            if (dataObj instanceof Optgroup) {
-              let optOptions = [];
-              dataObj.options.forEach((option) => {
-                if (!filter || filter(option)) {
-                  if (!includeOptgroup) {
-                    dataSearch.push(new Option(option));
-                  } else {
-                    optOptions.push(new Option(option));
-                  }
-                }
-              });
-              if (optOptions.length > 0) {
-                let optgroup = new Optgroup(dataObj);
-                optgroup.options = optOptions;
-                dataSearch.push(optgroup);
-              }
-            }
-            if (dataObj instanceof Option) {
-              if (!filter || filter(dataObj)) {
-                dataSearch.push(new Option(dataObj));
-              }
-            }
-          });
-          return dataSearch;
-        }
-        selectedOrderOptions(options) {
-          const newOrder = [];
-          this.selectedOrder.forEach((id) => {
-            const option = options.find((opt) => opt.id === id);
-            if (option) {
-              newOrder.push(option);
-            }
-          });
-          options.forEach((option) => {
-            let isIn = false;
-            newOrder.forEach((selectedOption) => {
-              if (option.id === selectedOption.id) {
-                isIn = true;
-                return;
-              }
-            });
-            if (!isIn) {
-              newOrder.push(option);
-            }
-          });
-          return newOrder;
-        }
-      }
-      class Render {
-        constructor(settings, classes, store, callbacks) {
-          this.store = store;
-          this.settings = settings;
-          this.classes = classes;
-          this.callbacks = callbacks;
-          this.main = this.mainDiv();
-          this.content = this.contentDiv();
-          this.updateClassStyles();
-          this.updateAriaAttributes();
-          if (this.settings.contentLocation) {
-            this.settings.contentLocation.appendChild(this.content.main);
-          }
-        }
-        enable() {
-          this.main.main.classList.remove(this.classes.disabled);
-          this.content.search.input.disabled = false;
-        }
-        disable() {
-          this.main.main.classList.add(this.classes.disabled);
-          this.content.search.input.disabled = true;
-        }
-        open() {
-          this.main.arrow.path.setAttribute("d", this.classes.arrowOpen);
-          this.main.main.classList.add(this.settings.openPosition === "up" ? this.classes.openAbove : this.classes.openBelow);
-          this.main.main.setAttribute("aria-expanded", "true");
-          this.moveContent();
-          const selectedOptions = this.store.getSelectedOptions();
-          if (selectedOptions.length) {
-            const selectedId = selectedOptions[selectedOptions.length - 1].id;
-            const selectedOption = this.content.list.querySelector('[data-id="' + selectedId + '"]');
-            if (selectedOption) {
-              this.ensureElementInView(this.content.list, selectedOption);
-            }
-          }
-        }
-        close() {
-          this.main.main.classList.remove(this.classes.openAbove);
-          this.main.main.classList.remove(this.classes.openBelow);
-          this.main.main.setAttribute("aria-expanded", "false");
-          this.content.main.classList.remove(this.classes.openAbove);
-          this.content.main.classList.remove(this.classes.openBelow);
-          this.main.arrow.path.setAttribute("d", this.classes.arrowClose);
-        }
-        updateClassStyles() {
-          this.main.main.className = "";
-          this.main.main.removeAttribute("style");
-          this.content.main.className = "";
-          this.content.main.removeAttribute("style");
-          this.main.main.classList.add(this.classes.main);
-          this.content.main.classList.add(this.classes.content);
-          if (this.settings.style !== "") {
-            this.main.main.style.cssText = this.settings.style;
-            this.content.main.style.cssText = this.settings.style;
-          }
-          if (this.settings.class.length) {
-            for (const c of this.settings.class) {
-              if (c.trim() !== "") {
-                this.main.main.classList.add(c.trim());
-                this.content.main.classList.add(c.trim());
-              }
-            }
-          }
-          if (this.settings.contentPosition === "relative" || this.settings.contentPosition === "fixed") {
-            this.content.main.classList.add("ss-" + this.settings.contentPosition);
-          }
-        }
-        updateAriaAttributes() {
-          this.main.main.role = "combobox";
-          this.main.main.setAttribute("aria-haspopup", "listbox");
-          this.main.main.setAttribute("aria-controls", this.content.main.id);
-          this.main.main.setAttribute("aria-expanded", "false");
-          this.content.main.setAttribute("role", "listbox");
-        }
-        mainDiv() {
-          var _a;
-          const main = document.createElement("div");
-          main.dataset.id = this.settings.id;
-          main.setAttribute("aria-label", this.settings.ariaLabel);
-          main.tabIndex = 0;
-          main.onkeydown = (e) => {
-            switch (e.key) {
-              case "ArrowUp":
-              case "ArrowDown":
-                this.callbacks.open();
-                e.key === "ArrowDown" ? this.highlight("down") : this.highlight("up");
-                return false;
-              case "Tab":
-                this.callbacks.close();
-                return true;
-              case "Enter":
-              case " ":
-                this.callbacks.open();
-                const highlighted = this.content.list.querySelector("." + this.classes.highlighted);
-                if (highlighted) {
-                  highlighted.click();
-                }
-                return false;
-              case "Escape":
-                this.callbacks.close();
-                return false;
-            }
-            if (e.key.length === 1) {
-              this.callbacks.open();
-            }
-            return true;
-          };
-          main.onclick = (e) => {
-            if (this.settings.disabled) {
-              return;
-            }
-            this.settings.isOpen ? this.callbacks.close() : this.callbacks.open();
-          };
-          const values = document.createElement("div");
-          values.classList.add(this.classes.values);
-          main.appendChild(values);
-          const deselect = document.createElement("div");
-          deselect.classList.add(this.classes.deselect);
-          const selectedOptions = (_a = this.store) === null || _a === void 0 ? void 0 : _a.getSelectedOptions();
-          if (!this.settings.allowDeselect || this.settings.isMultiple && selectedOptions && selectedOptions.length <= 0) {
-            deselect.classList.add(this.classes.hide);
-          } else {
-            deselect.classList.remove(this.classes.hide);
-          }
-          deselect.onclick = (e) => {
-            e.stopPropagation();
-            if (this.settings.disabled) {
-              return;
-            }
-            let shouldDelete = true;
-            const before = this.store.getSelectedOptions();
-            const after = [];
-            if (this.callbacks.beforeChange) {
-              shouldDelete = this.callbacks.beforeChange(after, before) === true;
-            }
-            if (shouldDelete) {
-              if (this.settings.isMultiple) {
-                this.callbacks.setSelected([], false);
-                this.updateDeselectAll();
-              } else {
-                const firstOption = this.store.getFirstOption();
-                const id = firstOption ? firstOption.id : "";
-                this.callbacks.setSelected(id, false);
-              }
-              if (this.settings.closeOnSelect) {
-                this.callbacks.close();
-              }
-              if (this.callbacks.afterChange) {
-                this.callbacks.afterChange(this.store.getSelectedOptions());
-              }
-            }
-          };
-          const deselectSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-          deselectSvg.setAttribute("viewBox", "0 0 100 100");
-          const deselectPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          deselectPath.setAttribute("d", this.classes.deselectPath);
-          deselectSvg.appendChild(deselectPath);
-          deselect.appendChild(deselectSvg);
-          main.appendChild(deselect);
-          const arrow = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-          arrow.classList.add(this.classes.arrow);
-          arrow.setAttribute("viewBox", "0 0 100 100");
-          const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          arrowPath.setAttribute("d", this.classes.arrowClose);
-          if (this.settings.alwaysOpen) {
-            arrow.classList.add(this.classes.hide);
-          }
-          arrow.appendChild(arrowPath);
-          main.appendChild(arrow);
-          return {
-            main,
-            values,
-            deselect: {
-              main: deselect,
-              svg: deselectSvg,
-              path: deselectPath
-            },
-            arrow: {
-              main: arrow,
-              path: arrowPath
-            }
-          };
-        }
-        mainFocus(eventType) {
-          if (eventType !== "click") {
-            this.main.main.focus({ preventScroll: true });
-          }
-        }
-        placeholder() {
-          const placeholderOption = this.store.filter((o) => o.placeholder, false);
-          let placeholderText = this.settings.placeholderText;
-          if (placeholderOption.length) {
-            if (placeholderOption[0].html !== "") {
-              placeholderText = placeholderOption[0].html;
-            } else if (placeholderOption[0].text !== "") {
-              placeholderText = placeholderOption[0].text;
-            }
-          }
-          const placeholder = document.createElement("div");
-          placeholder.classList.add(this.classes.placeholder);
-          placeholder.innerHTML = placeholderText;
-          return placeholder;
-        }
-        renderValues() {
-          if (!this.settings.isMultiple) {
-            this.renderSingleValue();
-            return;
-          }
-          this.renderMultipleValues();
-          this.updateDeselectAll();
-        }
-        renderSingleValue() {
-          const selected = this.store.filter((o) => {
-            return o.selected && !o.placeholder;
-          }, false);
-          const selectedSingle = selected.length > 0 ? selected[0] : null;
-          if (!selectedSingle) {
-            this.main.values.innerHTML = this.placeholder().outerHTML;
-          } else {
-            const singleValue = document.createElement("div");
-            singleValue.classList.add(this.classes.single);
-            if (selectedSingle.html) {
-              singleValue.innerHTML = selectedSingle.html;
-            } else {
-              singleValue.innerText = selectedSingle.text;
-            }
-            this.main.values.innerHTML = singleValue.outerHTML;
-          }
-          if (!this.settings.allowDeselect || !selected.length) {
-            this.main.deselect.main.classList.add(this.classes.hide);
-          } else {
-            this.main.deselect.main.classList.remove(this.classes.hide);
-          }
-        }
-        renderMultipleValues() {
-          let currentNodes = this.main.values.childNodes;
-          let selectedOptions = this.store.filter((opt) => {
-            return opt.selected && opt.display;
-          }, false);
-          if (selectedOptions.length === 0) {
-            this.main.values.innerHTML = this.placeholder().outerHTML;
-            return;
-          } else {
-            const placeholder = this.main.values.querySelector("." + this.classes.placeholder);
-            if (placeholder) {
-              placeholder.remove();
-            }
-          }
-          if (selectedOptions.length > this.settings.maxValuesShown) {
-            const singleValue = document.createElement("div");
-            singleValue.classList.add(this.classes.max);
-            singleValue.textContent = this.settings.maxValuesMessage.replace("{number}", selectedOptions.length.toString());
-            this.main.values.innerHTML = singleValue.outerHTML;
-            return;
-          } else {
-            const maxValuesMessage = this.main.values.querySelector("." + this.classes.max);
-            if (maxValuesMessage) {
-              maxValuesMessage.remove();
-            }
-          }
-          if (this.settings.keepOrder) {
-            selectedOptions = this.store.selectedOrderOptions(selectedOptions);
-          }
-          let removeNodes = [];
-          for (let i = 0; i < currentNodes.length; i++) {
-            const node = currentNodes[i];
-            const id = node.getAttribute("data-id");
-            if (id) {
-              const found = selectedOptions.filter((opt) => {
-                return opt.id === id;
-              }, false);
-              if (!found.length) {
-                removeNodes.push(node);
-              }
-            }
-          }
-          for (const n of removeNodes) {
-            n.classList.add(this.classes.valueOut);
-            setTimeout(() => {
-              if (this.main.values.hasChildNodes() && this.main.values.contains(n)) {
-                this.main.values.removeChild(n);
-              }
-            }, 100);
-          }
-          currentNodes = this.main.values.childNodes;
-          for (let d = 0; d < selectedOptions.length; d++) {
-            let shouldAdd = true;
-            for (let i = 0; i < currentNodes.length; i++) {
-              if (selectedOptions[d].id === String(currentNodes[i].dataset.id)) {
-                shouldAdd = false;
-              }
-            }
-            if (shouldAdd) {
-              if (this.settings.keepOrder) {
-                this.main.values.appendChild(this.multipleValue(selectedOptions[d]));
-              } else {
-                if (currentNodes.length === 0) {
-                  this.main.values.appendChild(this.multipleValue(selectedOptions[d]));
-                } else if (d === 0) {
-                  this.main.values.insertBefore(this.multipleValue(selectedOptions[d]), currentNodes[d]);
-                } else {
-                  currentNodes[d - 1].insertAdjacentElement("afterend", this.multipleValue(selectedOptions[d]));
-                }
-              }
-            }
-          }
-        }
-        multipleValue(option) {
-          const value = document.createElement("div");
-          value.classList.add(this.classes.value);
-          value.dataset.id = option.id;
-          const text = document.createElement("div");
-          text.classList.add(this.classes.valueText);
-          text.textContent = option.text;
-          value.appendChild(text);
-          if (!option.mandatory) {
-            const deleteDiv = document.createElement("div");
-            deleteDiv.classList.add(this.classes.valueDelete);
-            deleteDiv.onclick = (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (this.settings.disabled) {
-                return;
-              }
-              let shouldDelete = true;
-              const before = this.store.getSelectedOptions();
-              const after = before.filter((o) => {
-                return o.selected && o.id !== option.id;
-              }, true);
-              if (this.settings.minSelected && after.length < this.settings.minSelected) {
-                return;
-              }
-              if (this.callbacks.beforeChange) {
-                shouldDelete = this.callbacks.beforeChange(after, before) === true;
-              }
-              if (shouldDelete) {
-                let selectedIds = [];
-                for (const o of after) {
-                  if (o instanceof Optgroup) {
-                    for (const c of o.options) {
-                      selectedIds.push(c.id);
-                    }
-                  }
-                  if (o instanceof Option) {
-                    selectedIds.push(o.id);
-                  }
-                }
-                this.callbacks.setSelected(selectedIds, false);
-                if (this.settings.closeOnSelect) {
-                  this.callbacks.close();
-                }
-                if (this.callbacks.afterChange) {
-                  this.callbacks.afterChange(after);
-                }
-                this.updateDeselectAll();
-              }
-            };
-            const deleteSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            deleteSvg.setAttribute("viewBox", "0 0 100 100");
-            const deletePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            deletePath.setAttribute("d", this.classes.optionDelete);
-            deleteSvg.appendChild(deletePath);
-            deleteDiv.appendChild(deleteSvg);
-            value.appendChild(deleteDiv);
-          }
-          return value;
-        }
-        contentDiv() {
-          const main = document.createElement("div");
-          main.dataset.id = this.settings.id;
-          const search = this.searchDiv();
-          main.appendChild(search.main);
-          const list = this.listDiv();
-          main.appendChild(list);
-          return {
-            main,
-            search,
-            list
-          };
-        }
-        moveContent() {
-          if (this.settings.contentPosition === "relative") {
-            this.moveContentBelow();
-            return;
-          }
-          if (this.settings.openPosition === "down") {
-            this.moveContentBelow();
-            return;
-          } else if (this.settings.openPosition === "up") {
-            this.moveContentAbove();
-            return;
-          }
-          if (this.putContent() === "up") {
-            this.moveContentAbove();
-          } else {
-            this.moveContentBelow();
-          }
-        }
-        searchDiv() {
-          const main = document.createElement("div");
-          const input = document.createElement("input");
-          const addable = document.createElement("div");
-          main.classList.add(this.classes.search);
-          const searchReturn = {
-            main,
-            input
-          };
-          if (!this.settings.showSearch) {
-            main.classList.add(this.classes.hide);
-            input.readOnly = true;
-          }
-          input.type = "search";
-          input.placeholder = this.settings.searchPlaceholder;
-          input.tabIndex = -1;
-          input.setAttribute("aria-label", this.settings.searchPlaceholder);
-          input.setAttribute("autocapitalize", "off");
-          input.setAttribute("autocomplete", "off");
-          input.setAttribute("autocorrect", "off");
-          input.oninput = debounce2((e) => {
-            this.callbacks.search(e.target.value);
-          }, 100);
-          input.onkeydown = (e) => {
-            switch (e.key) {
-              case "ArrowUp":
-              case "ArrowDown":
-                e.key === "ArrowDown" ? this.highlight("down") : this.highlight("up");
-                return false;
-              case "Tab":
-                this.callbacks.close();
-                return true;
-              case "Escape":
-                this.callbacks.close();
-                return false;
-              case " ":
-                const highlighted = this.content.list.querySelector("." + this.classes.highlighted);
-                if (highlighted) {
-                  highlighted.click();
-                  return false;
-                }
-                return true;
-              case "Enter":
-                if (this.callbacks.addable) {
-                  addable.click();
-                  return false;
-                } else {
-                  const highlighted2 = this.content.list.querySelector("." + this.classes.highlighted);
-                  if (highlighted2) {
-                    highlighted2.click();
-                    return false;
-                  }
-                }
-                return true;
-            }
-            return true;
-          };
-          main.appendChild(input);
-          if (this.callbacks.addable) {
-            addable.classList.add(this.classes.addable);
-            const plus = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            plus.setAttribute("viewBox", "0 0 100 100");
-            const plusPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            plusPath.setAttribute("d", this.classes.addablePath);
-            plus.appendChild(plusPath);
-            addable.appendChild(plus);
-            addable.onclick = (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!this.callbacks.addable) {
-                return;
-              }
-              const inputValue = this.content.search.input.value.trim();
-              if (inputValue === "") {
-                this.content.search.input.focus();
-                return;
-              }
-              const runFinish = (oo) => {
-                let newOption = new Option(oo);
-                this.callbacks.addOption(newOption);
-                if (this.settings.isMultiple) {
-                  let ids = this.store.getSelected();
-                  ids.push(newOption.id);
-                  this.callbacks.setSelected(ids, true);
-                } else {
-                  this.callbacks.setSelected([newOption.id], true);
-                }
-                this.callbacks.search("");
-                if (this.settings.closeOnSelect) {
-                  setTimeout(() => {
-                    this.callbacks.close();
-                  }, 100);
-                }
-              };
-              const addableValue = this.callbacks.addable(inputValue);
-              if (addableValue === false || addableValue === void 0 || addableValue === null) {
-                return;
-              }
-              if (addableValue instanceof Promise) {
-                addableValue.then((value) => {
-                  if (typeof value === "string") {
-                    runFinish({
-                      text: value,
-                      value
-                    });
-                  } else if (addableValue instanceof Error) {
-                    this.renderError(addableValue.message);
-                  } else {
-                    runFinish(value);
-                  }
-                });
-              } else if (typeof addableValue === "string") {
-                runFinish({
-                  text: addableValue,
-                  value: addableValue
-                });
-              } else if (addableValue instanceof Error) {
-                this.renderError(addableValue.message);
-              } else {
-                runFinish(addableValue);
-              }
-              return;
-            };
-            main.appendChild(addable);
-            searchReturn.addable = {
-              main: addable,
-              svg: plus,
-              path: plusPath
-            };
-          }
-          return searchReturn;
-        }
-        searchFocus() {
-          this.content.search.input.focus();
-        }
-        getOptions(notPlaceholder = false, notDisabled = false, notHidden = false) {
-          let query = "." + this.classes.option;
-          if (notPlaceholder) {
-            query += ":not(." + this.classes.placeholder + ")";
-          }
-          if (notDisabled) {
-            query += ":not(." + this.classes.disabled + ")";
-          }
-          if (notHidden) {
-            query += ":not(." + this.classes.hide + ")";
-          }
-          return Array.from(this.content.list.querySelectorAll(query));
-        }
-        highlight(dir) {
-          const options = this.getOptions(true, true, true);
-          if (options.length === 0) {
-            return;
-          }
-          if (options.length === 1) {
-            if (!options[0].classList.contains(this.classes.highlighted)) {
-              options[0].classList.add(this.classes.highlighted);
-              return;
-            }
-          }
-          let highlighted = false;
-          for (const o of options) {
-            if (o.classList.contains(this.classes.highlighted)) {
-              highlighted = true;
-            }
-          }
-          if (!highlighted) {
-            for (const o of options) {
-              if (o.classList.contains(this.classes.selected)) {
-                o.classList.add(this.classes.highlighted);
-                break;
-              }
-            }
-          }
-          for (let i = 0; i < options.length; i++) {
-            if (options[i].classList.contains(this.classes.highlighted)) {
-              const prevOption = options[i];
-              prevOption.classList.remove(this.classes.highlighted);
-              const prevParent = prevOption.parentElement;
-              if (prevParent && prevParent.classList.contains(this.classes.open)) {
-                const optgroupLabel = prevParent.querySelector("." + this.classes.optgroupLabel);
-                if (optgroupLabel) {
-                  optgroupLabel.click();
-                }
-              }
-              let selectOption = options[dir === "down" ? i + 1 < options.length ? i + 1 : 0 : i - 1 >= 0 ? i - 1 : options.length - 1];
-              selectOption.classList.add(this.classes.highlighted);
-              this.ensureElementInView(this.content.list, selectOption);
-              const selectParent = selectOption.parentElement;
-              if (selectParent && selectParent.classList.contains(this.classes.close)) {
-                const optgroupLabel = selectParent.querySelector("." + this.classes.optgroupLabel);
-                if (optgroupLabel) {
-                  optgroupLabel.click();
-                }
-              }
-              return;
-            }
-          }
-          options[dir === "down" ? 0 : options.length - 1].classList.add(this.classes.highlighted);
-          this.ensureElementInView(this.content.list, options[dir === "down" ? 0 : options.length - 1]);
-        }
-        listDiv() {
-          const options = document.createElement("div");
-          options.classList.add(this.classes.list);
-          return options;
-        }
-        renderError(error2) {
-          this.content.list.innerHTML = "";
-          const errorDiv = document.createElement("div");
-          errorDiv.classList.add(this.classes.error);
-          errorDiv.textContent = error2;
-          this.content.list.appendChild(errorDiv);
-        }
-        renderSearching() {
-          this.content.list.innerHTML = "";
-          const searchingDiv = document.createElement("div");
-          searchingDiv.classList.add(this.classes.searching);
-          searchingDiv.textContent = this.settings.searchingText;
-          this.content.list.appendChild(searchingDiv);
-        }
-        renderOptions(data) {
-          this.content.list.innerHTML = "";
-          if (data.length === 0) {
-            const noResults = document.createElement("div");
-            noResults.classList.add(this.classes.search);
-            if (this.callbacks.addable) {
-              noResults.innerHTML = this.settings.addableText.replace("{value}", this.content.search.input.value);
-            } else {
-              noResults.innerHTML = this.settings.searchText;
-            }
-            this.content.list.appendChild(noResults);
-            return;
-          }
-          if (this.settings.allowDeselect && !this.settings.isMultiple) {
-            const placeholderOption = this.store.filter((o) => o.placeholder, false);
-            if (!placeholderOption.length) {
-              this.store.addOption(new Option({
-                text: "",
-                value: "",
-                selected: false,
-                placeholder: true
-              }), true);
-            }
-          }
-          for (const d of data) {
-            if (d instanceof Optgroup) {
-              const optgroupEl = document.createElement("div");
-              optgroupEl.classList.add(this.classes.optgroup);
-              const optgroupLabel = document.createElement("div");
-              optgroupLabel.classList.add(this.classes.optgroupLabel);
-              optgroupEl.appendChild(optgroupLabel);
-              const optgroupLabelText = document.createElement("div");
-              optgroupLabelText.classList.add(this.classes.optgroupLabelText);
-              optgroupLabelText.textContent = d.label;
-              optgroupLabel.appendChild(optgroupLabelText);
-              const optgroupActions = document.createElement("div");
-              optgroupActions.classList.add(this.classes.optgroupActions);
-              optgroupLabel.appendChild(optgroupActions);
-              if (this.settings.isMultiple && d.selectAll) {
-                const selectAll = document.createElement("div");
-                selectAll.classList.add(this.classes.optgroupSelectAll);
-                let allSelected = true;
-                for (const o of d.options) {
-                  if (!o.selected) {
-                    allSelected = false;
-                    break;
-                  }
-                }
-                if (allSelected) {
-                  selectAll.classList.add(this.classes.selected);
-                }
-                const selectAllText = document.createElement("span");
-                selectAllText.textContent = d.selectAllText;
-                selectAll.appendChild(selectAllText);
-                const selectAllSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                selectAllSvg.setAttribute("viewBox", "0 0 100 100");
-                selectAll.appendChild(selectAllSvg);
-                const selectAllBox = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                selectAllBox.setAttribute("d", this.classes.optgroupSelectAllBox);
-                selectAllSvg.appendChild(selectAllBox);
-                const selectAllCheck = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                selectAllCheck.setAttribute("d", this.classes.optgroupSelectAllCheck);
-                selectAllSvg.appendChild(selectAllCheck);
-                selectAll.addEventListener("click", (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const currentSelected = this.store.getSelected();
-                  if (allSelected) {
-                    const newSelected = currentSelected.filter((s) => {
-                      for (const o of d.options) {
-                        if (s === o.id) {
-                          return false;
-                        }
-                      }
-                      return true;
-                    });
-                    this.callbacks.setSelected(newSelected, true);
-                    return;
-                  } else {
-                    const newSelected = currentSelected.concat(d.options.map((o) => o.id));
-                    for (const o of d.options) {
-                      if (!this.store.getOptionByID(o.id)) {
-                        this.callbacks.addOption(o);
-                      }
-                    }
-                    this.callbacks.setSelected(newSelected, true);
-                    return;
-                  }
-                });
-                optgroupActions.appendChild(selectAll);
-              }
-              if (d.closable !== "off") {
-                const optgroupClosable = document.createElement("div");
-                optgroupClosable.classList.add(this.classes.optgroupClosable);
-                const optgroupClosableSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                optgroupClosableSvg.setAttribute("viewBox", "0 0 100 100");
-                optgroupClosableSvg.classList.add(this.classes.arrow);
-                optgroupClosable.appendChild(optgroupClosableSvg);
-                const optgroupClosableArrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                optgroupClosableSvg.appendChild(optgroupClosableArrow);
-                if (d.options.some((o) => o.selected) || this.content.search.input.value.trim() !== "") {
-                  optgroupClosable.classList.add(this.classes.open);
-                  optgroupClosableArrow.setAttribute("d", this.classes.arrowOpen);
-                } else if (d.closable === "open") {
-                  optgroupEl.classList.add(this.classes.open);
-                  optgroupClosableArrow.setAttribute("d", this.classes.arrowOpen);
-                } else if (d.closable === "close") {
-                  optgroupEl.classList.add(this.classes.close);
-                  optgroupClosableArrow.setAttribute("d", this.classes.arrowClose);
-                }
-                optgroupLabel.addEventListener("click", (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (optgroupEl.classList.contains(this.classes.close)) {
-                    optgroupEl.classList.remove(this.classes.close);
-                    optgroupEl.classList.add(this.classes.open);
-                    optgroupClosableArrow.setAttribute("d", this.classes.arrowOpen);
-                  } else {
-                    optgroupEl.classList.remove(this.classes.open);
-                    optgroupEl.classList.add(this.classes.close);
-                    optgroupClosableArrow.setAttribute("d", this.classes.arrowClose);
-                  }
-                });
-                optgroupActions.appendChild(optgroupClosable);
-              }
-              optgroupEl.appendChild(optgroupLabel);
-              for (const o of d.options) {
-                optgroupEl.appendChild(this.option(o));
-              }
-              this.content.list.appendChild(optgroupEl);
-            }
-            if (d instanceof Option) {
-              this.content.list.appendChild(this.option(d));
-            }
-          }
-        }
-        option(option) {
-          if (option.placeholder) {
-            const placeholder = document.createElement("div");
-            placeholder.classList.add(this.classes.option);
-            placeholder.classList.add(this.classes.hide);
-            return placeholder;
-          }
-          const optionEl = document.createElement("div");
-          optionEl.dataset.id = option.id;
-          optionEl.classList.add(this.classes.option);
-          optionEl.setAttribute("role", "option");
-          if (option.class) {
-            option.class.split(" ").forEach((dataClass) => {
-              optionEl.classList.add(dataClass);
-            });
-          }
-          if (option.style) {
-            optionEl.style.cssText = option.style;
-          }
-          if (this.settings.searchHighlight && this.content.search.input.value.trim() !== "") {
-            optionEl.innerHTML = this.highlightText(option.html !== "" ? option.html : option.text, this.content.search.input.value, this.classes.searchHighlighter);
-          } else if (option.html !== "") {
-            optionEl.innerHTML = option.html;
-          } else {
-            optionEl.textContent = option.text;
-          }
-          if (this.settings.showOptionTooltips && optionEl.textContent) {
-            optionEl.setAttribute("title", optionEl.textContent);
-          }
-          if (!option.display) {
-            optionEl.classList.add(this.classes.hide);
-          }
-          if (option.disabled) {
-            optionEl.classList.add(this.classes.disabled);
-          }
-          if (option.selected && this.settings.hideSelected) {
-            optionEl.classList.add(this.classes.hide);
-          }
-          if (option.selected) {
-            optionEl.classList.add(this.classes.selected);
-            optionEl.setAttribute("aria-selected", "true");
-            this.main.main.setAttribute("aria-activedescendant", optionEl.id);
-          } else {
-            optionEl.classList.remove(this.classes.selected);
-            optionEl.setAttribute("aria-selected", "false");
-          }
-          optionEl.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const selectedOptions = this.store.getSelected();
-            const element = e.currentTarget;
-            const elementID = String(element.dataset.id);
-            if (option.disabled || option.selected && !this.settings.allowDeselect) {
-              return;
-            }
-            if (this.settings.isMultiple && this.settings.maxSelected <= selectedOptions.length && !option.selected || this.settings.isMultiple && this.settings.minSelected >= selectedOptions.length && option.selected) {
-              return;
-            }
-            let shouldUpdate = false;
-            const before = this.store.getSelectedOptions();
-            let after = [];
-            if (this.settings.isMultiple) {
-              if (option.selected) {
-                after = before.filter((o) => o.id !== elementID);
-              } else {
-                after = before.concat(option);
-              }
-            }
-            if (!this.settings.isMultiple) {
-              if (option.selected) {
-                after = [];
-              } else {
-                after = [option];
-              }
-            }
-            if (!this.callbacks.beforeChange) {
-              shouldUpdate = true;
-            }
-            if (this.callbacks.beforeChange) {
-              if (this.callbacks.beforeChange(after, before) === false) {
-                shouldUpdate = false;
-              } else {
-                shouldUpdate = true;
-              }
-            }
-            if (shouldUpdate) {
-              if (!this.store.getOptionByID(elementID)) {
-                this.callbacks.addOption(option);
-              }
-              this.callbacks.setSelected(after.map((o) => o.id), false);
-              if (this.settings.closeOnSelect) {
-                this.callbacks.close();
-              }
-              if (this.callbacks.afterChange) {
-                this.callbacks.afterChange(after);
-              }
-            }
-          });
-          return optionEl;
-        }
-        destroy() {
-          this.main.main.remove();
-          this.content.main.remove();
-        }
-        highlightText(str, search, className) {
-          let completedString = str;
-          const regex = new RegExp("(?![^<]*>)(" + search.trim() + ")(?![^<]*>[^<>]*</)", "i");
-          if (!str.match(regex)) {
-            return str;
-          }
-          const matchStartPosition = str.match(regex).index;
-          const matchEndPosition = matchStartPosition + str.match(regex)[0].toString().length;
-          const originalTextFoundByRegex = str.substring(matchStartPosition, matchEndPosition);
-          completedString = completedString.replace(regex, `<mark class="${className}">${originalTextFoundByRegex}</mark>`);
-          return completedString;
-        }
-        moveContentAbove() {
-          const mainHeight = this.main.main.offsetHeight;
-          const contentHeight = this.content.main.offsetHeight;
-          this.main.main.classList.remove(this.classes.openBelow);
-          this.main.main.classList.add(this.classes.openAbove);
-          this.content.main.classList.remove(this.classes.openBelow);
-          this.content.main.classList.add(this.classes.openAbove);
-          const containerRect = this.main.main.getBoundingClientRect();
-          this.content.main.style.margin = "-" + (mainHeight + contentHeight - 1) + "px 0px 0px 0px";
-          this.content.main.style.top = containerRect.top + containerRect.height + (this.settings.contentPosition === "fixed" ? 0 : window.scrollY) + "px";
-          this.content.main.style.left = containerRect.left + (this.settings.contentPosition === "fixed" ? 0 : window.scrollX) + "px";
-          this.content.main.style.width = containerRect.width + "px";
-        }
-        moveContentBelow() {
-          this.main.main.classList.remove(this.classes.openAbove);
-          this.main.main.classList.add(this.classes.openBelow);
-          this.content.main.classList.remove(this.classes.openAbove);
-          this.content.main.classList.add(this.classes.openBelow);
-          const containerRect = this.main.main.getBoundingClientRect();
-          this.content.main.style.margin = "-1px 0px 0px 0px";
-          if (this.settings.contentPosition !== "relative") {
-            this.content.main.style.top = containerRect.top + containerRect.height + (this.settings.contentPosition === "fixed" ? 0 : window.scrollY) + "px";
-            this.content.main.style.left = containerRect.left + (this.settings.contentPosition === "fixed" ? 0 : window.scrollX) + "px";
-            this.content.main.style.width = containerRect.width + "px";
-          }
-        }
-        ensureElementInView(container, element) {
-          const cTop = container.scrollTop + container.offsetTop;
-          const cBottom = cTop + container.clientHeight;
-          const eTop = element.offsetTop;
-          const eBottom = eTop + element.clientHeight;
-          if (eTop < cTop) {
-            container.scrollTop -= cTop - eTop;
-          } else if (eBottom > cBottom) {
-            container.scrollTop += eBottom - cBottom;
-          }
-        }
-        putContent() {
-          const mainHeight = this.main.main.offsetHeight;
-          const mainRect = this.main.main.getBoundingClientRect();
-          const contentHeight = this.content.main.offsetHeight;
-          const spaceBelow = window.innerHeight - (mainRect.top + mainHeight);
-          if (spaceBelow <= contentHeight) {
-            if (mainRect.top > contentHeight) {
-              return "up";
-            } else {
-              return "down";
-            }
-          }
-          return "down";
-        }
-        updateDeselectAll() {
-          if (!this.store || !this.settings) {
-            return;
-          }
-          const selected = this.store.getSelectedOptions();
-          const hasSelectedItems = selected && selected.length > 0;
-          const isMultiple = this.settings.isMultiple;
-          const allowDeselect = this.settings.allowDeselect;
-          const deselectButton = this.main.deselect.main;
-          const hideClass = this.classes.hide;
-          if (allowDeselect && !(isMultiple && !hasSelectedItems)) {
-            deselectButton.classList.remove(hideClass);
-          } else {
-            deselectButton.classList.add(hideClass);
-          }
-        }
-      }
-      class Select {
-        constructor(select) {
-          this.listen = false;
-          this.observer = null;
-          this.select = select;
-          this.valueChange = this.valueChange.bind(this);
-          this.select.addEventListener("change", this.valueChange, {
-            passive: true
-          });
-          this.observer = new MutationObserver(this.observeCall.bind(this));
-          this.changeListen(true);
-        }
-        enable() {
-          this.select.disabled = false;
-        }
-        disable() {
-          this.select.disabled = true;
-        }
-        hideUI() {
-          this.select.tabIndex = -1;
-          this.select.style.display = "none";
-          this.select.setAttribute("aria-hidden", "true");
-        }
-        showUI() {
-          this.select.removeAttribute("tabindex");
-          this.select.style.display = "";
-          this.select.removeAttribute("aria-hidden");
-        }
-        changeListen(listen) {
-          this.listen = listen;
-          if (listen) {
-            if (this.observer) {
-              this.observer.observe(this.select, {
-                subtree: true,
-                childList: true,
-                attributes: true
-              });
-            }
-          }
-          if (!listen) {
-            if (this.observer) {
-              this.observer.disconnect();
-            }
-          }
-        }
-        valueChange(ev) {
-          if (this.listen && this.onValueChange) {
-            this.onValueChange(this.getSelectedOptions());
-          }
-          return true;
-        }
-        observeCall(mutations) {
-          if (!this.listen) {
-            return;
-          }
-          let classChanged = false;
-          let disabledChanged = false;
-          let optgroupOptionChanged = false;
-          for (const m of mutations) {
-            if (m.target === this.select) {
-              if (m.attributeName === "disabled") {
-                disabledChanged = true;
-              }
-              if (m.attributeName === "class") {
-                classChanged = true;
-              }
-              if (m.type === "childList") {
-                for (const n of m.addedNodes) {
-                  if (n.nodeName === "OPTION" && n.value === this.select.value) {
-                    this.select.dispatchEvent(new Event("change"));
-                    break;
-                  }
-                }
-                optgroupOptionChanged = true;
-              }
-            }
-            if (m.target.nodeName === "OPTGROUP" || m.target.nodeName === "OPTION") {
-              optgroupOptionChanged = true;
-            }
-          }
-          if (classChanged && this.onClassChange) {
-            this.onClassChange(this.select.className.split(" "));
-          }
-          if (disabledChanged && this.onDisabledChange) {
-            this.changeListen(false);
-            this.onDisabledChange(this.select.disabled);
-            this.changeListen(true);
-          }
-          if (optgroupOptionChanged && this.onOptionsChange) {
-            this.changeListen(false);
-            this.onOptionsChange(this.getData());
-            this.changeListen(true);
-          }
-        }
-        getData() {
-          let data = [];
-          const nodes = this.select.childNodes;
-          for (const n of nodes) {
-            if (n.nodeName === "OPTGROUP") {
-              data.push(this.getDataFromOptgroup(n));
-            }
-            if (n.nodeName === "OPTION") {
-              data.push(this.getDataFromOption(n));
-            }
-          }
-          return data;
-        }
-        getDataFromOptgroup(optgroup) {
-          let data = {
-            id: optgroup.id,
-            label: optgroup.label,
-            selectAll: optgroup.dataset ? optgroup.dataset.selectall === "true" : false,
-            selectAllText: optgroup.dataset ? optgroup.dataset.selectalltext : "Select all",
-            closable: optgroup.dataset ? optgroup.dataset.closable : "off",
-            options: []
-          };
-          const options = optgroup.childNodes;
-          for (const o of options) {
-            if (o.nodeName === "OPTION") {
-              data.options.push(this.getDataFromOption(o));
-            }
-          }
-          return data;
-        }
-        getDataFromOption(option) {
-          return {
-            id: option.id,
-            value: option.value,
-            text: option.text,
-            html: option.dataset && option.dataset.html ? option.dataset.html : "",
-            selected: option.selected,
-            display: option.style.display !== "none",
-            disabled: option.disabled,
-            mandatory: option.dataset ? option.dataset.mandatory === "true" : false,
-            placeholder: option.dataset.placeholder === "true",
-            class: option.className,
-            style: option.style.cssText,
-            data: option.dataset
-          };
-        }
-        getSelectedOptions() {
-          let options = [];
-          const opts = this.select.childNodes;
-          for (const o of opts) {
-            if (o.nodeName === "OPTGROUP") {
-              const optgroupOptions = o.childNodes;
-              for (const oo of optgroupOptions) {
-                if (oo.nodeName === "OPTION") {
-                  const option = oo;
-                  if (option.selected) {
-                    options.push(this.getDataFromOption(option));
-                  }
-                }
-              }
-            }
-            if (o.nodeName === "OPTION") {
-              const option = o;
-              if (option.selected) {
-                options.push(this.getDataFromOption(option));
-              }
-            }
-          }
-          return options;
-        }
-        getSelectedValues() {
-          return this.getSelectedOptions().map((option) => option.value);
-        }
-        setSelected(ids) {
-          this.changeListen(false);
-          const options = this.select.childNodes;
-          for (const o of options) {
-            if (o.nodeName === "OPTGROUP") {
-              const optgroup = o;
-              const optgroupOptions = optgroup.childNodes;
-              for (const oo of optgroupOptions) {
-                if (oo.nodeName === "OPTION") {
-                  const option = oo;
-                  option.selected = ids.includes(option.id);
-                }
-              }
-            }
-            if (o.nodeName === "OPTION") {
-              const option = o;
-              option.selected = ids.includes(option.id);
-            }
-          }
-          this.changeListen(true);
-        }
-        setSelectedByValue(values) {
-          this.changeListen(false);
-          const options = this.select.childNodes;
-          for (const o of options) {
-            if (o.nodeName === "OPTGROUP") {
-              const optgroup = o;
-              const optgroupOptions = optgroup.childNodes;
-              for (const oo of optgroupOptions) {
-                if (oo.nodeName === "OPTION") {
-                  const option = oo;
-                  option.selected = values.includes(option.value);
-                }
-              }
-            }
-            if (o.nodeName === "OPTION") {
-              const option = o;
-              option.selected = values.includes(option.value);
-            }
-          }
-          this.changeListen(true);
-        }
-        updateSelect(id, style, classes) {
-          this.changeListen(false);
-          if (id) {
-            this.select.dataset.id = id;
-          }
-          if (style) {
-            this.select.style.cssText = style;
-          }
-          if (classes) {
-            this.select.className = "";
-            classes.forEach((c) => {
-              if (c.trim() !== "") {
-                this.select.classList.add(c.trim());
-              }
-            });
-          }
-          this.changeListen(true);
-        }
-        updateOptions(data) {
-          this.changeListen(false);
-          this.select.innerHTML = "";
-          for (const d of data) {
-            if (d instanceof Optgroup) {
-              this.select.appendChild(this.createOptgroup(d));
-            }
-            if (d instanceof Option) {
-              this.select.appendChild(this.createOption(d));
-            }
-          }
-          this.select.dispatchEvent(new Event("change", { bubbles: true }));
-          this.changeListen(true);
-        }
-        createOptgroup(optgroup) {
-          const optgroupEl = document.createElement("optgroup");
-          optgroupEl.id = optgroup.id;
-          optgroupEl.label = optgroup.label;
-          if (optgroup.selectAll) {
-            optgroupEl.dataset.selectAll = "true";
-          }
-          if (optgroup.closable !== "off") {
-            optgroupEl.dataset.closable = optgroup.closable;
-          }
-          if (optgroup.options) {
-            for (const o of optgroup.options) {
-              optgroupEl.appendChild(this.createOption(o));
-            }
-          }
-          return optgroupEl;
-        }
-        createOption(info) {
-          const optionEl = document.createElement("option");
-          optionEl.id = info.id;
-          optionEl.value = info.value;
-          optionEl.textContent = info.text;
-          if (info.html !== "") {
-            optionEl.setAttribute("data-html", info.html);
-          }
-          if (info.selected) {
-            optionEl.selected = info.selected;
-          }
-          if (info.disabled) {
-            optionEl.disabled = true;
-          }
-          if (!info.display) {
-            optionEl.style.display = "none";
-          }
-          if (info.placeholder) {
-            optionEl.setAttribute("data-placeholder", "true");
-          }
-          if (info.mandatory) {
-            optionEl.setAttribute("data-mandatory", "true");
-          }
-          if (info.class) {
-            info.class.split(" ").forEach((optionClass) => {
-              optionEl.classList.add(optionClass);
-            });
-          }
-          if (info.data && typeof info.data === "object") {
-            Object.keys(info.data).forEach((key) => {
-              optionEl.setAttribute("data-" + kebabCase(key), info.data[key]);
-            });
-          }
-          return optionEl;
-        }
-        destroy() {
-          this.changeListen(false);
-          this.select.removeEventListener("change", this.valueChange);
-          if (this.observer) {
-            this.observer.disconnect();
-            this.observer = null;
-          }
-          delete this.select.dataset.id;
-          this.showUI();
-        }
-      }
-      class Settings {
-        constructor(settings) {
-          this.id = "";
-          this.style = "";
-          this.class = [];
-          this.isMultiple = false;
-          this.isOpen = false;
-          this.isFullOpen = false;
-          this.intervalMove = null;
-          if (!settings) {
-            settings = {};
-          }
-          this.id = "ss-" + generateID();
-          this.style = settings.style || "";
-          this.class = settings.class || [];
-          this.disabled = settings.disabled !== void 0 ? settings.disabled : false;
-          this.alwaysOpen = settings.alwaysOpen !== void 0 ? settings.alwaysOpen : false;
-          this.showSearch = settings.showSearch !== void 0 ? settings.showSearch : true;
-          this.focusSearch = settings.focusSearch !== void 0 ? settings.focusSearch : true;
-          this.ariaLabel = settings.ariaLabel || "Combobox";
-          this.searchPlaceholder = settings.searchPlaceholder || "Search";
-          this.searchText = settings.searchText || "No Results";
-          this.searchingText = settings.searchingText || "Searching...";
-          this.searchHighlight = settings.searchHighlight !== void 0 ? settings.searchHighlight : false;
-          this.closeOnSelect = settings.closeOnSelect !== void 0 ? settings.closeOnSelect : true;
-          this.contentLocation = settings.contentLocation || document.body;
-          this.contentPosition = settings.contentPosition || "absolute";
-          this.openPosition = settings.openPosition || "auto";
-          this.placeholderText = settings.placeholderText !== void 0 ? settings.placeholderText : "Select Value";
-          this.allowDeselect = settings.allowDeselect !== void 0 ? settings.allowDeselect : false;
-          this.hideSelected = settings.hideSelected !== void 0 ? settings.hideSelected : false;
-          this.keepOrder = settings.keepOrder !== void 0 ? settings.keepOrder : false;
-          this.showOptionTooltips = settings.showOptionTooltips !== void 0 ? settings.showOptionTooltips : false;
-          this.minSelected = settings.minSelected || 0;
-          this.maxSelected = settings.maxSelected || 1e3;
-          this.timeoutDelay = settings.timeoutDelay || 200;
-          this.maxValuesShown = settings.maxValuesShown || 20;
-          this.maxValuesMessage = settings.maxValuesMessage || "{number} selected";
-          this.addableText = settings.addableText || 'Press "Enter" to add {value}';
-        }
-      }
-      class SlimSelect2 {
-        constructor(config2) {
-          var _a;
-          this.events = {
-            search: void 0,
-            searchFilter: (opt, search) => {
-              return opt.text.toLowerCase().indexOf(search.toLowerCase()) !== -1;
-            },
-            addable: void 0,
-            beforeChange: void 0,
-            afterChange: void 0,
-            beforeOpen: void 0,
-            afterOpen: void 0,
-            beforeClose: void 0,
-            afterClose: void 0
-          };
-          this.windowResize = debounce2(() => {
-            if (!this.settings.isOpen && !this.settings.isFullOpen) {
-              return;
-            }
-            this.render.moveContent();
-          });
-          this.windowScroll = debounce2(() => {
-            if (!this.settings.isOpen && !this.settings.isFullOpen) {
-              return;
-            }
-            this.render.moveContent();
-          });
-          this.documentClick = (e) => {
-            if (!this.settings.isOpen) {
-              return;
-            }
-            if (e.target && !hasClassInTree(e.target, this.settings.id)) {
-              this.close(e.type);
-            }
-          };
-          this.windowVisibilityChange = () => {
-            if (document.hidden) {
-              this.close();
-            }
-          };
-          this.selectEl = typeof config2.select === "string" ? document.querySelector(config2.select) : config2.select;
-          if (!this.selectEl) {
-            if (config2.events && config2.events.error) {
-              config2.events.error(new Error("Could not find select element"));
-            }
-            return;
-          }
-          if (this.selectEl.tagName !== "SELECT") {
-            if (config2.events && config2.events.error) {
-              config2.events.error(new Error("Element isnt of type select"));
-            }
-            return;
-          }
-          if (this.selectEl.dataset.ssid) {
-            this.destroy();
-          }
-          this.settings = new Settings(config2.settings);
-          this.cssClasses = new CssClasses(config2.cssClasses);
-          const debounceEvents = ["afterChange", "beforeOpen", "afterOpen", "beforeClose", "afterClose"];
-          for (const key in config2.events) {
-            if (!config2.events.hasOwnProperty(key)) {
-              continue;
-            }
-            if (debounceEvents.indexOf(key) !== -1) {
-              this.events[key] = debounce2(config2.events[key], 100);
-            } else {
-              this.events[key] = config2.events[key];
-            }
-          }
-          this.settings.disabled = ((_a = config2.settings) === null || _a === void 0 ? void 0 : _a.disabled) ? config2.settings.disabled : this.selectEl.disabled;
-          this.settings.isMultiple = this.selectEl.multiple;
-          this.settings.style = this.selectEl.style.cssText;
-          this.settings.class = this.selectEl.className.split(" ");
-          this.select = new Select(this.selectEl);
-          this.select.updateSelect(this.settings.id, this.settings.style, this.settings.class);
-          this.select.hideUI();
-          this.select.onValueChange = (options) => {
-            this.setSelected(options.map((option) => option.id));
-          };
-          this.select.onClassChange = (classes) => {
-            this.settings.class = classes;
-            this.render.updateClassStyles();
-          };
-          this.select.onDisabledChange = (disabled) => {
-            if (disabled) {
-              this.disable();
-            } else {
-              this.enable();
-            }
-          };
-          this.select.onOptionsChange = (data) => {
-            this.setData(data);
-          };
-          this.store = new Store(this.settings.isMultiple ? "multiple" : "single", config2.data ? config2.data : this.select.getData());
-          if (config2.data) {
-            this.select.updateOptions(this.store.getData());
-          }
-          const renderCallbacks = {
-            open: this.open.bind(this),
-            close: this.close.bind(this),
-            addable: this.events.addable ? this.events.addable : void 0,
-            setSelected: this.setSelected.bind(this),
-            addOption: this.addOption.bind(this),
-            search: this.search.bind(this),
-            beforeChange: this.events.beforeChange,
-            afterChange: this.events.afterChange
-          };
-          this.render = new Render(this.settings, this.cssClasses, this.store, renderCallbacks);
-          this.render.renderValues();
-          this.render.renderOptions(this.store.getData());
-          const selectAriaLabel = this.selectEl.getAttribute("aria-label");
-          const selectAriaLabelledBy = this.selectEl.getAttribute("aria-labelledby");
-          if (selectAriaLabel) {
-            this.render.main.main.setAttribute("aria-label", selectAriaLabel);
-          } else if (selectAriaLabelledBy) {
-            this.render.main.main.setAttribute("aria-labelledby", selectAriaLabelledBy);
-          }
-          if (this.selectEl.parentNode) {
-            this.selectEl.parentNode.insertBefore(this.render.main.main, this.selectEl.nextSibling);
-          }
-          window.addEventListener("resize", this.windowResize, false);
-          if (this.settings.openPosition === "auto") {
-            window.addEventListener("scroll", this.windowScroll, false);
-          }
-          document.addEventListener("visibilitychange", this.windowVisibilityChange);
-          if (this.settings.disabled) {
-            this.disable();
-          }
-          if (this.settings.alwaysOpen) {
-            this.open();
-          }
-          this.selectEl.slim = this;
-        }
-        enable() {
-          this.settings.disabled = false;
-          this.select.enable();
-          this.render.enable();
-        }
-        disable() {
-          this.settings.disabled = true;
-          this.select.disable();
-          this.render.disable();
-        }
-        getData() {
-          return this.store.getData();
-        }
-        setData(data) {
-          const selected = this.store.getSelected();
-          const err = this.store.validateDataArray(data);
-          if (err) {
-            if (this.events.error) {
-              this.events.error(err);
-            }
-            return;
-          }
-          this.store.setData(data);
-          const dataClean = this.store.getData();
-          this.select.updateOptions(dataClean);
-          this.render.renderValues();
-          this.render.renderOptions(dataClean);
-          if (this.events.afterChange && !isEqual(selected, this.store.getSelected())) {
-            this.events.afterChange(this.store.getSelectedOptions());
-          }
-        }
-        getSelected() {
-          let options = this.store.getSelectedOptions();
-          if (this.settings.keepOrder) {
-            options = this.store.selectedOrderOptions(options);
-          }
-          return options.map((option) => option.value);
-        }
-        setSelected(values, runAfterChange = true) {
-          const selected = this.store.getSelected();
-          const options = this.store.getDataOptions();
-          values = Array.isArray(values) ? values : [values];
-          const ids = [];
-          for (const value of values) {
-            if (options.find((option) => option.id == value)) {
-              ids.push(value);
-              continue;
-            }
-            for (const option of options.filter((option2) => option2.value == value)) {
-              ids.push(option.id);
-            }
-          }
-          this.store.setSelectedBy("id", ids);
-          const data = this.store.getData();
-          this.select.updateOptions(data);
-          this.render.renderValues();
-          if (this.render.content.search.input.value !== "") {
-            this.search(this.render.content.search.input.value);
-          } else {
-            this.render.renderOptions(data);
-          }
-          if (runAfterChange && this.events.afterChange && !isEqual(selected, this.store.getSelected())) {
-            this.events.afterChange(this.store.getSelectedOptions());
-          }
-        }
-        addOption(option) {
-          const selected = this.store.getSelected();
-          if (!this.store.getDataOptions().some((o) => {
-            var _a;
-            return o.value === ((_a = option.value) !== null && _a !== void 0 ? _a : option.text);
-          })) {
-            this.store.addOption(option);
-          }
-          const data = this.store.getData();
-          this.select.updateOptions(data);
-          this.render.renderValues();
-          this.render.renderOptions(data);
-          if (this.events.afterChange && !isEqual(selected, this.store.getSelected())) {
-            this.events.afterChange(this.store.getSelectedOptions());
-          }
-        }
-        open() {
-          if (this.settings.disabled || this.settings.isOpen) {
-            return;
-          }
-          if (this.events.beforeOpen) {
-            this.events.beforeOpen();
-          }
-          this.render.open();
-          if (this.settings.showSearch && this.settings.focusSearch) {
-            this.render.searchFocus();
-          }
-          this.settings.isOpen = true;
-          setTimeout(() => {
-            if (this.events.afterOpen) {
-              this.events.afterOpen();
-            }
-            if (this.settings.isOpen) {
-              this.settings.isFullOpen = true;
-            }
-            document.addEventListener("click", this.documentClick);
-          }, this.settings.timeoutDelay);
-          if (this.settings.contentPosition === "absolute") {
-            if (this.settings.intervalMove) {
-              clearInterval(this.settings.intervalMove);
-            }
-            this.settings.intervalMove = setInterval(this.render.moveContent.bind(this.render), 500);
-          }
-        }
-        close(eventType = null) {
-          if (!this.settings.isOpen || this.settings.alwaysOpen) {
-            return;
-          }
-          if (this.events.beforeClose) {
-            this.events.beforeClose();
-          }
-          this.render.close();
-          if (this.render.content.search.input.value !== "") {
-            this.search("");
-          }
-          this.render.mainFocus(eventType);
-          this.settings.isOpen = false;
-          this.settings.isFullOpen = false;
-          setTimeout(() => {
-            if (this.events.afterClose) {
-              this.events.afterClose();
-            }
-            document.removeEventListener("click", this.documentClick);
-          }, this.settings.timeoutDelay);
-          if (this.settings.intervalMove) {
-            clearInterval(this.settings.intervalMove);
-          }
-        }
-        search(value) {
-          if (this.render.content.search.input.value !== value) {
-            this.render.content.search.input.value = value;
-          }
-          if (!this.events.search) {
-            this.render.renderOptions(value === "" ? this.store.getData() : this.store.search(value, this.events.searchFilter));
-            return;
-          }
-          this.render.renderSearching();
-          const searchResp = this.events.search(value, this.store.getSelectedOptions());
-          if (searchResp instanceof Promise) {
-            searchResp.then((data) => {
-              this.render.renderOptions(this.store.partialToFullData(data));
-            }).catch((err) => {
-              this.render.renderError(typeof err === "string" ? err : err.message);
-            });
-            return;
-          } else if (Array.isArray(searchResp)) {
-            this.render.renderOptions(this.store.partialToFullData(searchResp));
-          } else {
-            this.render.renderError("Search event must return a promise or an array of data");
-          }
-        }
-        destroy() {
-          document.removeEventListener("click", this.documentClick);
-          window.removeEventListener("resize", this.windowResize, false);
-          if (this.settings.openPosition === "auto") {
-            window.removeEventListener("scroll", this.windowScroll, false);
-          }
-          document.removeEventListener("visibilitychange", this.windowVisibilityChange);
-          this.store.setData([]);
-          this.render.destroy();
-          this.select.destroy();
-        }
-      }
-      return SlimSelect2;
-    });
   }
 });
 
@@ -8493,13 +6521,13 @@ var AttributeObserver = class {
   }
 };
 function add(map, key, value) {
-  fetch2(map, key).add(value);
+  fetch(map, key).add(value);
 }
 function del(map, key, value) {
-  fetch2(map, key).delete(value);
+  fetch(map, key).delete(value);
   prune(map, key);
 }
-function fetch2(map, key) {
+function fetch(map, key) {
   let values = map.get(key);
   if (!values) {
     values = /* @__PURE__ */ new Set();
@@ -10889,110 +8917,6 @@ var modal_controller_default = class extends Controller2 {
   }
 };
 
-// app/javascript/controllers/multiselect_controller.js
-var import_slim_select = __toESM(require_slimselect());
-var multiselect_controller_default = class extends Controller {
-  static targets = ["rows", "selectedContainerList"];
-  connect() {
-    this.selectedIds = [];
-    this.initializeSelectedIds();
-    this.initializeSlimSelect();
-  }
-  initializeSelectedIds() {
-    const existingIds = document.getElementById("disposal_container_ids").value.split(",");
-    this.selectedIds = existingIds.filter((id) => id);
-  }
-  initializeSlimSelect() {
-    this.slimSelect = new import_slim_select.default({
-      select: "#container-multiselect",
-      showSearch: true,
-      settings: {
-        allowDeselect: true
-      },
-      onChange: (info) => {
-        this.addRow(info);
-      }
-    });
-    this.element.querySelector("#container-multiselect").addEventListener("change", this.addRow.bind(this));
-  }
-  addRow(info) {
-    const containerId = info.value;
-    const containerName = info.text;
-    if (containerId && !this.selectedIds.includes(containerId)) {
-      const tag = document.createElement("div");
-      tag.classList.add(
-        "flex",
-        "items-center",
-        "bg-red-100",
-        "border",
-        "border-red-200",
-        "text-red-600",
-        "px-2",
-        "py-1",
-        "rounded-full",
-        "mr-1",
-        "mb-1"
-      );
-      tag.setAttribute("data-multiselect-id", containerId);
-      tag.innerHTML = `
-        ${containerName}
-        <button type="button" class="ml-2 text-red-600" data-action="multiselect#removeTag" data-multiselect-id="${containerId}">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 9.293l3.293-3.293a1 1 0 011.414 0l.086.086a1 1 0 010 1.414L11.414 10l3.293 3.293a1 1 0 01.086 1.32l-.086.086a1 1 0 01-1.414 0L10 11.414l-3.293 3.293a1 1 0 01-1.32.086l-.086-.086a1 1 0 010-1.414L8.586 10 5.293 6.707a1 1 0 01-.086-1.32l.086-.086a1 1 0 011.414 0L10 8.586z" clip-rule="evenodd" />
-          </svg>
-        </button>
-      `;
-      this.selectedContainerListTarget.appendChild(tag);
-      const row = document.createElement("div");
-      row.classList.add(
-        "bg-gray-100",
-        "border",
-        "rounded",
-        "p-4",
-        "flex",
-        "items-center",
-        "space-x-4",
-        "mt-2"
-      );
-      row.setAttribute("data-multiselect-id", containerId);
-      row.innerHTML = `
-        <span class="text-red-600">${containerName}</span>
-        <label class="flex items-center">
-          MXI Cost: $
-          <input type="number" name="disposal_cost[disposal_containers_attributes][${containerId}][mxi_cost]" class="ml-2 border rounded py-1 px-2" required>
-        </label>
-        <label class="flex items-center">
-          Client Charge: $
-          <input type="number" name="disposal_cost[disposal_containers_attributes][${containerId}][client_charge]" class="ml-2 border rounded py-1 px-2" required>
-        </label>
-        <input type="hidden" name="disposal_cost[disposal_containers_attributes][${containerId}][name]" value="${containerName}">
-        <input type="hidden" name="disposal_cost[disposal_containers_attributes][${containerId}][_destroy]" value="false">
-      `;
-      this.rowsTarget.appendChild(row);
-      this.selectedIds.push(containerId);
-      document.getElementById("disposal_container_ids").value = this.selectedIds.join(",");
-      this.slimSelect.set("");
-    }
-  }
-  removeTag(event) {
-    const containerId = event.currentTarget.getAttribute("data-multiselect-id");
-    const tag = this.selectedContainerListTarget.querySelector(
-      `[data-multiselect-id="${containerId}"]`
-    );
-    if (tag) {
-      tag.remove();
-    }
-    const row = this.rowsTarget.querySelector(
-      `[data-multiselect-id="${containerId}"]`
-    );
-    if (row) {
-      row.remove();
-    }
-    this.selectedIds = this.selectedIds.filter((id) => id !== containerId);
-    document.getElementById("disposal_container_ids").value = this.selectedIds.join(",");
-  }
-};
-
 // node_modules/stimulus-rails-nested-form/dist/stimulus-rails-nested-form.mjs
 var r = class extends Controller {
   add(t) {
@@ -11120,13 +9044,13 @@ var MicroEvent = class {
     });
   }
   trigger(events, ...args) {
-    var self2 = this;
+    var self = this;
     forEvents(events, (event) => {
-      const event_array = self2._events[event];
+      const event_array = self._events[event];
       if (event_array === void 0)
         return;
       event_array.forEach((fct) => {
-        fct.apply(self2, args);
+        fct.apply(self, args);
       });
     });
   }
@@ -11173,38 +9097,38 @@ function MicroPlugin(Interface) {
      */
     initializePlugins(plugins) {
       var key, name;
-      const self2 = this;
+      const self = this;
       const queue = [];
       if (Array.isArray(plugins)) {
         plugins.forEach((plugin15) => {
           if (typeof plugin15 === "string") {
             queue.push(plugin15);
           } else {
-            self2.plugins.settings[plugin15.name] = plugin15.options;
+            self.plugins.settings[plugin15.name] = plugin15.options;
             queue.push(plugin15.name);
           }
         });
       } else if (plugins) {
         for (key in plugins) {
           if (plugins.hasOwnProperty(key)) {
-            self2.plugins.settings[key] = plugins[key];
+            self.plugins.settings[key] = plugins[key];
             queue.push(key);
           }
         }
       }
       while (name = queue.shift()) {
-        self2.require(name);
+        self.require(name);
       }
     }
     loadPlugin(name) {
-      var self2 = this;
-      var plugins = self2.plugins;
+      var self = this;
+      var plugins = self.plugins;
       var plugin15 = Interface.plugins[name];
       if (!Interface.plugins.hasOwnProperty(name)) {
         throw new Error('Unable to find "' + name + '" plugin');
       }
       plugins.requested[name] = true;
-      plugins.loaded[name] = plugin15.fn.apply(self2, [self2.plugins.settings[name] || {}]);
+      plugins.loaded[name] = plugin15.fn.apply(self, [self.plugins.settings[name] || {}]);
       plugins.names.push(name);
     }
     /**
@@ -11212,13 +9136,13 @@ function MicroPlugin(Interface) {
      *
      */
     require(name) {
-      var self2 = this;
-      var plugins = self2.plugins;
-      if (!self2.plugins.loaded.hasOwnProperty(name)) {
+      var self = this;
+      var plugins = self.plugins;
+      if (!self.plugins.loaded.hasOwnProperty(name)) {
         if (plugins.requested[name]) {
           throw new Error('Plugin has circular dependency ("' + name + '")');
         }
-        self2.loadPlugin(name);
+        self.loadPlugin(name);
       }
       return plugins.loaded[name];
     }
@@ -11793,14 +9717,14 @@ var Sifter = class {
   }
   _getSortFunction(search) {
     var implicit_score, sort_flds = [];
-    const self2 = this, options = search.options, sort = !search.query && options.sort_empty ? options.sort_empty : options.sort;
+    const self = this, options = search.options, sort = !search.query && options.sort_empty ? options.sort_empty : options.sort;
     if (typeof sort == "function") {
       return sort.bind(this);
     }
     const get_field = function(name, result) {
       if (name === "$score")
         return result.score;
-      return search.getAttrFn(self2.items[result.id], name);
+      return search.getAttrFn(self.items[result.id], name);
     };
     if (sort) {
       for (let s of sort) {
@@ -11877,24 +9801,24 @@ var Sifter = class {
    *
    */
   search(query, options) {
-    var self2 = this, score, search;
+    var self = this, score, search;
     search = this.prepareSearch(query, options);
     options = search.options;
     query = search.query;
-    const fn_score = options.score || self2._getScoreFunction(search);
+    const fn_score = options.score || self._getScoreFunction(search);
     if (query.length) {
-      iterate(self2.items, (item, id) => {
+      iterate(self.items, (item, id) => {
         score = fn_score(item);
         if (options.filter === false || score > 0) {
           search.items.push({ "score": score, "id": id });
         }
       });
     } else {
-      iterate(self2.items, (_, id) => {
+      iterate(self.items, (_, id) => {
         search.items.push({ "score": 1, "id": id });
       });
     }
-    const fn_sort = self2._getSortFunction(search);
+    const fn_sort = self._getSortFunction(search);
     if (fn_sort)
       search.items.sort(fn_sort);
     search.total = search.items.length;
@@ -11929,35 +9853,35 @@ var timeout = (fn, timeout2) => {
 var loadDebounce = (fn, delay) => {
   var timeout2;
   return function(value, callback) {
-    var self2 = this;
+    var self = this;
     if (timeout2) {
-      self2.loading = Math.max(self2.loading - 1, 0);
+      self.loading = Math.max(self.loading - 1, 0);
       clearTimeout(timeout2);
     }
     timeout2 = setTimeout(function() {
       timeout2 = null;
-      self2.loadedSearches[value] = true;
-      fn.call(self2, value, callback);
+      self.loadedSearches[value] = true;
+      fn.call(self, value, callback);
     }, delay);
   };
 };
-var debounce_events = (self2, types, fn) => {
+var debounce_events = (self, types, fn) => {
   var type;
-  var trigger = self2.trigger;
+  var trigger = self.trigger;
   var event_args = {};
-  self2.trigger = function() {
+  self.trigger = function() {
     var type2 = arguments[0];
     if (types.indexOf(type2) !== -1) {
       event_args[type2] = arguments;
     } else {
-      return trigger.apply(self2, arguments);
+      return trigger.apply(self, arguments);
     }
   };
-  fn.apply(self2, []);
-  self2.trigger = trigger;
+  fn.apply(self, []);
+  self.trigger = trigger;
   for (type of types) {
     if (type in event_args) {
-      trigger.apply(self2, event_args[type]);
+      trigger.apply(self, event_args[type]);
     }
   }
 };
@@ -12519,17 +10443,17 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   setup() {
-    const self2 = this;
-    const settings = self2.settings;
-    const control_input = self2.control_input;
-    const dropdown = self2.dropdown;
-    const dropdown_content = self2.dropdown_content;
-    const wrapper = self2.wrapper;
-    const control = self2.control;
-    const input = self2.input;
-    const focus_node = self2.focus_node;
+    const self = this;
+    const settings = self.settings;
+    const control_input = self.control_input;
+    const dropdown = self.dropdown;
+    const dropdown_content = self.dropdown_content;
+    const wrapper = self.wrapper;
+    const control = self.control;
+    const input = self.input;
+    const focus_node = self.focus_node;
     const passive_event = { passive: true };
-    const listboxId = self2.inputId + "-ts-dropdown";
+    const listboxId = self.inputId + "-ts-dropdown";
     setAttr(dropdown_content, {
       id: listboxId
     });
@@ -12539,23 +10463,23 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       "aria-expanded": "false",
       "aria-controls": listboxId
     });
-    const control_id = getId(focus_node, self2.inputId + "-ts-control");
-    const query = "label[for='" + escapeQuery(self2.inputId) + "']";
+    const control_id = getId(focus_node, self.inputId + "-ts-control");
+    const query = "label[for='" + escapeQuery(self.inputId) + "']";
     const label = document.querySelector(query);
-    const label_click = self2.focus.bind(self2);
+    const label_click = self.focus.bind(self);
     if (label) {
       addEvent(label, "click", label_click);
       setAttr(label, { for: control_id });
-      const label_id = getId(label, self2.inputId + "-ts-label");
+      const label_id = getId(label, self.inputId + "-ts-label");
       setAttr(focus_node, { "aria-labelledby": label_id });
       setAttr(dropdown_content, { "aria-labelledby": label_id });
     }
     wrapper.style.width = input.style.width;
-    if (self2.plugins.names.length) {
-      const classes_plugins = "plugin-" + self2.plugins.names.join(" plugin-");
+    if (self.plugins.names.length) {
+      const classes_plugins = "plugin-" + self.plugins.names.join(" plugin-");
       addClasses([wrapper, dropdown], classes_plugins);
     }
-    if ((settings.maxItems === null || settings.maxItems > 1) && self2.is_select_tag) {
+    if ((settings.maxItems === null || settings.maxItems > 1) && self.is_select_tag) {
       setAttr(input, { multiple: "multiple" });
     }
     if (settings.placeholder) {
@@ -12568,56 +10492,56 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       settings.load = loadDebounce(settings.load, settings.loadThrottle);
     }
     addEvent(dropdown, "mousemove", () => {
-      self2.ignoreHover = false;
+      self.ignoreHover = false;
     });
     addEvent(dropdown, "mouseenter", (e) => {
       var target_match = parentMatch(e.target, "[data-selectable]", dropdown);
       if (target_match)
-        self2.onOptionHover(e, target_match);
+        self.onOptionHover(e, target_match);
     }, { capture: true });
     addEvent(dropdown, "click", (evt) => {
       const option = parentMatch(evt.target, "[data-selectable]");
       if (option) {
-        self2.onOptionSelect(evt, option);
+        self.onOptionSelect(evt, option);
         preventDefault(evt, true);
       }
     });
     addEvent(control, "click", (evt) => {
       var target_match = parentMatch(evt.target, "[data-ts-item]", control);
-      if (target_match && self2.onItemSelect(evt, target_match)) {
+      if (target_match && self.onItemSelect(evt, target_match)) {
         preventDefault(evt, true);
         return;
       }
       if (control_input.value != "") {
         return;
       }
-      self2.onClick();
+      self.onClick();
       preventDefault(evt, true);
     });
-    addEvent(focus_node, "keydown", (e) => self2.onKeyDown(e));
-    addEvent(control_input, "keypress", (e) => self2.onKeyPress(e));
-    addEvent(control_input, "input", (e) => self2.onInput(e));
-    addEvent(focus_node, "blur", (e) => self2.onBlur(e));
-    addEvent(focus_node, "focus", (e) => self2.onFocus(e));
-    addEvent(control_input, "paste", (e) => self2.onPaste(e));
+    addEvent(focus_node, "keydown", (e) => self.onKeyDown(e));
+    addEvent(control_input, "keypress", (e) => self.onKeyPress(e));
+    addEvent(control_input, "input", (e) => self.onInput(e));
+    addEvent(focus_node, "blur", (e) => self.onBlur(e));
+    addEvent(focus_node, "focus", (e) => self.onFocus(e));
+    addEvent(control_input, "paste", (e) => self.onPaste(e));
     const doc_mousedown = (evt) => {
       const target = evt.composedPath()[0];
       if (!wrapper.contains(target) && !dropdown.contains(target)) {
-        if (self2.isFocused) {
-          self2.blur();
+        if (self.isFocused) {
+          self.blur();
         }
-        self2.inputState();
+        self.inputState();
         return;
       }
-      if (target == control_input && self2.isOpen) {
+      if (target == control_input && self.isOpen) {
         evt.stopPropagation();
       } else {
         preventDefault(evt, true);
       }
     };
     const win_scroll = () => {
-      if (self2.isOpen) {
-        self2.positionDropdown();
+      if (self.isOpen) {
+        self.positionDropdown();
       }
     };
     addEvent(document, "mousedown", doc_mousedown);
@@ -12635,35 +10559,35 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       tabIndex: input.tabIndex
     };
     input.tabIndex = -1;
-    input.insertAdjacentElement("afterend", self2.wrapper);
-    self2.sync(false);
+    input.insertAdjacentElement("afterend", self.wrapper);
+    self.sync(false);
     settings.items = [];
     delete settings.optgroups;
     delete settings.options;
     addEvent(input, "invalid", () => {
-      if (self2.isValid) {
-        self2.isValid = false;
-        self2.isInvalid = true;
-        self2.refreshState();
+      if (self.isValid) {
+        self.isValid = false;
+        self.isInvalid = true;
+        self.refreshState();
       }
     });
-    self2.updateOriginalInput();
-    self2.refreshItems();
-    self2.close(false);
-    self2.inputState();
-    self2.isSetup = true;
+    self.updateOriginalInput();
+    self.refreshItems();
+    self.close(false);
+    self.inputState();
+    self.isSetup = true;
     if (input.disabled) {
-      self2.disable();
+      self.disable();
     } else if (input.readOnly) {
-      self2.setReadOnly(true);
+      self.setReadOnly(true);
     } else {
-      self2.enable();
+      self.enable();
     }
-    self2.on("change", this.onChange);
+    self.on("change", this.onChange);
     addClasses(input, "tomselected", "ts-hidden-accessible");
-    self2.trigger("initialize");
+    self.trigger("initialize");
     if (settings.preload === true) {
-      self2.preload();
+      self.preload();
     }
   }
   /**
@@ -12680,9 +10604,9 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * Sets up default rendering functions.
    */
   setupTemplates() {
-    var self2 = this;
-    var field_label = self2.settings.labelField;
-    var field_optgroup = self2.settings.optgroupLabelField;
+    var self = this;
+    var field_label = self.settings.labelField;
+    var field_optgroup = self.settings.optgroupLabelField;
     var templates = {
       "optgroup": (data) => {
         let optgroup = document.createElement("div");
@@ -12714,7 +10638,7 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
         return "<div></div>";
       }
     };
-    self2.settings.render = Object.assign({}, templates, self2.settings.render);
+    self.settings.render = Object.assign({}, templates, self.settings.render);
   }
   /**
    * Maps fired events to callbacks provided
@@ -12753,11 +10677,11 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   sync(get_settings = true) {
-    const self2 = this;
-    const settings = get_settings ? getSettings(self2.input, { delimiter: self2.settings.delimiter }) : self2.settings;
-    self2.setupOptions(settings.options, settings.optgroups);
-    self2.setValue(settings.items || [], true);
-    self2.lastQuery = null;
+    const self = this;
+    const settings = get_settings ? getSettings(self.input, { delimiter: self.settings.delimiter }) : self.settings;
+    self.setupOptions(settings.options, settings.optgroups);
+    self.setValue(settings.items || [], true);
+    self.lastQuery = null;
   }
   /**
    * Triggered when the main control element
@@ -12765,16 +10689,16 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   onClick() {
-    var self2 = this;
-    if (self2.activeItems.length > 0) {
-      self2.clearActiveItems();
-      self2.focus();
+    var self = this;
+    if (self.activeItems.length > 0) {
+      self.clearActiveItems();
+      self.focus();
       return;
     }
-    if (self2.isFocused && self2.isOpen) {
-      self2.blur();
+    if (self.isFocused && self.isOpen) {
+      self.blur();
     } else {
-      self2.focus();
+      self.focus();
     }
   }
   /**
@@ -12797,27 +10721,27 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   onPaste(e) {
-    var self2 = this;
-    if (self2.isInputHidden || self2.isLocked) {
+    var self = this;
+    if (self.isInputHidden || self.isLocked) {
       preventDefault(e);
       return;
     }
-    if (!self2.settings.splitOn) {
+    if (!self.settings.splitOn) {
       return;
     }
     setTimeout(() => {
-      var pastedText = self2.inputValue();
-      if (!pastedText.match(self2.settings.splitOn)) {
+      var pastedText = self.inputValue();
+      if (!pastedText.match(self.settings.splitOn)) {
         return;
       }
-      var splitInput = pastedText.trim().split(self2.settings.splitOn);
+      var splitInput = pastedText.trim().split(self.settings.splitOn);
       iterate2(splitInput, (piece) => {
         const hash = hash_key(piece);
         if (hash) {
           if (this.options[piece]) {
-            self2.addItem(piece);
+            self.addItem(piece);
           } else {
-            self2.createItem(piece);
+            self.createItem(piece);
           }
         }
       });
@@ -12828,14 +10752,14 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   onKeyPress(e) {
-    var self2 = this;
-    if (self2.isLocked) {
+    var self = this;
+    if (self.isLocked) {
       preventDefault(e);
       return;
     }
     var character = String.fromCharCode(e.keyCode || e.which);
-    if (self2.settings.create && self2.settings.mode === "multi" && character === self2.settings.delimiter) {
-      self2.createItem();
+    if (self.settings.create && self.settings.mode === "multi" && character === self.settings.delimiter) {
+      self.createItem();
       preventDefault(e);
       return;
     }
@@ -12845,9 +10769,9 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   onKeyDown(e) {
-    var self2 = this;
-    self2.ignoreHover = true;
-    if (self2.isLocked) {
+    var self = this;
+    self.ignoreHover = true;
+    if (self.isLocked) {
       if (e.keyCode !== KEY_TAB) {
         preventDefault(e);
       }
@@ -12857,68 +10781,68 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       // ctrl+A: select all
       case KEY_A:
         if (isKeyDown(KEY_SHORTCUT, e)) {
-          if (self2.control_input.value == "") {
+          if (self.control_input.value == "") {
             preventDefault(e);
-            self2.selectAll();
+            self.selectAll();
             return;
           }
         }
         break;
       // esc: close dropdown
       case KEY_ESC:
-        if (self2.isOpen) {
+        if (self.isOpen) {
           preventDefault(e, true);
-          self2.close();
+          self.close();
         }
-        self2.clearActiveItems();
+        self.clearActiveItems();
         return;
       // down: open dropdown or move selection down
       case KEY_DOWN:
-        if (!self2.isOpen && self2.hasOptions) {
-          self2.open();
-        } else if (self2.activeOption) {
-          let next = self2.getAdjacent(self2.activeOption, 1);
+        if (!self.isOpen && self.hasOptions) {
+          self.open();
+        } else if (self.activeOption) {
+          let next = self.getAdjacent(self.activeOption, 1);
           if (next)
-            self2.setActiveOption(next);
+            self.setActiveOption(next);
         }
         preventDefault(e);
         return;
       // up: move selection up
       case KEY_UP:
-        if (self2.activeOption) {
-          let prev = self2.getAdjacent(self2.activeOption, -1);
+        if (self.activeOption) {
+          let prev = self.getAdjacent(self.activeOption, -1);
           if (prev)
-            self2.setActiveOption(prev);
+            self.setActiveOption(prev);
         }
         preventDefault(e);
         return;
       // return: select active option
       case KEY_RETURN:
-        if (self2.canSelect(self2.activeOption)) {
-          self2.onOptionSelect(e, self2.activeOption);
+        if (self.canSelect(self.activeOption)) {
+          self.onOptionSelect(e, self.activeOption);
           preventDefault(e);
-        } else if (self2.settings.create && self2.createItem()) {
+        } else if (self.settings.create && self.createItem()) {
           preventDefault(e);
-        } else if (document.activeElement == self2.control_input && self2.isOpen) {
+        } else if (document.activeElement == self.control_input && self.isOpen) {
           preventDefault(e);
         }
         return;
       // left: modifiy item selection to the left
       case KEY_LEFT:
-        self2.advanceSelection(-1, e);
+        self.advanceSelection(-1, e);
         return;
       // right: modifiy item selection to the right
       case KEY_RIGHT:
-        self2.advanceSelection(1, e);
+        self.advanceSelection(1, e);
         return;
       // tab: select active option and/or create item
       case KEY_TAB:
-        if (self2.settings.selectOnTab) {
-          if (self2.canSelect(self2.activeOption)) {
-            self2.onOptionSelect(e, self2.activeOption);
+        if (self.settings.selectOnTab) {
+          if (self.canSelect(self.activeOption)) {
+            self.onOptionSelect(e, self.activeOption);
             preventDefault(e);
           }
-          if (self2.settings.create && self2.createItem()) {
+          if (self.settings.create && self.createItem()) {
             preventDefault(e);
           }
         }
@@ -12926,10 +10850,10 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       // delete|backspace: delete items
       case KEY_BACKSPACE:
       case KEY_DELETE:
-        self2.deleteSelection(e);
+        self.deleteSelection(e);
         return;
     }
-    if (self2.isInputHidden && !isKeyDown(KEY_SHORTCUT, e)) {
+    if (self.isInputHidden && !isKeyDown(KEY_SHORTCUT, e)) {
       preventDefault(e);
     }
   }
@@ -12980,25 +10904,25 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   onFocus(e) {
-    var self2 = this;
-    var wasFocused = self2.isFocused;
-    if (self2.isDisabled || self2.isReadOnly) {
-      self2.blur();
+    var self = this;
+    var wasFocused = self.isFocused;
+    if (self.isDisabled || self.isReadOnly) {
+      self.blur();
       preventDefault(e);
       return;
     }
-    if (self2.ignoreFocus)
+    if (self.ignoreFocus)
       return;
-    self2.isFocused = true;
-    if (self2.settings.preload === "focus")
-      self2.preload();
+    self.isFocused = true;
+    if (self.settings.preload === "focus")
+      self.preload();
     if (!wasFocused)
-      self2.trigger("focus");
-    if (!self2.activeItems.length) {
-      self2.inputState();
-      self2.refreshOptions(!!self2.settings.openOnFocus);
+      self.trigger("focus");
+    if (!self.activeItems.length) {
+      self.inputState();
+      self.refreshOptions(!!self.settings.openOnFocus);
     }
-    self2.refreshState();
+    self.refreshState();
   }
   /**
    * Triggered on <input> blur.
@@ -13007,19 +10931,19 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
   onBlur(e) {
     if (document.hasFocus() === false)
       return;
-    var self2 = this;
-    if (!self2.isFocused)
+    var self = this;
+    if (!self.isFocused)
       return;
-    self2.isFocused = false;
-    self2.ignoreFocus = false;
+    self.isFocused = false;
+    self.ignoreFocus = false;
     var deactivate = () => {
-      self2.close();
-      self2.setActiveItem();
-      self2.setCaret(self2.items.length);
-      self2.trigger("blur");
+      self.close();
+      self.setActiveItem();
+      self.setCaret(self.items.length);
+      self.trigger("blur");
     };
-    if (self2.settings.create && self2.settings.createOnBlur) {
-      self2.createItem(null, deactivate);
+    if (self.settings.create && self.settings.createOnBlur) {
+      self.createItem(null, deactivate);
     } else {
       deactivate();
     }
@@ -13030,26 +10954,26 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   onOptionSelect(evt, option) {
-    var value, self2 = this;
+    var value, self = this;
     if (option.parentElement && option.parentElement.matches("[data-disabled]")) {
       return;
     }
     if (option.classList.contains("create")) {
-      self2.createItem(null, () => {
-        if (self2.settings.closeAfterSelect) {
-          self2.close();
+      self.createItem(null, () => {
+        if (self.settings.closeAfterSelect) {
+          self.close();
         }
       });
     } else {
       value = option.dataset.value;
       if (typeof value !== "undefined") {
-        self2.lastQuery = null;
-        self2.addItem(value);
-        if (self2.settings.closeAfterSelect) {
-          self2.close();
+        self.lastQuery = null;
+        self.addItem(value);
+        if (self.settings.closeAfterSelect) {
+          self.close();
         }
-        if (!self2.settings.hideSelected && evt.type && /click/.test(evt.type)) {
-          self2.setActiveOption(option);
+        if (!self.settings.hideSelected && evt.type && /click/.test(evt.type)) {
+          self.setActiveOption(option);
         }
       }
     }
@@ -13070,10 +10994,10 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   onItemSelect(evt, item) {
-    var self2 = this;
-    if (!self2.isLocked && self2.settings.mode === "multi") {
+    var self = this;
+    if (!self.isLocked && self.settings.mode === "multi") {
       preventDefault(evt);
-      self2.setActiveItem(item, evt);
+      self.setActiveItem(item, evt);
       return true;
     }
     return false;
@@ -13106,29 +11030,29 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   load(value) {
-    const self2 = this;
-    if (!self2.canLoad(value))
+    const self = this;
+    if (!self.canLoad(value))
       return;
-    addClasses(self2.wrapper, self2.settings.loadingClass);
-    self2.loading++;
-    const callback = self2.loadCallback.bind(self2);
-    self2.settings.load.call(self2, value, callback);
+    addClasses(self.wrapper, self.settings.loadingClass);
+    self.loading++;
+    const callback = self.loadCallback.bind(self);
+    self.settings.load.call(self, value, callback);
   }
   /**
    * Invoked by the user-provided option provider
    *
    */
   loadCallback(options, optgroups) {
-    const self2 = this;
-    self2.loading = Math.max(self2.loading - 1, 0);
-    self2.lastQuery = null;
-    self2.clearActiveOption();
-    self2.setupOptions(options, optgroups);
-    self2.refreshOptions(self2.isFocused && !self2.isInputHidden);
-    if (!self2.loading) {
-      removeClasses(self2.wrapper, self2.settings.loadingClass);
+    const self = this;
+    self.loading = Math.max(self.loading - 1, 0);
+    self.lastQuery = null;
+    self.clearActiveOption();
+    self.setupOptions(options, optgroups);
+    self.refreshOptions(self.isFocused && !self.isInputHidden);
+    if (!self.loading) {
+      removeClasses(self.wrapper, self.settings.loadingClass);
     }
-    self2.trigger("load", options, optgroups);
+    self.trigger("load", options, optgroups);
   }
   preload() {
     var classList = this.wrapper.classList;
@@ -13189,49 +11113,49 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   setActiveItem(item, e) {
-    var self2 = this;
+    var self = this;
     var eventName;
     var i, begin, end, swap;
     var last;
-    if (self2.settings.mode === "single")
+    if (self.settings.mode === "single")
       return;
     if (!item) {
-      self2.clearActiveItems();
-      if (self2.isFocused) {
-        self2.inputState();
+      self.clearActiveItems();
+      if (self.isFocused) {
+        self.inputState();
       }
       return;
     }
     eventName = e && e.type.toLowerCase();
-    if (eventName === "click" && isKeyDown("shiftKey", e) && self2.activeItems.length) {
-      last = self2.getLastActive();
-      begin = Array.prototype.indexOf.call(self2.control.children, last);
-      end = Array.prototype.indexOf.call(self2.control.children, item);
+    if (eventName === "click" && isKeyDown("shiftKey", e) && self.activeItems.length) {
+      last = self.getLastActive();
+      begin = Array.prototype.indexOf.call(self.control.children, last);
+      end = Array.prototype.indexOf.call(self.control.children, item);
       if (begin > end) {
         swap = begin;
         begin = end;
         end = swap;
       }
       for (i = begin; i <= end; i++) {
-        item = self2.control.children[i];
-        if (self2.activeItems.indexOf(item) === -1) {
-          self2.setActiveItemClass(item);
+        item = self.control.children[i];
+        if (self.activeItems.indexOf(item) === -1) {
+          self.setActiveItemClass(item);
         }
       }
       preventDefault(e);
     } else if (eventName === "click" && isKeyDown(KEY_SHORTCUT, e) || eventName === "keydown" && isKeyDown("shiftKey", e)) {
       if (item.classList.contains("active")) {
-        self2.removeActiveItem(item);
+        self.removeActiveItem(item);
       } else {
-        self2.setActiveItemClass(item);
+        self.setActiveItemClass(item);
       }
     } else {
-      self2.clearActiveItems();
-      self2.setActiveItemClass(item);
+      self.clearActiveItems();
+      self.setActiveItemClass(item);
     }
-    self2.inputState();
-    if (!self2.isFocused) {
-      self2.focus();
+    self.inputState();
+    if (!self.isFocused) {
+      self.focus();
     }
   }
   /**
@@ -13239,14 +11163,14 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   setActiveItemClass(item) {
-    const self2 = this;
-    const last_active = self2.control.querySelector(".last-active");
+    const self = this;
+    const last_active = self.control.querySelector(".last-active");
     if (last_active)
       removeClasses(last_active, "last-active");
     addClasses(item, "active last-active");
-    self2.trigger("item_select", item);
-    if (self2.activeItems.indexOf(item) == -1) {
-      self2.activeItems.push(item);
+    self.trigger("item_select", item);
+    if (self.activeItems.indexOf(item) == -1) {
+      self.activeItems.push(item);
     }
   }
   /**
@@ -13331,17 +11255,17 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * Selects all items (CTRL + A).
    */
   selectAll() {
-    const self2 = this;
-    if (self2.settings.mode === "single")
+    const self = this;
+    if (self.settings.mode === "single")
       return;
-    const activeItems = self2.controlChildren();
+    const activeItems = self.controlChildren();
     if (!activeItems.length)
       return;
-    self2.inputState();
-    self2.close();
-    self2.activeItems = activeItems;
+    self.inputState();
+    self.close();
+    self.activeItems = activeItems;
     iterate2(activeItems, (item) => {
-      self2.setActiveItemClass(item);
+      self.setActiveItemClass(item);
     });
   }
   /**
@@ -13349,20 +11273,20 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   inputState() {
-    var self2 = this;
-    if (!self2.control.contains(self2.control_input))
+    var self = this;
+    if (!self.control.contains(self.control_input))
       return;
-    setAttr(self2.control_input, { placeholder: self2.settings.placeholder });
-    if (self2.activeItems.length > 0 || !self2.isFocused && self2.settings.hidePlaceholder && self2.items.length > 0) {
-      self2.setTextboxValue();
-      self2.isInputHidden = true;
+    setAttr(self.control_input, { placeholder: self.settings.placeholder });
+    if (self.activeItems.length > 0 || !self.isFocused && self.settings.hidePlaceholder && self.items.length > 0) {
+      self.setTextboxValue();
+      self.isInputHidden = true;
     } else {
-      if (self2.settings.hidePlaceholder && self2.items.length > 0) {
-        setAttr(self2.control_input, { placeholder: "" });
+      if (self.settings.hidePlaceholder && self.items.length > 0) {
+        setAttr(self.control_input, { placeholder: "" });
       }
-      self2.isInputHidden = false;
+      self.isInputHidden = false;
     }
-    self2.wrapper.classList.toggle("input-hidden", self2.isInputHidden);
+    self.wrapper.classList.toggle("input-hidden", self.isInputHidden);
   }
   /**
    * Get the input value
@@ -13374,18 +11298,18 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * Gives the control focus.
    */
   focus() {
-    var self2 = this;
-    if (self2.isDisabled || self2.isReadOnly)
+    var self = this;
+    if (self.isDisabled || self.isReadOnly)
       return;
-    self2.ignoreFocus = true;
-    if (self2.control_input.offsetWidth) {
-      self2.control_input.focus();
+    self.ignoreFocus = true;
+    if (self.control_input.offsetWidth) {
+      self.control_input.focus();
     } else {
-      self2.focus_node.focus();
+      self.focus_node.focus();
     }
     setTimeout(() => {
-      self2.ignoreFocus = false;
-      self2.onFocus();
+      self.ignoreFocus = false;
+      self.onFocus();
     }, 0);
   }
   /**
@@ -13433,25 +11357,25 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    */
   search(query) {
     var result, calculateScore;
-    var self2 = this;
+    var self = this;
     var options = this.getSearchOptions();
-    if (self2.settings.score) {
-      calculateScore = self2.settings.score.call(self2, query);
+    if (self.settings.score) {
+      calculateScore = self.settings.score.call(self, query);
       if (typeof calculateScore !== "function") {
         throw new Error('Tom Select "score" setting must be a function that returns a function');
       }
     }
-    if (query !== self2.lastQuery) {
-      self2.lastQuery = query;
-      result = self2.sifter.search(query, Object.assign(options, { score: calculateScore }));
-      self2.currentResults = result;
+    if (query !== self.lastQuery) {
+      self.lastQuery = query;
+      result = self.sifter.search(query, Object.assign(options, { score: calculateScore }));
+      self.currentResults = result;
     } else {
-      result = Object.assign({}, self2.currentResults);
+      result = Object.assign({}, self.currentResults);
     }
-    if (self2.settings.hideSelected) {
+    if (self.settings.hideSelected) {
       result.items = result.items.filter((item) => {
         let hashed = hash_key(item.id);
-        return !(hashed && self2.items.indexOf(hashed) !== -1);
+        return !(hashed && self.items.indexOf(hashed) !== -1);
       });
     }
     return result;
@@ -13466,22 +11390,22 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
     var create;
     const groups = {};
     const groups_order = [];
-    var self2 = this;
-    var query = self2.inputValue();
-    const same_query = query === self2.lastQuery || query == "" && self2.lastQuery == null;
-    var results = self2.search(query);
+    var self = this;
+    var query = self.inputValue();
+    const same_query = query === self.lastQuery || query == "" && self.lastQuery == null;
+    var results = self.search(query);
     var active_option = null;
-    var show_dropdown = self2.settings.shouldOpen || false;
-    var dropdown_content = self2.dropdown_content;
+    var show_dropdown = self.settings.shouldOpen || false;
+    var dropdown_content = self.dropdown_content;
     if (same_query) {
-      active_option = self2.activeOption;
+      active_option = self.activeOption;
       if (active_option) {
         active_group = active_option.closest("[data-group]");
       }
     }
     n = results.items.length;
-    if (typeof self2.settings.maxOptions === "number") {
-      n = Math.min(n, self2.settings.maxOptions);
+    if (typeof self.settings.maxOptions === "number") {
+      n = Math.min(n, self.settings.maxOptions);
     }
     if (n > 0) {
       show_dropdown = true;
@@ -13504,20 +11428,20 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       if (!item)
         continue;
       let opt_value = item.id;
-      let option = self2.options[opt_value];
+      let option = self.options[opt_value];
       if (option === void 0)
         continue;
       let opt_hash = get_hash(opt_value);
-      let option_el = self2.getOption(opt_hash, true);
-      if (!self2.settings.hideSelected) {
-        option_el.classList.toggle("selected", self2.items.includes(opt_hash));
+      let option_el = self.getOption(opt_hash, true);
+      if (!self.settings.hideSelected) {
+        option_el.classList.toggle("selected", self.items.includes(opt_hash));
       }
-      optgroup = option[self2.settings.optgroupField] || "";
+      optgroup = option[self.settings.optgroupField] || "";
       optgroups = Array.isArray(optgroup) ? optgroup : [optgroup];
       for (j = 0, k = optgroups && optgroups.length; j < k; j++) {
         optgroup = optgroups[j];
         let order = option.$order;
-        let self_optgroup = self2.optgroups[optgroup];
+        let self_optgroup = self.optgroups[optgroup];
         if (self_optgroup === void 0) {
           optgroup = "";
         } else {
@@ -13529,7 +11453,7 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
           setAttr(option_el, { id: option.$id + "-clone-" + j, "aria-selected": null });
           option_el.classList.add("ts-cloned");
           removeClasses(option_el, "active");
-          if (self2.activeOption && self2.activeOption.dataset.value == opt_value) {
+          if (self.activeOption && self.activeOption.dataset.value == opt_value) {
             if (active_group && active_group.dataset.group === optgroup.toString()) {
               active_option = option_el;
             }
@@ -13541,7 +11465,7 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
         }
       }
     }
-    if (self2.settings.lockOptgroupOrder) {
+    if (self.settings.lockOptgroupOrder) {
       groups_order.sort((a, b) => {
         return a.order - b.order;
       });
@@ -13552,13 +11476,13 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       let optgroup2 = group_order.optgroup;
       if (!group_fragment || !group_fragment.children.length)
         return;
-      let group_heading = self2.optgroups[optgroup2];
+      let group_heading = self.optgroups[optgroup2];
       if (group_heading !== void 0) {
         let group_options = document.createDocumentFragment();
-        let header = self2.render("optgroup_header", group_heading);
+        let header = self.render("optgroup_header", group_heading);
         append(group_options, header);
         append(group_options, group_fragment);
-        let group_html = self2.render("optgroup", { group: group_heading, options: group_options });
+        let group_html = self.render("optgroup", { group: group_heading, options: group_options });
         append(html, group_html);
       } else {
         append(html, group_fragment);
@@ -13566,7 +11490,7 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
     });
     dropdown_content.innerHTML = "";
     append(dropdown_content, html);
-    if (self2.settings.highlight) {
+    if (self.settings.highlight) {
       removeHighlight(dropdown_content);
       if (results.query.length && results.tokens.length) {
         iterate2(results.tokens, (tok) => {
@@ -13575,49 +11499,49 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       }
     }
     var add_template = (template) => {
-      let content = self2.render(template, { input: query });
+      let content = self.render(template, { input: query });
       if (content) {
         show_dropdown = true;
         dropdown_content.insertBefore(content, dropdown_content.firstChild);
       }
       return content;
     };
-    if (self2.loading) {
+    if (self.loading) {
       add_template("loading");
-    } else if (!self2.settings.shouldLoad.call(self2, query)) {
+    } else if (!self.settings.shouldLoad.call(self, query)) {
       add_template("not_loading");
     } else if (results.items.length === 0) {
       add_template("no_results");
     }
-    has_create_option = self2.canCreate(query);
+    has_create_option = self.canCreate(query);
     if (has_create_option) {
       create = add_template("option_create");
     }
-    self2.hasOptions = results.items.length > 0 || has_create_option;
+    self.hasOptions = results.items.length > 0 || has_create_option;
     if (show_dropdown) {
       if (results.items.length > 0) {
-        if (!active_option && self2.settings.mode === "single" && self2.items[0] != void 0) {
-          active_option = self2.getOption(self2.items[0]);
+        if (!active_option && self.settings.mode === "single" && self.items[0] != void 0) {
+          active_option = self.getOption(self.items[0]);
         }
         if (!dropdown_content.contains(active_option)) {
           let active_index = 0;
-          if (create && !self2.settings.addPrecedence) {
+          if (create && !self.settings.addPrecedence) {
             active_index = 1;
           }
-          active_option = self2.selectable()[active_index];
+          active_option = self.selectable()[active_index];
         }
       } else if (create) {
         active_option = create;
       }
-      if (triggerDropdown && !self2.isOpen) {
-        self2.open();
-        self2.scrollToOption(active_option, "auto");
+      if (triggerDropdown && !self.isOpen) {
+        self.open();
+        self.scrollToOption(active_option, "auto");
       }
-      self2.setActiveOption(active_option);
+      self.setActiveOption(active_option);
     } else {
-      self2.clearActiveOption();
-      if (triggerDropdown && self2.isOpen) {
-        self2.close(false);
+      self.clearActiveOption();
+      if (triggerDropdown && self.isOpen) {
+        self.close(false);
       }
     }
   }
@@ -13640,22 +11564,22 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   addOption(data, user_created = false) {
-    const self2 = this;
+    const self = this;
     if (Array.isArray(data)) {
-      self2.addOptions(data, user_created);
+      self.addOptions(data, user_created);
       return false;
     }
-    const key = hash_key(data[self2.settings.valueField]);
-    if (key === null || self2.options.hasOwnProperty(key)) {
+    const key = hash_key(data[self.settings.valueField]);
+    if (key === null || self.options.hasOwnProperty(key)) {
       return false;
     }
-    data.$order = data.$order || ++self2.order;
-    data.$id = self2.inputId + "-opt-" + data.$order;
-    self2.options[key] = data;
-    self2.lastQuery = null;
+    data.$order = data.$order || ++self.order;
+    data.$id = self.inputId + "-opt-" + data.$order;
+    self.options[key] = data;
+    self.lastQuery = null;
     if (user_created) {
-      self2.userOptions[key] = user_created;
-      self2.trigger("option_add", key, data);
+      self.userOptions[key] = user_created;
+      self.trigger("option_add", key, data);
     }
     return key;
   }
@@ -13725,59 +11649,59 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   updateOption(value, data) {
-    const self2 = this;
+    const self = this;
     var item_new;
     var index_item;
     const value_old = hash_key(value);
-    const value_new = hash_key(data[self2.settings.valueField]);
+    const value_new = hash_key(data[self.settings.valueField]);
     if (value_old === null)
       return;
-    const data_old = self2.options[value_old];
+    const data_old = self.options[value_old];
     if (data_old == void 0)
       return;
     if (typeof value_new !== "string")
       throw new Error("Value must be set in option data");
-    const option = self2.getOption(value_old);
-    const item = self2.getItem(value_old);
+    const option = self.getOption(value_old);
+    const item = self.getItem(value_old);
     data.$order = data.$order || data_old.$order;
-    delete self2.options[value_old];
-    self2.uncacheValue(value_new);
-    self2.options[value_new] = data;
+    delete self.options[value_old];
+    self.uncacheValue(value_new);
+    self.options[value_new] = data;
     if (option) {
-      if (self2.dropdown_content.contains(option)) {
-        const option_new = self2._render("option", data);
+      if (self.dropdown_content.contains(option)) {
+        const option_new = self._render("option", data);
         replaceNode(option, option_new);
-        if (self2.activeOption === option) {
-          self2.setActiveOption(option_new);
+        if (self.activeOption === option) {
+          self.setActiveOption(option_new);
         }
       }
       option.remove();
     }
     if (item) {
-      index_item = self2.items.indexOf(value_old);
+      index_item = self.items.indexOf(value_old);
       if (index_item !== -1) {
-        self2.items.splice(index_item, 1, value_new);
+        self.items.splice(index_item, 1, value_new);
       }
-      item_new = self2._render("item", data);
+      item_new = self._render("item", data);
       if (item.classList.contains("active"))
         addClasses(item_new, "active");
       replaceNode(item, item_new);
     }
-    self2.lastQuery = null;
+    self.lastQuery = null;
   }
   /**
    * Removes a single option.
    *
    */
   removeOption(value, silent) {
-    const self2 = this;
+    const self = this;
     value = get_hash(value);
-    self2.uncacheValue(value);
-    delete self2.userOptions[value];
-    delete self2.options[value];
-    self2.lastQuery = null;
-    self2.trigger("option_remove", value);
-    self2.removeItem(value, silent);
+    self.uncacheValue(value);
+    delete self.userOptions[value];
+    delete self.options[value];
+    self.lastQuery = null;
+    self.trigger("option_remove", value);
+    self.removeItem(value, silent);
   }
   /**
    * Clears all options.
@@ -13834,14 +11758,14 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   getAdjacent(option, direction, type = "option") {
-    var self2 = this, all;
+    var self = this, all;
     if (!option) {
       return null;
     }
     if (type == "item") {
-      all = self2.controlChildren();
+      all = self.controlChildren();
     } else {
-      all = self2.dropdown_content.querySelectorAll("[data-selectable]");
+      all = self.dropdown_content.querySelectorAll("[data-selectable]");
     }
     for (let i = 0; i < all.length; i++) {
       if (all[i] != option) {
@@ -13872,13 +11796,13 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   addItems(values, silent) {
-    var self2 = this;
+    var self = this;
     var items = Array.isArray(values) ? values : [values];
-    items = items.filter((x) => self2.items.indexOf(x) === -1);
+    items = items.filter((x) => self.items.indexOf(x) === -1);
     const last_item = items[items.length - 1];
     items.forEach((item) => {
-      self2.isPending = item !== last_item;
-      self2.addItem(item, silent);
+      self.isPending = item !== last_item;
+      self.addItem(item, silent);
     });
   }
   /**
@@ -13890,54 +11814,54 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
     var events = silent ? [] : ["change", "dropdown_close"];
     debounce_events(this, events, () => {
       var item, wasFull;
-      const self2 = this;
-      const inputMode = self2.settings.mode;
+      const self = this;
+      const inputMode = self.settings.mode;
       const hashed = hash_key(value);
-      if (hashed && self2.items.indexOf(hashed) !== -1) {
+      if (hashed && self.items.indexOf(hashed) !== -1) {
         if (inputMode === "single") {
-          self2.close();
+          self.close();
         }
-        if (inputMode === "single" || !self2.settings.duplicates) {
+        if (inputMode === "single" || !self.settings.duplicates) {
           return;
         }
       }
-      if (hashed === null || !self2.options.hasOwnProperty(hashed))
+      if (hashed === null || !self.options.hasOwnProperty(hashed))
         return;
       if (inputMode === "single")
-        self2.clear(silent);
-      if (inputMode === "multi" && self2.isFull())
+        self.clear(silent);
+      if (inputMode === "multi" && self.isFull())
         return;
-      item = self2._render("item", self2.options[hashed]);
-      if (self2.control.contains(item)) {
+      item = self._render("item", self.options[hashed]);
+      if (self.control.contains(item)) {
         item = item.cloneNode(true);
       }
-      wasFull = self2.isFull();
-      self2.items.splice(self2.caretPos, 0, hashed);
-      self2.insertAtCaret(item);
-      if (self2.isSetup) {
-        if (!self2.isPending && self2.settings.hideSelected) {
-          let option = self2.getOption(hashed);
-          let next = self2.getAdjacent(option, 1);
+      wasFull = self.isFull();
+      self.items.splice(self.caretPos, 0, hashed);
+      self.insertAtCaret(item);
+      if (self.isSetup) {
+        if (!self.isPending && self.settings.hideSelected) {
+          let option = self.getOption(hashed);
+          let next = self.getAdjacent(option, 1);
           if (next) {
-            self2.setActiveOption(next);
+            self.setActiveOption(next);
           }
         }
-        if (!self2.isPending && !self2.settings.closeAfterSelect) {
-          self2.refreshOptions(self2.isFocused && inputMode !== "single");
+        if (!self.isPending && !self.settings.closeAfterSelect) {
+          self.refreshOptions(self.isFocused && inputMode !== "single");
         }
-        if (self2.settings.closeAfterSelect != false && self2.isFull()) {
-          self2.close();
-        } else if (!self2.isPending) {
-          self2.positionDropdown();
+        if (self.settings.closeAfterSelect != false && self.isFull()) {
+          self.close();
+        } else if (!self.isPending) {
+          self.positionDropdown();
         }
-        self2.trigger("item_add", hashed, item);
-        if (!self2.isPending) {
-          self2.updateOriginalInput({ silent });
+        self.trigger("item_add", hashed, item);
+        if (!self.isPending) {
+          self.updateOriginalInput({ silent });
         }
       }
-      if (!self2.isPending || !wasFull && self2.isFull()) {
-        self2.inputState();
-        self2.refreshState();
+      if (!self.isPending || !wasFull && self.isFull()) {
+        self.inputState();
+        self.refreshState();
       }
     });
   }
@@ -13947,8 +11871,8 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   removeItem(item = null, silent) {
-    const self2 = this;
-    item = self2.getItem(item);
+    const self = this;
+    item = self.getItem(item);
     if (!item)
       return;
     var i, idx;
@@ -13956,22 +11880,22 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
     i = nodeIndex(item);
     item.remove();
     if (item.classList.contains("active")) {
-      idx = self2.activeItems.indexOf(item);
-      self2.activeItems.splice(idx, 1);
+      idx = self.activeItems.indexOf(item);
+      self.activeItems.splice(idx, 1);
       removeClasses(item, "active");
     }
-    self2.items.splice(i, 1);
-    self2.lastQuery = null;
-    if (!self2.settings.persist && self2.userOptions.hasOwnProperty(value)) {
-      self2.removeOption(value, silent);
+    self.items.splice(i, 1);
+    self.lastQuery = null;
+    if (!self.settings.persist && self.userOptions.hasOwnProperty(value)) {
+      self.removeOption(value, silent);
     }
-    if (i < self2.caretPos) {
-      self2.setCaret(self2.caretPos - 1);
+    if (i < self.caretPos) {
+      self.setCaret(self.caretPos - 1);
     }
-    self2.updateOriginalInput({ silent });
-    self2.refreshState();
-    self2.positionDropdown();
-    self2.trigger("item_remove", value, item);
+    self.updateOriginalInput({ silent });
+    self.refreshState();
+    self.positionDropdown();
+    self.trigger("item_remove", value, item);
   }
   /**
    * Invokes the `create` method provided in the
@@ -13991,37 +11915,37 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
       callback = () => {
       };
     }
-    var self2 = this;
-    var caret = self2.caretPos;
+    var self = this;
+    var caret = self.caretPos;
     var output;
-    input = input || self2.inputValue();
-    if (!self2.canCreate(input)) {
+    input = input || self.inputValue();
+    if (!self.canCreate(input)) {
       callback();
       return false;
     }
-    self2.lock();
+    self.lock();
     var created = false;
     var create = (data) => {
-      self2.unlock();
+      self.unlock();
       if (!data || typeof data !== "object")
         return callback();
-      var value = hash_key(data[self2.settings.valueField]);
+      var value = hash_key(data[self.settings.valueField]);
       if (typeof value !== "string") {
         return callback();
       }
-      self2.setTextboxValue();
-      self2.addOption(data, true);
-      self2.setCaret(caret);
-      self2.addItem(value);
+      self.setTextboxValue();
+      self.addOption(data, true);
+      self.setCaret(caret);
+      self.addItem(value);
       callback(data);
       created = true;
     };
-    if (typeof self2.settings.create === "function") {
-      output = self2.settings.create.call(this, input, create);
+    if (typeof self.settings.create === "function") {
+      output = self.settings.create.call(this, input, create);
     } else {
       output = {
-        [self2.settings.labelField]: input,
-        [self2.settings.valueField]: input
+        [self.settings.labelField]: input,
+        [self.settings.valueField]: input
       };
     }
     if (!created) {
@@ -14033,36 +11957,36 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * Re-renders the selected item lists.
    */
   refreshItems() {
-    var self2 = this;
-    self2.lastQuery = null;
-    if (self2.isSetup) {
-      self2.addItems(self2.items);
+    var self = this;
+    self.lastQuery = null;
+    if (self.isSetup) {
+      self.addItems(self.items);
     }
-    self2.updateOriginalInput();
-    self2.refreshState();
+    self.updateOriginalInput();
+    self.refreshState();
   }
   /**
    * Updates all state-dependent attributes
    * and CSS classes.
    */
   refreshState() {
-    const self2 = this;
-    self2.refreshValidityState();
-    const isFull = self2.isFull();
-    const isLocked = self2.isLocked;
-    self2.wrapper.classList.toggle("rtl", self2.rtl);
-    const wrap_classList = self2.wrapper.classList;
-    wrap_classList.toggle("focus", self2.isFocused);
-    wrap_classList.toggle("disabled", self2.isDisabled);
-    wrap_classList.toggle("readonly", self2.isReadOnly);
-    wrap_classList.toggle("required", self2.isRequired);
-    wrap_classList.toggle("invalid", !self2.isValid);
+    const self = this;
+    self.refreshValidityState();
+    const isFull = self.isFull();
+    const isLocked = self.isLocked;
+    self.wrapper.classList.toggle("rtl", self.rtl);
+    const wrap_classList = self.wrapper.classList;
+    wrap_classList.toggle("focus", self.isFocused);
+    wrap_classList.toggle("disabled", self.isDisabled);
+    wrap_classList.toggle("readonly", self.isReadOnly);
+    wrap_classList.toggle("required", self.isRequired);
+    wrap_classList.toggle("invalid", !self.isValid);
     wrap_classList.toggle("locked", isLocked);
     wrap_classList.toggle("full", isFull);
-    wrap_classList.toggle("input-active", self2.isFocused && !self2.isInputHidden);
-    wrap_classList.toggle("dropdown-active", self2.isOpen);
-    wrap_classList.toggle("has-options", isEmptyObject(self2.options));
-    wrap_classList.toggle("has-items", self2.items.length > 0);
+    wrap_classList.toggle("input-active", self.isFocused && !self.isInputHidden);
+    wrap_classList.toggle("dropdown-active", self.isOpen);
+    wrap_classList.toggle("has-options", isEmptyObject(self.options));
+    wrap_classList.toggle("has-items", self.items.length > 0);
   }
   /**
    * Update the `required` attribute of both input and control input.
@@ -14073,12 +11997,12 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * hidden and can't show errors.
    */
   refreshValidityState() {
-    var self2 = this;
-    if (!self2.input.validity) {
+    var self = this;
+    if (!self.input.validity) {
       return;
     }
-    self2.isValid = self2.input.validity.valid;
-    self2.isInvalid = !self2.isValid;
+    self.isValid = self.input.validity.valid;
+    self.isInvalid = !self.isValid;
   }
   /**
    * Determines whether or not more items can be added
@@ -14095,16 +12019,16 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   updateOriginalInput(opts = {}) {
-    const self2 = this;
+    const self = this;
     var option, label;
-    const empty_option = self2.input.querySelector('option[value=""]');
-    if (self2.is_select_tag) {
+    const empty_option = self.input.querySelector('option[value=""]');
+    if (self.is_select_tag) {
       let AddSelected = function(option_el, value, label2) {
         if (!option_el) {
           option_el = getDom('<option value="' + escape_html(value) + '">' + escape_html(label2) + "</option>");
         }
         if (option_el != empty_option) {
-          self2.input.append(option_el);
+          self.input.append(option_el);
         }
         selected.push(option_el);
         if (option_el != empty_option || has_selected > 0) {
@@ -14113,18 +12037,18 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
         return option_el;
       };
       const selected = [];
-      const has_selected = self2.input.querySelectorAll("option:checked").length;
-      self2.input.querySelectorAll("option:checked").forEach((option_el) => {
+      const has_selected = self.input.querySelectorAll("option:checked").length;
+      self.input.querySelectorAll("option:checked").forEach((option_el) => {
         option_el.selected = false;
       });
-      if (self2.items.length == 0 && self2.settings.mode == "single") {
+      if (self.items.length == 0 && self.settings.mode == "single") {
         AddSelected(empty_option, "", "");
       } else {
-        self2.items.forEach((value) => {
-          option = self2.options[value];
-          label = option[self2.settings.labelField] || "";
+        self.items.forEach((value) => {
+          option = self.options[value];
+          label = option[self.settings.labelField] || "";
           if (selected.includes(option.$option)) {
-            const reuse_opt = self2.input.querySelector(`option[value="${addSlashes(value)}"]:not(:checked)`);
+            const reuse_opt = self.input.querySelector(`option[value="${addSlashes(value)}"]:not(:checked)`);
             AddSelected(reuse_opt, value, label);
           } else {
             option.$option = AddSelected(option.$option, value, label);
@@ -14132,11 +12056,11 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
         });
       }
     } else {
-      self2.input.value = self2.getValue();
+      self.input.value = self.getValue();
     }
-    if (self2.isSetup) {
+    if (self.isSetup) {
       if (!opts.silent) {
-        self2.trigger("change", self2.getValue());
+        self.trigger("change", self.getValue());
       }
     }
   }
@@ -14145,39 +12069,39 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * the available options.
    */
   open() {
-    var self2 = this;
-    if (self2.isLocked || self2.isOpen || self2.settings.mode === "multi" && self2.isFull())
+    var self = this;
+    if (self.isLocked || self.isOpen || self.settings.mode === "multi" && self.isFull())
       return;
-    self2.isOpen = true;
-    setAttr(self2.focus_node, { "aria-expanded": "true" });
-    self2.refreshState();
-    applyCSS(self2.dropdown, { visibility: "hidden", display: "block" });
-    self2.positionDropdown();
-    applyCSS(self2.dropdown, { visibility: "visible", display: "block" });
-    self2.focus();
-    self2.trigger("dropdown_open", self2.dropdown);
+    self.isOpen = true;
+    setAttr(self.focus_node, { "aria-expanded": "true" });
+    self.refreshState();
+    applyCSS(self.dropdown, { visibility: "hidden", display: "block" });
+    self.positionDropdown();
+    applyCSS(self.dropdown, { visibility: "visible", display: "block" });
+    self.focus();
+    self.trigger("dropdown_open", self.dropdown);
   }
   /**
    * Closes the autocomplete dropdown menu.
    */
   close(setTextboxValue = true) {
-    var self2 = this;
-    var trigger = self2.isOpen;
+    var self = this;
+    var trigger = self.isOpen;
     if (setTextboxValue) {
-      self2.setTextboxValue();
-      if (self2.settings.mode === "single" && self2.items.length) {
-        self2.inputState();
+      self.setTextboxValue();
+      if (self.settings.mode === "single" && self.items.length) {
+        self.inputState();
       }
     }
-    self2.isOpen = false;
-    setAttr(self2.focus_node, { "aria-expanded": "false" });
-    applyCSS(self2.dropdown, { display: "none" });
-    if (self2.settings.hideSelected) {
-      self2.clearActiveOption();
+    self.isOpen = false;
+    setAttr(self.focus_node, { "aria-expanded": "false" });
+    applyCSS(self.dropdown, { display: "none" });
+    if (self.settings.hideSelected) {
+      self.clearActiveOption();
     }
-    self2.refreshState();
+    self.refreshState();
     if (trigger)
-      self2.trigger("dropdown_close", self2.dropdown);
+      self.trigger("dropdown_close", self.dropdown);
   }
   /**
    * Calculates and applies the appropriate
@@ -14204,17 +12128,17 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   clear(silent) {
-    var self2 = this;
-    if (!self2.items.length)
+    var self = this;
+    if (!self.items.length)
       return;
-    var items = self2.controlChildren();
+    var items = self.controlChildren();
     iterate2(items, (item) => {
-      self2.removeItem(item, true);
+      self.removeItem(item, true);
     });
-    self2.inputState();
+    self.inputState();
     if (!silent)
-      self2.updateOriginalInput();
-    self2.trigger("clear");
+      self.updateOriginalInput();
+    self.trigger("clear");
   }
   /**
    * A helper method for inserting an element
@@ -14222,11 +12146,11 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   insertAtCaret(el) {
-    const self2 = this;
-    const caret = self2.caretPos;
-    const target = self2.control;
+    const self = this;
+    const caret = self.caretPos;
+    const target = self.control;
     target.insertBefore(el, target.children[caret] || null);
-    self2.setCaret(caret + 1);
+    self.setCaret(caret + 1);
   }
   /**
    * Removes the current selected item(s).
@@ -14234,42 +12158,42 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    */
   deleteSelection(e) {
     var direction, selection, caret, tail;
-    var self2 = this;
+    var self = this;
     direction = e && e.keyCode === KEY_BACKSPACE ? -1 : 1;
-    selection = getSelection(self2.control_input);
+    selection = getSelection(self.control_input);
     const rm_items = [];
-    if (self2.activeItems.length) {
-      tail = getTail(self2.activeItems, direction);
+    if (self.activeItems.length) {
+      tail = getTail(self.activeItems, direction);
       caret = nodeIndex(tail);
       if (direction > 0) {
         caret++;
       }
-      iterate2(self2.activeItems, (item) => rm_items.push(item));
-    } else if ((self2.isFocused || self2.settings.mode === "single") && self2.items.length) {
-      const items = self2.controlChildren();
+      iterate2(self.activeItems, (item) => rm_items.push(item));
+    } else if ((self.isFocused || self.settings.mode === "single") && self.items.length) {
+      const items = self.controlChildren();
       let rm_item;
       if (direction < 0 && selection.start === 0 && selection.length === 0) {
-        rm_item = items[self2.caretPos - 1];
-      } else if (direction > 0 && selection.start === self2.inputValue().length) {
-        rm_item = items[self2.caretPos];
+        rm_item = items[self.caretPos - 1];
+      } else if (direction > 0 && selection.start === self.inputValue().length) {
+        rm_item = items[self.caretPos];
       }
       if (rm_item !== void 0) {
         rm_items.push(rm_item);
       }
     }
-    if (!self2.shouldDelete(rm_items, e)) {
+    if (!self.shouldDelete(rm_items, e)) {
       return false;
     }
     preventDefault(e, true);
     if (typeof caret !== "undefined") {
-      self2.setCaret(caret);
+      self.setCaret(caret);
     }
     while (rm_items.length) {
-      self2.removeItem(rm_items.pop());
+      self.removeItem(rm_items.pop());
     }
-    self2.inputState();
-    self2.positionDropdown();
-    self2.refreshOptions(false);
+    self.inputState();
+    self.positionDropdown();
+    self.refreshOptions(false);
     return true;
   }
   /**
@@ -14290,32 +12214,32 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    *
    */
   advanceSelection(direction, e) {
-    var last_active, adjacent, self2 = this;
-    if (self2.rtl)
+    var last_active, adjacent, self = this;
+    if (self.rtl)
       direction *= -1;
-    if (self2.inputValue().length)
+    if (self.inputValue().length)
       return;
     if (isKeyDown(KEY_SHORTCUT, e) || isKeyDown("shiftKey", e)) {
-      last_active = self2.getLastActive(direction);
+      last_active = self.getLastActive(direction);
       if (last_active) {
         if (!last_active.classList.contains("active")) {
           adjacent = last_active;
         } else {
-          adjacent = self2.getAdjacent(last_active, direction, "item");
+          adjacent = self.getAdjacent(last_active, direction, "item");
         }
       } else if (direction > 0) {
-        adjacent = self2.control_input.nextElementSibling;
+        adjacent = self.control_input.nextElementSibling;
       } else {
-        adjacent = self2.control_input.previousElementSibling;
+        adjacent = self.control_input.previousElementSibling;
       }
       if (adjacent) {
         if (adjacent.classList.contains("active")) {
-          self2.removeActiveItem(last_active);
+          self.removeActiveItem(last_active);
         }
-        self2.setActiveItemClass(adjacent);
+        self.setActiveItemClass(adjacent);
       }
     } else {
-      self2.moveCaret(direction);
+      self.moveCaret(direction);
     }
   }
   moveCaret(direction) {
@@ -14406,17 +12330,17 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * be garbage collected.
    */
   destroy() {
-    var self2 = this;
-    var revertSettings = self2.revertSettings;
-    self2.trigger("destroy");
-    self2.off();
-    self2.wrapper.remove();
-    self2.dropdown.remove();
-    self2.input.innerHTML = revertSettings.innerHTML;
-    self2.input.tabIndex = revertSettings.tabIndex;
-    removeClasses(self2.input, "tomselected", "ts-hidden-accessible");
-    self2._destroy();
-    delete self2.input.tomselect;
+    var self = this;
+    var revertSettings = self.revertSettings;
+    self.trigger("destroy");
+    self.off();
+    self.wrapper.remove();
+    self.dropdown.remove();
+    self.input.innerHTML = revertSettings.innerHTML;
+    self.input.tabIndex = revertSettings.tabIndex;
+    removeClasses(self.input, "tomselected", "ts-hidden-accessible");
+    self._destroy();
+    delete self.input.tomselect;
   }
   /**
    * A helper method for rendering "item" and
@@ -14425,42 +12349,42 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    */
   render(templateName, data) {
     var id, html;
-    const self2 = this;
+    const self = this;
     if (typeof this.settings.render[templateName] !== "function") {
       return null;
     }
-    html = self2.settings.render[templateName].call(this, data, escape_html);
+    html = self.settings.render[templateName].call(this, data, escape_html);
     if (!html) {
       return null;
     }
     html = getDom(html);
     if (templateName === "option" || templateName === "option_create") {
-      if (data[self2.settings.disabledField]) {
+      if (data[self.settings.disabledField]) {
         setAttr(html, { "aria-disabled": "true" });
       } else {
         setAttr(html, { "data-selectable": "" });
       }
     } else if (templateName === "optgroup") {
-      id = data.group[self2.settings.optgroupValueField];
+      id = data.group[self.settings.optgroupValueField];
       setAttr(html, { "data-group": id });
-      if (data.group[self2.settings.disabledField]) {
+      if (data.group[self.settings.disabledField]) {
         setAttr(html, { "data-disabled": "" });
       }
     }
     if (templateName === "option" || templateName === "item") {
-      const value = get_hash(data[self2.settings.valueField]);
+      const value = get_hash(data[self.settings.valueField]);
       setAttr(html, { "data-value": value });
       if (templateName === "item") {
-        addClasses(html, self2.settings.itemClass);
+        addClasses(html, self.settings.itemClass);
         setAttr(html, { "data-ts-item": "" });
       } else {
-        addClasses(html, self2.settings.optionClass);
+        addClasses(html, self.settings.optionClass);
         setAttr(html, {
           role: "option",
           id: data.$id
         });
         data.$div = html;
-        self2.options[value] = data;
+        self.options[value] = data;
       }
     }
     return html;
@@ -14515,19 +12439,19 @@ var TomSelect = class extends MicroPlugin(MicroEvent) {
    * });
    */
   hook(when, method, new_fn) {
-    var self2 = this;
-    var orig_method = self2[method];
-    self2[method] = function() {
+    var self = this;
+    var orig_method = self[method];
+    self[method] = function() {
       var result, result_new;
       if (when === "after") {
-        result = orig_method.apply(self2, arguments);
+        result = orig_method.apply(self, arguments);
       }
-      result_new = new_fn.apply(self2, arguments);
+      result_new = new_fn.apply(self, arguments);
       if (when === "instead") {
         return result_new;
       }
       if (when === "before") {
-        result = orig_method.apply(self2, arguments);
+        result = orig_method.apply(self, arguments);
       }
       return result;
     };
@@ -14582,9 +12506,9 @@ var isHtmlString2 = (arg) => {
   return false;
 };
 function plugin2(userOptions) {
-  var self2 = this;
-  var orig_onOptionSelect = self2.onOptionSelect;
-  self2.settings.hideSelected = false;
+  var self = this;
+  var orig_onOptionSelect = self.onOptionSelect;
+  self.settings.hideSelected = false;
   const cbOptions = Object.assign({
     // so that the user may add different ones as well
     className: "tomselect-checkbox",
@@ -14619,10 +12543,10 @@ function plugin2(userOptions) {
       }
     }, 1);
   };
-  self2.hook("after", "setupTemplates", () => {
-    var orig_render_option = self2.settings.render.option;
-    self2.settings.render.option = (data, escape_html3) => {
-      var rendered = getDom2(orig_render_option.call(self2, data, escape_html3));
+  self.hook("after", "setupTemplates", () => {
+    var orig_render_option = self.settings.render.option;
+    self.settings.render.option = (data, escape_html3) => {
+      var rendered = getDom2(orig_render_option.call(self, data, escape_html3));
       var checkbox = document.createElement("input");
       if (cbOptions.className) {
         checkbox.classList.add(cbOptions.className);
@@ -14631,34 +12555,34 @@ function plugin2(userOptions) {
         preventDefault2(evt);
       });
       checkbox.type = "checkbox";
-      const hashed = hash_key2(data[self2.settings.valueField]);
-      UpdateChecked(checkbox, !!(hashed && self2.items.indexOf(hashed) > -1));
+      const hashed = hash_key2(data[self.settings.valueField]);
+      UpdateChecked(checkbox, !!(hashed && self.items.indexOf(hashed) > -1));
       rendered.prepend(checkbox);
       return rendered;
     };
   });
-  self2.on("item_remove", (value) => {
-    var option = self2.getOption(value);
+  self.on("item_remove", (value) => {
+    var option = self.getOption(value);
     if (option) {
       option.classList.remove("selected");
       UpdateCheckbox(option);
     }
   });
-  self2.on("item_add", (value) => {
-    var option = self2.getOption(value);
+  self.on("item_add", (value) => {
+    var option = self.getOption(value);
     if (option) {
       UpdateCheckbox(option);
     }
   });
-  self2.hook("instead", "onOptionSelect", (evt, option) => {
+  self.hook("instead", "onOptionSelect", (evt, option) => {
     if (option.classList.contains("selected")) {
       option.classList.remove("selected");
-      self2.removeItem(option.dataset.value);
-      self2.refreshOptions();
+      self.removeItem(option.dataset.value);
+      self.refreshOptions();
       preventDefault2(evt, true);
       return;
     }
-    orig_onOptionSelect.call(self2, evt, option);
+    orig_onOptionSelect.call(self, evt, option);
     UpdateCheckbox(option);
   });
 }
@@ -14685,7 +12609,7 @@ var isHtmlString3 = (arg) => {
   return false;
 };
 function plugin3(userOptions) {
-  const self2 = this;
+  const self = this;
   const options = Object.assign({
     className: "clear-button",
     title: "Clear All",
@@ -14693,18 +12617,18 @@ function plugin3(userOptions) {
       return `<div class="${data.className}" title="${data.title}">&#10799;</div>`;
     }
   }, userOptions);
-  self2.on("initialize", () => {
+  self.on("initialize", () => {
     var button = getDom3(options.html(options));
     button.addEventListener("click", (evt) => {
-      if (self2.isLocked) return;
-      self2.clear();
-      if (self2.settings.mode === "single" && self2.settings.allowEmptyOption) {
-        self2.addItem("");
+      if (self.isLocked) return;
+      self.clear();
+      if (self.settings.mode === "single" && self.settings.allowEmptyOption) {
+        self.addItem("");
       }
       evt.preventDefault();
       evt.stopPropagation();
     });
-    self2.control.appendChild(button);
+    self.control.appendChild(button);
   });
 }
 
@@ -14779,16 +12703,16 @@ var isBefore = (referenceNode, newNode) => {
   return false;
 };
 function plugin4() {
-  var self2 = this;
-  if (self2.settings.mode !== "multi") return;
-  var orig_lock = self2.lock;
-  var orig_unlock = self2.unlock;
+  var self = this;
+  if (self.settings.mode !== "multi") return;
+  var orig_lock = self.lock;
+  var orig_unlock = self.unlock;
   let sortable = true;
   let drag_item;
-  self2.hook("after", "setupTemplates", () => {
-    var orig_render_item = self2.settings.render.item;
-    self2.settings.render.item = (data, escape) => {
-      const item = getDom4(orig_render_item.call(self2, data, escape));
+  self.hook("after", "setupTemplates", () => {
+    var orig_render_item = self.settings.render.item;
+    self.settings.render.item = (data, escape) => {
+      const item = getDom4(orig_render_item.call(self, data, escape));
       setAttr2(item, {
         "draggable": "true"
       });
@@ -14824,7 +12748,7 @@ function plugin4() {
         (_drag_item = drag_item) == null || _drag_item.classList.remove("ts-dragging");
         drag_item = void 0;
         var values = [];
-        self2.control.querySelectorAll(`[data-value]`).forEach((el) => {
+        self.control.querySelectorAll(`[data-value]`).forEach((el) => {
           if (el.dataset.value) {
             let value = el.dataset.value;
             if (value) {
@@ -14832,7 +12756,7 @@ function plugin4() {
             }
           }
         });
-        self2.setValue(values);
+        self.setValue(values);
       };
       addEvent3(item, "mousedown", mousedown);
       addEvent3(item, "dragstart", dragStart);
@@ -14843,13 +12767,13 @@ function plugin4() {
       return item;
     };
   });
-  self2.hook("instead", "lock", () => {
+  self.hook("instead", "lock", () => {
     sortable = false;
-    return orig_lock.call(self2);
+    return orig_lock.call(self);
   });
-  self2.hook("instead", "unlock", () => {
+  self.hook("instead", "unlock", () => {
     sortable = true;
-    return orig_unlock.call(self2);
+    return orig_unlock.call(self);
   });
 }
 
@@ -14883,7 +12807,7 @@ var isHtmlString5 = (arg) => {
   return false;
 };
 function plugin5(userOptions) {
-  const self2 = this;
+  const self = this;
   const options = Object.assign({
     title: "Untitled",
     headerClass: "dropdown-header",
@@ -14894,16 +12818,16 @@ function plugin5(userOptions) {
       return '<div class="' + data.headerClass + '"><div class="' + data.titleRowClass + '"><span class="' + data.labelClass + '">' + data.title + '</span><a class="' + data.closeClass + '">&times;</a></div></div>';
     }
   }, userOptions);
-  self2.on("initialize", () => {
+  self.on("initialize", () => {
     var header = getDom5(options.html(options));
     var close_link = header.querySelector("." + options.closeClass);
     if (close_link) {
       close_link.addEventListener("click", (evt) => {
         preventDefault4(evt, true);
-        self2.close();
+        self.close();
       });
     }
-    self2.dropdown.insertBefore(header, self2.dropdown.firstChild);
+    self.dropdown.insertBefore(header, self.dropdown.firstChild);
   });
 }
 
@@ -14958,34 +12882,34 @@ var nodeIndex2 = (el, amongst) => {
   return i;
 };
 function plugin6() {
-  var self2 = this;
-  self2.hook("instead", "setCaret", (new_pos) => {
-    if (self2.settings.mode === "single" || !self2.control.contains(self2.control_input)) {
-      new_pos = self2.items.length;
+  var self = this;
+  self.hook("instead", "setCaret", (new_pos) => {
+    if (self.settings.mode === "single" || !self.control.contains(self.control_input)) {
+      new_pos = self.items.length;
     } else {
-      new_pos = Math.max(0, Math.min(self2.items.length, new_pos));
-      if (new_pos != self2.caretPos && !self2.isPending) {
-        self2.controlChildren().forEach((child, j) => {
+      new_pos = Math.max(0, Math.min(self.items.length, new_pos));
+      if (new_pos != self.caretPos && !self.isPending) {
+        self.controlChildren().forEach((child, j) => {
           if (j < new_pos) {
-            self2.control_input.insertAdjacentElement("beforebegin", child);
+            self.control_input.insertAdjacentElement("beforebegin", child);
           } else {
-            self2.control.appendChild(child);
+            self.control.appendChild(child);
           }
         });
       }
     }
-    self2.caretPos = new_pos;
+    self.caretPos = new_pos;
   });
-  self2.hook("instead", "moveCaret", (direction) => {
-    if (!self2.isFocused) return;
-    const last_active = self2.getLastActive(direction);
+  self.hook("instead", "moveCaret", (direction) => {
+    if (!self.isFocused) return;
+    const last_active = self.getLastActive(direction);
     if (last_active) {
       const idx = nodeIndex2(last_active);
-      self2.setCaret(direction > 0 ? idx + 1 : idx);
-      self2.setActiveItem();
+      self.setCaret(direction > 0 ? idx + 1 : idx);
+      self.setActiveItem();
       removeClasses2(last_active, "last-active");
     } else {
-      self2.setCaret(self2.caretPos + direction);
+      self.setCaret(self.caretPos + direction);
     }
   });
 }
@@ -15063,49 +12987,49 @@ var castAsArray3 = (arg) => {
   return arg;
 };
 function plugin7() {
-  const self2 = this;
-  self2.settings.shouldOpen = true;
-  self2.hook("before", "setup", () => {
-    self2.focus_node = self2.control;
-    addClasses2(self2.control_input, "dropdown-input");
+  const self = this;
+  self.settings.shouldOpen = true;
+  self.hook("before", "setup", () => {
+    self.focus_node = self.control;
+    addClasses2(self.control_input, "dropdown-input");
     const div = getDom6('<div class="dropdown-input-wrap">');
-    div.append(self2.control_input);
-    self2.dropdown.insertBefore(div, self2.dropdown.firstChild);
+    div.append(self.control_input);
+    self.dropdown.insertBefore(div, self.dropdown.firstChild);
     const placeholder = getDom6('<input class="items-placeholder" tabindex="-1" />');
-    placeholder.placeholder = self2.settings.placeholder || "";
-    self2.control.append(placeholder);
+    placeholder.placeholder = self.settings.placeholder || "";
+    self.control.append(placeholder);
   });
-  self2.on("initialize", () => {
-    self2.control_input.addEventListener("keydown", (evt) => {
+  self.on("initialize", () => {
+    self.control_input.addEventListener("keydown", (evt) => {
       switch (evt.keyCode) {
         case KEY_ESC2:
-          if (self2.isOpen) {
+          if (self.isOpen) {
             preventDefault5(evt, true);
-            self2.close();
+            self.close();
           }
-          self2.clearActiveItems();
+          self.clearActiveItems();
           return;
         case KEY_TAB2:
-          self2.focus_node.tabIndex = -1;
+          self.focus_node.tabIndex = -1;
           break;
       }
-      return self2.onKeyDown.call(self2, evt);
+      return self.onKeyDown.call(self, evt);
     });
-    self2.on("blur", () => {
-      self2.focus_node.tabIndex = self2.isDisabled ? -1 : self2.tabIndex;
+    self.on("blur", () => {
+      self.focus_node.tabIndex = self.isDisabled ? -1 : self.tabIndex;
     });
-    self2.on("dropdown_open", () => {
-      self2.control_input.focus();
+    self.on("dropdown_open", () => {
+      self.control_input.focus();
     });
-    const orig_onBlur = self2.onBlur;
-    self2.hook("instead", "onBlur", (evt) => {
-      if (evt && evt.relatedTarget == self2.control_input) return;
-      return orig_onBlur.call(self2);
+    const orig_onBlur = self.onBlur;
+    self.hook("instead", "onBlur", (evt) => {
+      if (evt && evt.relatedTarget == self.control_input) return;
+      return orig_onBlur.call(self);
     });
-    addEvent4(self2.control_input, "blur", () => self2.onBlur());
-    self2.hook("before", "close", () => {
-      if (!self2.isOpen) return;
-      self2.focus_node.focus({
+    addEvent4(self.control_input, "blur", () => self.onBlur());
+    self.hook("before", "close", () => {
+      if (!self.isOpen) return;
+      self.focus_node.focus({
         preventScroll: true
       });
     });
@@ -15117,12 +13041,12 @@ var addEvent5 = (target, type, callback, options) => {
   target.addEventListener(type, callback, options);
 };
 function plugin8() {
-  var self2 = this;
-  self2.on("initialize", () => {
+  var self = this;
+  self.on("initialize", () => {
     var test_input = document.createElement("span");
-    var control = self2.control_input;
+    var control = self.control_input;
     test_input.style.cssText = "position:absolute; top:-99999px; left:-99999px; width:auto; padding:0; white-space:pre; ";
-    self2.wrapper.appendChild(test_input);
+    self.wrapper.appendChild(test_input);
     var transfer_styles = ["letterSpacing", "fontSize", "fontFamily", "fontWeight", "textTransform"];
     for (const style_name of transfer_styles) {
       test_input.style[style_name] = control.style[style_name];
@@ -15132,7 +13056,7 @@ function plugin8() {
       control.style.width = test_input.clientWidth + "px";
     };
     resize();
-    self2.on("update item_add item_remove", resize);
+    self.on("update item_add item_remove", resize);
     addEvent5(control, "input", resize);
     addEvent5(control, "keyup", resize);
     addEvent5(control, "blur", resize);
@@ -15142,11 +13066,11 @@ function plugin8() {
 
 // node_modules/tom-select/dist/esm/plugins/no_backspace_delete/plugin.js
 function plugin9() {
-  var self2 = this;
-  var orig_deleteSelection = self2.deleteSelection;
+  var self = this;
+  var orig_deleteSelection = self.deleteSelection;
   this.hook("instead", "deleteSelection", (evt) => {
-    if (self2.activeItems.length) {
-      return orig_deleteSelection.call(self2, evt);
+    if (self.activeItems.length) {
+      return orig_deleteSelection.call(self, evt);
     }
     return false;
   });
@@ -15183,16 +13107,16 @@ var nodeIndex3 = (el, amongst) => {
   return i;
 };
 function plugin11() {
-  var self2 = this;
-  var orig_keydown = self2.onKeyDown;
-  self2.hook("instead", "onKeyDown", (evt) => {
+  var self = this;
+  var orig_keydown = self.onKeyDown;
+  self.hook("instead", "onKeyDown", (evt) => {
     var index, option, options, optgroup;
-    if (!self2.isOpen || !(evt.keyCode === KEY_LEFT2 || evt.keyCode === KEY_RIGHT2)) {
-      return orig_keydown.call(self2, evt);
+    if (!self.isOpen || !(evt.keyCode === KEY_LEFT2 || evt.keyCode === KEY_RIGHT2)) {
+      return orig_keydown.call(self, evt);
     }
-    self2.ignoreHover = true;
-    optgroup = parentMatch2(self2.activeOption, "[data-group]");
-    index = nodeIndex3(self2.activeOption, "[data-selectable]");
+    self.ignoreHover = true;
+    optgroup = parentMatch2(self.activeOption, "[data-group]");
+    index = nodeIndex3(self.activeOption, "[data-selectable]");
     if (!optgroup) {
       return;
     }
@@ -15207,7 +13131,7 @@ function plugin11() {
     options = optgroup.querySelectorAll("[data-selectable]");
     option = options[Math.min(options.length - 1, index)];
     if (option) {
-      self2.setActiveOption(option);
+      self.setActiveOption(option);
     }
   });
 }
@@ -15254,28 +13178,28 @@ function plugin12(userOptions) {
     className: "remove",
     append: true
   }, userOptions);
-  var self2 = this;
+  var self = this;
   if (!options.append) {
     return;
   }
   var html = '<a href="javascript:void(0)" class="' + options.className + '" tabindex="-1" title="' + escape_html2(options.title) + '">' + options.label + "</a>";
-  self2.hook("after", "setupTemplates", () => {
-    var orig_render_item = self2.settings.render.item;
-    self2.settings.render.item = (data, escape) => {
-      var item = getDom7(orig_render_item.call(self2, data, escape));
+  self.hook("after", "setupTemplates", () => {
+    var orig_render_item = self.settings.render.item;
+    self.settings.render.item = (data, escape) => {
+      var item = getDom7(orig_render_item.call(self, data, escape));
       var close_button = getDom7(html);
       item.appendChild(close_button);
       addEvent6(close_button, "mousedown", (evt) => {
         preventDefault6(evt, true);
       });
       addEvent6(close_button, "click", (evt) => {
-        if (self2.isLocked) return;
+        if (self.isLocked) return;
         preventDefault6(evt, true);
-        if (self2.isLocked) return;
-        if (!self2.shouldDelete([item], evt)) return;
-        self2.removeItem(item);
-        self2.refreshOptions(false);
-        self2.inputState();
+        if (self.isLocked) return;
+        if (!self.shouldDelete([item], evt)) return;
+        self.removeItem(item);
+        self.refreshOptions(false);
+        self.inputState();
       });
       return item;
     };
@@ -15284,20 +13208,20 @@ function plugin12(userOptions) {
 
 // node_modules/tom-select/dist/esm/plugins/restore_on_backspace/plugin.js
 function plugin13(userOptions) {
-  const self2 = this;
+  const self = this;
   const options = Object.assign({
     text: (option) => {
-      return option[self2.settings.labelField];
+      return option[self.settings.labelField];
     }
   }, userOptions);
-  self2.on("item_remove", function(value) {
-    if (!self2.isFocused) {
+  self.on("item_remove", function(value) {
+    if (!self.isFocused) {
       return;
     }
-    if (self2.control_input.value.trim() === "") {
-      var option = self2.options[value];
+    if (self.control_input.value.trim() === "") {
+      var option = self.options[value];
       if (option) {
-        self2.setTextboxValue(options.text.call(self2, option));
+        self.setTextboxValue(options.text.call(self, option));
       }
     }
   });
@@ -15343,24 +13267,24 @@ var castAsArray4 = (arg) => {
   return arg;
 };
 function plugin14() {
-  const self2 = this;
-  const orig_canLoad = self2.canLoad;
-  const orig_clearActiveOption = self2.clearActiveOption;
-  const orig_loadCallback = self2.loadCallback;
+  const self = this;
+  const orig_canLoad = self.canLoad;
+  const orig_clearActiveOption = self.clearActiveOption;
+  const orig_loadCallback = self.loadCallback;
   var pagination = {};
   var dropdown_content;
   var loading_more = false;
   var load_more_opt;
   var default_values = [];
-  if (!self2.settings.shouldLoadMore) {
-    self2.settings.shouldLoadMore = () => {
+  if (!self.settings.shouldLoadMore) {
+    self.settings.shouldLoadMore = () => {
       const scroll_percent = dropdown_content.clientHeight / (dropdown_content.scrollHeight - dropdown_content.scrollTop);
       if (scroll_percent > 0.9) {
         return true;
       }
-      if (self2.activeOption) {
-        var selectable = self2.selectable();
-        var index = Array.from(selectable).indexOf(self2.activeOption);
+      if (self.activeOption) {
+        var selectable = self.selectable();
+        var index = Array.from(selectable).indexOf(self.activeOption);
         if (index >= selectable.length - 2) {
           return true;
         }
@@ -15368,16 +13292,16 @@ function plugin14() {
       return false;
     };
   }
-  if (!self2.settings.firstUrl) {
+  if (!self.settings.firstUrl) {
     throw "virtual_scroll plugin requires a firstUrl() method";
   }
-  self2.settings.sortField = [{
+  self.settings.sortField = [{
     field: "$order"
   }, {
     field: "$score"
   }];
   const canLoadMore = (query) => {
-    if (typeof self2.settings.maxOptions === "number" && dropdown_content.children.length >= self2.settings.maxOptions) {
+    if (typeof self.settings.maxOptions === "number" && dropdown_content.children.length >= self.settings.maxOptions) {
       return false;
     }
     if (query in pagination && pagination[query]) {
@@ -15386,55 +13310,55 @@ function plugin14() {
     return false;
   };
   const clearFilter = (option, value) => {
-    if (self2.items.indexOf(value) >= 0 || default_values.indexOf(value) >= 0) {
+    if (self.items.indexOf(value) >= 0 || default_values.indexOf(value) >= 0) {
       return true;
     }
     return false;
   };
-  self2.setNextUrl = (value, next_url) => {
+  self.setNextUrl = (value, next_url) => {
     pagination[value] = next_url;
   };
-  self2.getUrl = (query) => {
+  self.getUrl = (query) => {
     if (query in pagination) {
       const next_url = pagination[query];
       pagination[query] = false;
       return next_url;
     }
-    self2.clearPagination();
-    return self2.settings.firstUrl.call(self2, query);
+    self.clearPagination();
+    return self.settings.firstUrl.call(self, query);
   };
-  self2.clearPagination = () => {
+  self.clearPagination = () => {
     pagination = {};
   };
-  self2.hook("instead", "clearActiveOption", () => {
+  self.hook("instead", "clearActiveOption", () => {
     if (loading_more) {
       return;
     }
-    return orig_clearActiveOption.call(self2);
+    return orig_clearActiveOption.call(self);
   });
-  self2.hook("instead", "canLoad", (query) => {
+  self.hook("instead", "canLoad", (query) => {
     if (!(query in pagination)) {
-      return orig_canLoad.call(self2, query);
+      return orig_canLoad.call(self, query);
     }
     return canLoadMore(query);
   });
-  self2.hook("instead", "loadCallback", (options, optgroups) => {
+  self.hook("instead", "loadCallback", (options, optgroups) => {
     if (!loading_more) {
-      self2.clearOptions(clearFilter);
+      self.clearOptions(clearFilter);
     } else if (load_more_opt) {
       const first_option = options[0];
       if (first_option !== void 0) {
-        load_more_opt.dataset.value = first_option[self2.settings.valueField];
+        load_more_opt.dataset.value = first_option[self.settings.valueField];
       }
     }
-    orig_loadCallback.call(self2, options, optgroups);
+    orig_loadCallback.call(self, options, optgroups);
     loading_more = false;
   });
-  self2.hook("after", "refreshOptions", () => {
-    const query = self2.lastValue;
+  self.hook("after", "refreshOptions", () => {
+    const query = self.lastValue;
     var option;
     if (canLoadMore(query)) {
-      option = self2.render("loading_more", {
+      option = self.render("loading_more", {
         query
       });
       if (option) {
@@ -15442,36 +13366,36 @@ function plugin14() {
         load_more_opt = option;
       }
     } else if (query in pagination && !dropdown_content.querySelector(".no-results")) {
-      option = self2.render("no_more_results", {
+      option = self.render("no_more_results", {
         query
       });
     }
     if (option) {
-      addClasses3(option, self2.settings.optionClass);
+      addClasses3(option, self.settings.optionClass);
       dropdown_content.append(option);
     }
   });
-  self2.on("initialize", () => {
-    default_values = Object.keys(self2.options);
-    dropdown_content = self2.dropdown_content;
-    self2.settings.render = Object.assign({}, {
+  self.on("initialize", () => {
+    default_values = Object.keys(self.options);
+    dropdown_content = self.dropdown_content;
+    self.settings.render = Object.assign({}, {
       loading_more: () => {
         return `<div class="loading-more-results">Loading more results ... </div>`;
       },
       no_more_results: () => {
         return `<div class="no-more-results">No more results</div>`;
       }
-    }, self2.settings.render);
+    }, self.settings.render);
     dropdown_content.addEventListener("scroll", () => {
-      if (!self2.settings.shouldLoadMore.call(self2)) {
+      if (!self.settings.shouldLoadMore.call(self)) {
         return;
       }
-      if (!canLoadMore(self2.lastValue)) {
+      if (!canLoadMore(self.lastValue)) {
         return;
       }
       if (loading_more) return;
       loading_more = true;
-      self2.load.call(self2, self2.lastValue);
+      self.load.call(self, self.lastValue);
     });
   });
 }
@@ -15826,74 +13750,11 @@ var client_type_controller_default = class extends Controller {
   }
 };
 
-// app/javascript/controllers/populate_waste_controller.js
-var populate_waste_controller_default = class extends Controller2 {
-  static targets = [
-    "dotShippingDescription",
-    "processingCode",
-    "wasteType",
-    "containerType",
-    "vendor",
-    "mxiCost",
-    "clientCost",
-    "wasteCommonName"
-  ];
-  populate(event) {
-    const selectedId = event.target.value;
-    fetch(`/disposal_costs/${selectedId}.json`).then((response) => response.json()).then((data) => {
-      this.dotShippingDescriptionTarget.value = data.dot_shipping_description;
-      this.processingCodeTarget.value = data.processing_code;
-      this.wasteTypeTarget.value = data.waste_type;
-      this.wasteCommonNameTarget.value = data.waste_common_name;
-      this.populateDropdown(
-        this.containerTypeTarget,
-        data.disposal_containers,
-        "Select a container"
-      );
-      this.populateDropdown(
-        this.vendorTarget,
-        data.vendors,
-        "Select a vendor"
-      );
-    }).catch(
-      (error2) => console.error("Error fetching disposal cost data:", error2)
-    );
-  }
-  populateDropdown(targetElement, items, defaultText = "Select an option") {
-    if (!Array.isArray(items)) {
-      console.log("Expected array but got:", typeof items);
-      return;
-    }
-    targetElement.innerHTML = "";
-    const defaultOption = document.createElement("option");
-    defaultOption.text = defaultText;
-    defaultOption.value = "";
-    targetElement.add(defaultOption);
-    items.forEach((item) => {
-      const option = document.createElement("option");
-      option.text = item.name || item.company_name || "Unnamed";
-      option.value = item.name || item.company_name;
-      if (item.cost) option.dataset.cost = item.cost;
-      if (item.charge) option.dataset.charge = item.charge;
-      targetElement.add(option);
-    });
-  }
-  // New method to populate cost and charge
-  populateCostAndCharge(event) {
-    const selectedOption = event.target.selectedOptions[0];
-    const cost = selectedOption.dataset.cost;
-    const charge = selectedOption.dataset.charge;
-    this.mxiCostTarget.value = cost;
-    this.clientCostTarget.value = charge;
-  }
-};
-
 // app/javascript/controllers/index.js
 application.register("alerts", alerts_controller_default);
 application.register("dropdown", dropdown_controller_default);
 application.register("hello", hello_controller_default);
 application.register("modal", modal_controller_default);
-application.register("multiselect", multiselect_controller_default);
 application.register("nested-form", nested_form_controller_default);
 application.register("phone-format", phone_format_controller_default);
 application.register("searchable-dropdown", searchable_dropdown_controller_default);
@@ -15902,7 +13763,6 @@ application.register("toggle", toggle_controller_default);
 application.register("tom-select", tom_select_controller_default);
 application.register("tabs", tabs_controller_default);
 application.register("client-type", client_type_controller_default);
-application.register("populate-waste", populate_waste_controller_default);
 /*! Bundled license information:
 
 @hotwired/turbo/dist/turbo.es2017-esm.js:

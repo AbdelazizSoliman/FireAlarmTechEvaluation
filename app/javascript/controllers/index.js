@@ -16,9 +16,6 @@ application.register('hello', HelloController);
 import ModalController from './modal_controller';
 application.register('modal', ModalController);
 
-import MultiselectController from './multiselect_controller';
-application.register('multiselect', MultiselectController);
-
 import NestedFormController from './nested_form_controller';
 application.register('nested-form', NestedFormController);
 
@@ -43,5 +40,3 @@ application.register('tabs', TabsController);
 import ClientTypeController from './client_type_controller';
 application.register('client-type', ClientTypeController);
 
-import PopulateWasteController from './populate_waste_controller';
-application.register('populate-waste', PopulateWasteController);

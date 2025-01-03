@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   end
 
   resources :projects
+  resources :fire_alarm_control_panels
 
   devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

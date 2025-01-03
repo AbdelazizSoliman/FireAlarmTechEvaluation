@@ -1,0 +1,2 @@
+class FireAlarmControlPanel < ApplicationRecord
+end

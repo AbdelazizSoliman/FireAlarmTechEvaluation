@@ -1,0 +1,2 @@
+class GraphicSystem < ApplicationRecord
+end

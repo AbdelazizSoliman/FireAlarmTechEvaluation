@@ -1,5 +1,5 @@
 class FireAlarmControlPanelController < ApplicationController
-    def index  
+      def index  
         @fire_alarm_control_panels = FireAlarmControlPanel.all  
       end  
     
@@ -64,4 +64,5 @@ class FireAlarmControlPanelController < ApplicationController
           :internal_batteries_backup_capacity_panel,  
           :external_batteries_backup_time  
         )  
+      end
 end

@@ -9,7 +9,11 @@ Rails.application.routes.draw do
   resources :products
   resources :fire_alarm_control_panels
   resources :graphic_systems  
-  resources :projects
+  resources :projects do
+    collection do
+      get :download_excel
+    end
+  end
 
   devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

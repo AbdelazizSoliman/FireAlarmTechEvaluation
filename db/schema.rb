@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_03_224700) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_04_113343) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -37,6 +37,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_03_224700) do
     t.integer "external_batteries_backup_time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "project_id"
+    t.index ["project_id"], name: "index_fire_alarm_control_panels_on_project_id"
   end
 
   create_table "graphic_systems", force: :cascade do |t|
@@ -47,6 +49,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_03_224700) do
     t.string "screens"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "project_id"
+    t.index ["project_id"], name: "index_graphic_systems_on_project_id"
   end
 
   create_table "products", force: :cascade do |t|
@@ -56,6 +60,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_03_224700) do
     t.string "country_of_manufacture_detectors"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "project_id"
+    t.index ["project_id"], name: "index_products_on_project_id"
+  end
+
+  create_table "projects", force: :cascade do |t|
+    t.bigint "product_id"
+    t.bigint "fire_alarm_control_panel_id"
+    t.bigint "graphic_system_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fire_alarm_control_panel_id"], name: "index_projects_on_fire_alarm_control_panel_id"
+    t.index ["graphic_system_id"], name: "index_projects_on_graphic_system_id"
+    t.index ["product_id"], name: "index_projects_on_product_id"
   end
 
   create_table "suppliers", force: :cascade do |t|
@@ -90,4 +107,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_03_224700) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "fire_alarm_control_panels", "projects"
+  add_foreign_key "graphic_systems", "projects"
+  add_foreign_key "products", "projects"
+  add_foreign_key "projects", "fire_alarm_control_panels"
+  add_foreign_key "projects", "graphic_systems"
+  add_foreign_key "projects", "products"
 end

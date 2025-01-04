@@ -6,8 +6,10 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :projects
+  resources :products
   resources :fire_alarm_control_panels
+  resources :graphic_systems  
+  resources :projects, only: [:index, :new, :create]  
 
   devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

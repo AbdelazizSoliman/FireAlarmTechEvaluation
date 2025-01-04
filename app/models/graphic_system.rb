@@ -1,2 +1,4 @@
 class GraphicSystem < ApplicationRecord
-end
+    belongs_to :project
+  end
+  

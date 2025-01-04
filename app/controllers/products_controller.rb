@@ -42,6 +42,6 @@ class ProductController < ApplicationController
       private  
     
       def product_params  
-        params.require(:product).permit(:name, :country_of_origin, :country_of_manufacture_fc, :country_of_manufacture_detectors)  
+        params.require(:product).permit(:product_name, :country_of_origin, :country_of_manufacture_fc, :country_of_manufacture_detectors)  
       end  
 end

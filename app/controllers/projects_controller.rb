@@ -5,6 +5,7 @@ class ProjectsController < ApplicationController
   end  
 
   def show
+    @project = Project.includes(:product, :fire_alarm_control_panel, :graphic_system).find(params[:id])
   end
 
 
@@ -24,6 +25,41 @@ class ProjectsController < ApplicationController
       render :new  
     end  
   end  
+
+  def download_excel
+    @projects = Project.includes(:product, :fire_alarm_control_panel, :graphic_system)
+
+    Axlsx::Package.new do |p|
+      p.workbook.add_worksheet(name: "Project Data") do |sheet|
+        # Add headers
+        sheet.add_row ["Project ID", "Product Name", "Country of Origin", "Manufacture (FC)", "Manufacture (Detectors)", 
+                       "MFCAP", "Standards", "Total No of Panels", 
+                       "Workstation", "Control Feature", "Softwares"]
+
+        # Add data rows
+        @projects.each do |project|
+          sheet.add_row [
+            project.id,
+            project.product&.product_name,
+            project.product&.country_of_origin,
+            project.product&.country_of_manufacture_mfacp,
+            project.product&.country_of_manufacture_detectors,
+            project.fire_alarm_control_panel&.mfacp,
+            project.fire_alarm_control_panel&.standards,
+            project.fire_alarm_control_panel&.total_no_of_panels,
+            project.graphic_system&.workstation,
+            project.graphic_system&.workstation_control_feature,
+            project.graphic_system&.softwares
+          ]
+        end
+      end
+
+      # Send the file as a response
+      send_data p.to_stream.read,
+                filename: "project_data.xlsx",
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    end
+  end
 
   private  
 

@@ -1,0 +1,58 @@
+<h1>Project Details</h1>
+
+<!-- Product Details -->
+<h2>Product Details</h2>
+<% if @project.product %>
+  <ul>
+    <li><strong>Product Name:</strong> <%= @project.product.product_name %></li>
+    <li><strong>Country of Origin:</strong> <%= @project.product.country_of_origin %></li>
+    <li><strong>Manufacture (MFCAP):</strong> <%= @project.product.country_of_manufacture_mfacp %></li>
+    <li><strong>Manufacture (Detectors):</strong> <%= @project.product.country_of_manufacture_detectors %></li>
+  </ul>
+<% else %>
+  <p>No product details available.</p>
+<% end %>
+
+<!-- Fire Alarm Control Panel Details -->
+<h2>Fire Alarm Control Panel Details</h2>
+<% if @project.fire_alarm_control_panel %>
+  <ul>
+    <li><strong>Manufacturer:</strong> <%= @project.fire_alarm_control_panel.mfacp %></li>
+    <li><strong>Standards:</strong> <%= @project.fire_alarm_control_panel.standards %></li>
+    <li><strong>Total Panels:</strong> <%= @project.fire_alarm_control_panel.total_no_of_panels %></li>
+    <li><strong>Total Loop Cards:</strong> <%= @project.fire_alarm_control_panel.total_number_of_loop_cards %></li>
+    <li><strong>Circuits Per Loop Card:</strong> <%= @project.fire_alarm_control_panel.total_number_of_circuits_per_card_loop %></li>
+    <li><strong>Total Loops:</strong> <%= @project.fire_alarm_control_panel.total_no_of_loops %></li>
+    <li><strong>Spare Loops:</strong> <%= @project.fire_alarm_control_panel.total_no_of_spare_loops %></li>
+    <li><strong>Detectors Per Loop:</strong> <%= @project.fire_alarm_control_panel.total_no_of_detectors_per_loop %></li>
+    <li><strong>Polarity Insensitivity:</strong> <%= @project.fire_alarm_control_panel.initiating_devices_polarity_insensitivity %></li>
+    <li><strong>Spare Percentage Per Loop:</strong> <%= @project.fire_alarm_control_panel.spare_percentage_per_loop %></li>
+    <li><strong>Repeater:</strong> <%= @project.fire_alarm_control_panel.fa_repeater %></li>
+    <li><strong>Auto Dialer:</strong> <%= @project.fire_alarm_control_panel.auto_dialer %></li>
+    <li><strong>Dot Matrix Printer:</strong> <%= @project.fire_alarm_control_panel.dot_matrix_printer %></li>
+    <li><strong>Backup Time:</strong> <%= @project.fire_alarm_control_panel.backup_time %></li>
+    <li><strong>Standby Power (24 Alarm 5):</strong> <%= @project.fire_alarm_control_panel.power_standby_24_alarm_5 %></li>
+    <li><strong>Standby Power (24 Alarm 15):</strong> <%= @project.fire_alarm_control_panel.power_standby_24_alarm_15 %></li>
+    <li><strong>Internal Batteries Capacity:</strong> <%= @project.fire_alarm_control_panel.internal_batteries_backup_capacity_panel %></li>
+    <li><strong>External Batteries Backup Time:</strong> <%= @project.fire_alarm_control_panel.external_batteries_backup_time %></li>
+  </ul>
+<% else %>
+  <p>No fire alarm control panel details available.</p>
+<% end %>
+
+<!-- Graphic System Details -->
+<h2>Graphic System Details</h2>
+<% if @project.graphic_system %>
+  <ul>
+    <li><strong>Workstation:</strong> <%= @project.graphic_system.workstation %></li>
+    <li><strong>Control Features:</strong> <%= @project.graphic_system.workstation_control_feature %></li>
+    <li><strong>Softwares:</strong> <%= @project.graphic_system.softwares %></li>
+    <li><strong>Licenses:</strong> <%= @project.graphic_system.licenses %></li>
+    <li><strong>Screens:</strong> <%= @project.graphic_system.screens %></li>
+  </ul>
+<% else %>
+  <p>No graphic system details available.</p>
+<% end %>
+
+<!-- Back Button -->
+<%= link_to 'Back to Projects', projects_path, class: 'btn btn-secondary' %>

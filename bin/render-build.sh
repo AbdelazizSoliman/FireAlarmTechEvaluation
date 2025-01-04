@@ -2,12 +2,18 @@
 # exit on error
 set -o errexit
 
+# Ensure esbuild binary is executable
+chmod +x ./node_modules/.bin/esbuild || echo "esbuild binary not found or already executable"
+
+# Install Ruby gems
 bundle install
+
+# Install Node.js dependencies
+yarn install --check-files || npm install
+
+# Compile assets
 bundle exec rails assets:precompile
 bundle exec rails assets:clean
 
-# If you're using a Free instance type, you need to
-# perform database migrations in the build command.
-# Uncomment the following line:
-
+# Perform database migrations (optional, uncomment if needed)
 # bundle exec rails db:migrate

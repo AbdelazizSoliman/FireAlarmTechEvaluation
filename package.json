@@ -9,7 +9,6 @@
     "@tailwindcss/forms": "^0.5.7",
     "autoprefixer": "^10.4.19",
     "choices.js": "^10.2.0",
-    "esbuild": "^0.23.0",
     "esbuild-plugin-stimulus": "^0.1.5",
     "jquery": "^3.7.1",
     "postcss": "^8.4.39",
@@ -26,5 +25,8 @@
   "scripts": {
     "build": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets",
     "build:css": "tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2"
   }
 }

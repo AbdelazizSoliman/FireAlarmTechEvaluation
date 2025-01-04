@@ -4,6 +4,10 @@ class ProjectsController < ApplicationController
     @projects = Project.all  # This will fetch all project records  
   end  
 
+  def show
+  end
+
+
   def new  
     @project = Project.new
     @project.build_product

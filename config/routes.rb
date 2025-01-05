@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   resources :fire_alarm_control_panels
   resources :graphic_systems  
   resources :projects do
-    collection do
+    member do
       get :download_excel
     end
   end

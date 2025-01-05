@@ -53,6 +53,6 @@
 <% else %>
   <p>No graphic system details available.</p>
 <% end %>
-<%= link_to 'Download Excel', download_excel_projects_path, class: 'btn btn-primary' %>
+<%= link_to 'Download Excel', download_excel_project_path(@project), class: 'btn btn-primary' %>
 <!-- Back Button -->
 <%= link_to 'Back to Projects', projects_path, class: 'btn btn-secondary' %>

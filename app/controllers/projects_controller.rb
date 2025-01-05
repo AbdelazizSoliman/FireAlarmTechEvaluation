@@ -86,35 +86,50 @@ class ProjectsController < ApplicationController
     standard_file_path = Rails.root.join('lib', 'standard_comparison_data.xlsx') # Adjust this path accordingly  
     standard_workbook = RubyXL::Parser.parse(standard_file_path)  
     standard_sheet = standard_workbook[0]  
-
+  
     # Acquire project data to compare.  
     total_no_of_panels = project.fire_alarm_control_panel&.total_no_of_panels  # Get the project field for Total No of Panels  
-
-    # Get the standard value for Total No of Panels (Assuming it's in Row 2, Column 5)  
+    # Get the standard value for Total No of Panels (Assuming it's in Row 2, Column 8)  
     standard_value = standard_sheet[1][7].value  # Change according to the correct row/column for your data  
-
+  
+    # Get the Country of Origin value (assuming it's in Row 2, Column 2)  
+    country_of_origin = project.product&.country_of_origin || ""  # Get the country of origin from the project  
+  
+    # Define the accepted countries as an array  
+    accepted_countries = ["Cumque labore cupida", "Egypt", "India"]  
+  
     # Check if the Total No of Panels is equal to or greater than the standard value of 100.  
-    comparison_result = total_no_of_panels.present? && total_no_of_panels.to_i >= standard_value.to_i  
-
-    # Return the result as an array containing:  
-    # [Comparison Result (true or false), Uploaded Value, Standard Value]  
-    [comparison_result, total_no_of_panels, standard_value]  
-  end  
+    comparison_result_panels = total_no_of_panels.present? && total_no_of_panels.to_i >= standard_value.to_i  
+  
+    # Check if the Country of Origin is included in the accepted countries  
+    country_origin_result = accepted_countries.include?(country_of_origin)  
+  
+    # Return the results as an array containing:  
+    # [Total No of Panels Comparison Result (true or false), Country of Origin Comparison Result (true or false), Uploaded Value, Standard Value, Country of Origin]  
+    [comparison_result_panels, country_origin_result, total_no_of_panels, standard_value, country_of_origin, accepted_countries]  
+  end
 
   # Method for generating PDF report  
   def generate_pdf_report(comparison_result)  
     Prawn::Document.generate(Rails.root.join('public', "report_#{Time.now.to_i}.pdf")) do |pdf|  
       pdf.text "Comparison Report", size: 30, style: :bold  
       pdf.move_down 20  
-
+  
       pdf.text "Comparison Results:", size: 20, style: :bold  
-      is_accepted, uploaded, standard = comparison_result  
-      status = is_accepted ? "Accepted" : "Rejected"  
-      pdf.text "Total No of Panels: #{status} (Uploaded: #{uploaded}, Standard: #{standard})"  
-
-      overall_status = is_accepted ? "Accepted" : "Rejected"  
+      is_accepted_panels, is_accepted_country, uploaded_panels, standard_value, uploaded_country, accepted_countries = comparison_result  
+  
+      # Status for Total No of Panels  
+      status_panels = is_accepted_panels ? "Accepted" : "Rejected"  
+      pdf.text "Total No of Panels: #{status_panels} (Uploaded: #{uploaded_panels}, Standard: #{standard_value})"  
+  
+      # Status for Country of Origin  
+      status_country = is_accepted_country ? "Accepted" : "Rejected"  
+      pdf.text "Country of Origin: #{status_country} (Uploaded: #{uploaded_country}, Accepted: #{accepted_countries.join(', ')})"  
+  
+      # Overall status  
+      overall_status = is_accepted_panels && is_accepted_country ? "Accepted" : "Rejected"  
       pdf.move_down 20  
       pdf.text "Overall Status: #{overall_status}", size: 25, style: :bold  
     end  
-  end  
+  end
 end

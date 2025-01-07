@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     end
   end
 
+  
   resources :products
   resources :fire_alarm_control_panels
   resources :graphic_systems  
@@ -16,6 +17,18 @@ Rails.application.routes.draw do
   end
 
   devise_for :users
+
+  namespace :api do
+    namespace :supplier do
+      post 'register', to: 'suppliers#register'
+    end
+  end
+
+  # namespace :supplier do
+  #   get 'all', to: 'suppliers#index'
+  #   post 'register', to: 'suppliers#register'
+  # end
+  
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

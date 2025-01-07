@@ -28,7 +28,7 @@ module SupplierApi
     # CORS configuration  
     config.middleware.insert_before 0, Rack::Cors do  
       allow do  
-        origins '*' # Change this to specific origins for production  
+        origins 'http://localhost:5173' # Change this to specific origins for production  
         resource '*', headers: :any, methods: [:get, :post, :put, :patch, :delete, :options, :head]  
       end  
     end  

@@ -1,11 +1,25 @@
 class SuppliersController < ApplicationController
     before_action :set_supplier, only: %i[ show edit update destroy ]
 
+    def register
+      @supplier = Supplier.new(supplier_params)
+      if @supplier.save
+        render json: { message: 'Supplier registered successfully' }, status: :created
+      else
+        render json: { errors: @supplier.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+  
+
     # GET /suppliers
     def index
       @suppliers = Supplier.all.order(:created_at)
+      respond_to do |format|
+        format.html # renders the HTML view (default)
+        format.json { render json: @suppliers } # renders JSON response
+      end
     end
-  
+    
     # GET /suppliers/1
     def show
     end
@@ -59,6 +73,8 @@ class SuppliersController < ApplicationController
             :total_years_in_saudi_market,
             :phone,
             :supplier_email,
+            :password,
+            :password_confirmation
         )
       end
       

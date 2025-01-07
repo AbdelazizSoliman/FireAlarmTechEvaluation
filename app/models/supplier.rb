@@ -5,6 +5,10 @@ class Supplier < ApplicationRecord
     # accepts_nested_attributes_for :sites, allow_destroy: true, reject_if: :all_blank
     # accepts_nested_attributes_for :project
  
+    has_secure_password
+
+    validates :password, presence: true, length: { minimum: 6 }, confirmation: true
+    validates :password_confirmation, presence: true
  
     # Validates the presence
    validates  :supplier_name,:supplier_category,:total_years_in_saudi_market,:phone,:supplier_email, presence: true

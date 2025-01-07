@@ -38,6 +38,17 @@
         <%= form.email_field :supplier_email, placeholder: "Enter email", class: input_class %>
         <%= form.label :supplier_email, "Email", class: label_class %>
       </div>
+
+      <!-- Password fields -->
+      <div class="relative">
+        <%= form.password_field :password, placeholder: "Enter password", class: input_class %>
+        <%= form.label :password, "Password", class: label_class %>
+      </div>
+
+      <div class="relative">
+        <%= form.password_field :password_confirmation, placeholder: "Confirm password", class: input_class %>
+        <%= form.label :password_confirmation, "Confirm Password", class: label_class %>
+      </div>
     </div>
   </div>
 

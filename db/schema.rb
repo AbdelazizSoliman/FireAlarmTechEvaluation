@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_07_081303) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_07_111326) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -53,6 +53,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_07_081303) do
     t.index ["project_id"], name: "index_graphic_systems_on_project_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.string "title"
+    t.text "body"
+    t.string "notifiable_type", null: false
+    t.bigint "notifiable_id", null: false
+    t.boolean "read"
+    t.string "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "product_name"
     t.string "country_of_origin"
@@ -86,6 +98,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_07_081303) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.string "password_digest"
+    t.string "status"
   end
 
   create_table "users", force: :cascade do |t|

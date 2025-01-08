@@ -1,23 +1,24 @@
 class Supplier < ApplicationRecord
-    # has_many :project, dependent: :destroy
-   
-    
-    # accepts_nested_attributes_for :sites, allow_destroy: true, reject_if: :all_blank
-    # accepts_nested_attributes_for :project
- 
-    has_secure_password
+  STATUSES = %w[pending approved rejected]
+  has_secure_password
 
-    validates :password, presence: true, length: { minimum: 6 }, confirmation: true
-    validates :password_confirmation, presence: true
- 
-    # Validates the presence
-   validates  :supplier_name,:supplier_category,:total_years_in_saudi_market,:phone,:supplier_email, presence: true
- 
- #   # Validates the format of the phone number
- #   validates :phone, :bill_to_phone,
- #               format: { with: /\A\d{10}\z/, message: 'must be exactly 10 digits' }
- 
-   # Validates the format of the email
-   validates :supplier_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'must be a valid email address' }
- 
- end
+  validates :password, presence: true, length: { minimum: 6 }, confirmation: true, if: :password_required?
+  validates :password_confirmation, presence: true, if: :password_required?
+
+  validates :status, inclusion: { in: STATUSES }
+  after_initialize :set_default_status, if: :new_record?
+
+  validates :supplier_name, :supplier_category, :total_years_in_saudi_market, :phone, :supplier_email, presence: true
+  validates :supplier_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'must be a valid email address' }
+
+  private
+
+  # Skip password validation when updating non-password fields
+  def password_required?
+    new_record? || password.present? || password_confirmation.present?
+  end
+
+  def set_default_status
+    self.status ||= 'pending'
+  end
+end

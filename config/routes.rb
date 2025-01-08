@@ -21,6 +21,22 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :supplier do
       post 'register', to: 'suppliers#register'
+      post 'login', to: 'sessions#create'
+      get  '/profile', to: 'sessions#profile'
+
+    end
+  end
+
+  namespace :api do
+    resources :notifications, only: [:index, :update]
+  end
+
+  resources :notifications, only: [] do
+    member do
+      post :approve
+      post :reject
+      get :approve
+      get :reject
     end
   end
 

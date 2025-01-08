@@ -83,3 +83,5 @@ gem 'axlsx_rails'
 gem 'prawn'
 
 gem 'rubyXL'
+
+gem 'jwt'

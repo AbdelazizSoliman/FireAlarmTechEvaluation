@@ -8,11 +8,19 @@ module Api
       def register
         @supplier = ::Supplier.new(supplier_params)
         if @supplier.save
+          Notification.create!(
+            title: "New Supplier Registration",
+            body: "Supplier #{@supplier.supplier_name} has registered.",
+            notifiable: @supplier,
+            read: false,
+            status: "pending"
+          )
           render json: { message: 'Supplier registered successfully' }, status: :created
         else
           render json: { errors: @supplier.errors.full_messages }, status: :unprocessable_entity
         end
       end
+      
 
       # GET /suppliers
       def index

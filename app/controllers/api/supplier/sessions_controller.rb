@@ -9,7 +9,7 @@ module Api
         supplier = ::Supplier.find_by(supplier_email: params[:email])
         if supplier&.authenticate(params[:password])
           token = generate_token(supplier.id)
-          render json: { token: token }, status: :ok
+          render json: { token: token, status: supplier.status }, status: :ok
         else
           render json: { error: 'Invalid email or password' }, status: :unauthorized
         end

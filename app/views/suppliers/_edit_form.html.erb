@@ -38,6 +38,12 @@
         <%= form.number_field :total_years_in_saudi_market, class: input_class, placeholder: '' %>
         <%= form.label :total_years_in_saudi_market, "Years in Saudi Market", class: label_class %>
       </div>
+
+      <!-- Status Field -->
+      <div class="relative">
+        <%= form.select :status, Supplier::STATUSES.map { |s| [s.capitalize, s] }, {}, class: input_class %>
+        <%= form.label :status, "Status", class: label_class %>
+      </div>
     </div>
   </div>
 

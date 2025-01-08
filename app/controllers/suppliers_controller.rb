@@ -3,7 +3,7 @@ class SuppliersController < ApplicationController
 
   # GET /suppliers
   def index
-    @suppliers = Supplier.where(status: ['approved', 'rejected']).order(created_at: :desc)
+    @suppliers = Supplier.where(status: ['approved', 'rejected', 'pending']).order(created_at: :desc)
     respond_to do |format|
       format.html # renders the HTML view (default)
       format.json { render json: @suppliers } # renders JSON response

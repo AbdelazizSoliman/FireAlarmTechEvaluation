@@ -11,6 +11,9 @@ class Supplier < ApplicationRecord
   validates :supplier_name, :supplier_category, :total_years_in_saudi_market, :phone, :supplier_email, presence: true
   validates :supplier_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'must be a valid email address' }
 
+  has_many :subsystem_suppliers, dependent: :destroy
+  has_many :subsystems, through: :subsystem_suppliers
+
   private
 
   # Skip password validation when updating non-password fields

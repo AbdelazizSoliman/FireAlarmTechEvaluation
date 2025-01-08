@@ -11,6 +11,10 @@ class ApplicationController < ActionController::Base
       devise_parameter_sanitizer.permit(:account_update, keys: %i[first_name last_name])
     end
 
+    def after_sign_out_path_for(_resource_or_scope)
+      new_user_session_path # Redirect to the login page
+    end
+
 
     private
 
@@ -19,7 +23,7 @@ class ApplicationController < ActionController::Base
         Rails.logger.info "Current User: #{current_user.full_name}"
         @unread_notifications_count = Notification.where(read: false).count
       else
-        Rails.logger.info "No user is currently logged in."
+        @unread_notifications_count = 0
       end
     end
 end

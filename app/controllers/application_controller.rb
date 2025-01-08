@@ -14,9 +14,14 @@ class ApplicationController < ActionController::Base
 
     private
 
-  def set_unread_notifications_count
-    @unread_notifications_count = Notification.where(read: false).count
-  end
+    def set_unread_notifications_count
+      if current_user
+        Rails.logger.info "Current User: #{current_user.full_name}"
+        @unread_notifications_count = Notification.where(read: false).count
+      else
+        Rails.logger.info "No user is currently logged in."
+      end
+    end
 end
   
   

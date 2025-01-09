@@ -1,0 +1,8 @@
+<h1 class="text-xl font-bold">Subsystems</h1>
+<ul>
+  <% @subsystems.each do |subsystem| %>
+    <li>
+      <%= link_to subsystem.name, subsystem_path(subsystem), class: "text-blue-500 hover:underline" %>
+    </li>
+  <% end %>
+</ul>

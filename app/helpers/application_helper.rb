@@ -10,15 +10,23 @@ module ApplicationHelper
     when "projects"
       link_to("Projects", projects_path)
     when "systems"
-      link_to("Projects", projects_path) +
-        " > ".html_safe +
-        link_to("Systems", project_systems_path(project_id: params[:project_id]))
+      if params[:project_id]
+        link_to("Projects", projects_path) +
+          " > ".html_safe +
+          link_to("Systems", project_systems_path(params[:project_id]))
+      else
+        "Systems"
+      end
     when "subsystems"
-      link_to("Projects", projects_path) +
-        " > ".html_safe +
-        link_to("Systems", project_systems_path(project_id: params[:project_id])) +
-        " > ".html_safe +
-        link_to("Subsystems", project_system_subsystems_path(params[:project_id], params[:system_id]))
+      if params[:project_id] && params[:system_id]
+        link_to("Projects", projects_path) +
+          " > ".html_safe +
+          link_to("Systems", project_systems_path(params[:project_id])) +
+          " > ".html_safe +
+          link_to("Subsystems", project_system_subsystems_path(params[:project_id], params[:system_id]))
+      else
+        "Subsystems"
+      end
     else
       controller_name.titleize
     end

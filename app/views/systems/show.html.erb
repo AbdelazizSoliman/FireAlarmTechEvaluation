@@ -1,0 +1,7 @@
+<% @system.subsystems.each do |subsystem| %>
+  <div class="my-4">
+    <%= link_to "Fire Alarm System", 
+                new_project_system_subsystem_fire_alarm_control_panel_path(@system.project, @system, subsystem), 
+                class: "bg-buttonRed text-white py-2 px-4 rounded" %>
+  </div>
+<% end %>

@@ -6,15 +6,23 @@ Rails.application.routes.draw do
     end
   end
 
-  
-  resources :products
-  resources :fire_alarm_control_panels
-  resources :graphic_systems  
+
+  # resources :projects do
+  #   member do
+  #     get :download_excel
+  #   end
+  # end
+
+ 
   resources :projects do
-    member do
-      get :download_excel
+    resources :systems, only: [:index, :show] do
+      resources :subsystems do
+        resources :fire_alarm_control_panels, only: [:new, :create, :edit, :update]
+      end
     end
   end
+  
+
 
   devise_for :users
 

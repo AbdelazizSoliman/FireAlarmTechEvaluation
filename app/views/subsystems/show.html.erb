@@ -1,0 +1,15 @@
+<h1 class="text-xl font-bold">Subsystem: <%= @subsystem.name %> in System: <%= @subsystem.system.name %></h1>
+
+<h2 class="text-lg font-semibold mt-6">Fire Alarm Control Panel Details</h2>
+<% if @subsystem.fire_alarm_control_panels.present? %>
+  <% @subsystem.fire_alarm_control_panels.each do |panel| %>
+    <ul class="list-disc ml-8">
+      <% panel.attributes.each do |key, value| %>
+        <% next if %w[id subsystem_id created_at updated_at].include?(key) %>
+        <li><strong><%= key.humanize %>:</strong> <%= value.present? ? value : "N/A" %></li>
+      <% end %>
+    </ul>
+  <% end %>
+<% else %>
+  <p>No Fire Alarm Control Panel details available for this subsystem.</p>
+<% end %>

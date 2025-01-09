@@ -6,16 +6,26 @@ module ApplicationHelper
   end
 
   def current_page_name
-    controller_link = link_to(controller_name.titleize, { controller: controller_name, action: 'index' })
-
-    "#{controller_link}
-        <li>
-          <svg class=\"h-4 w-4 text-gray-400\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">
-            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 5l7 7-7 7\" />
-          </svg>
-        </li>
-        #{action_name.titleize}".html_safe
+    case controller_name
+    when "projects"
+      link_to("Projects", projects_path)
+    when "systems"
+      link_to("Projects", projects_path) +
+        " > ".html_safe +
+        link_to("Systems", project_systems_path(project_id: params[:project_id]))
+    when "subsystems"
+      link_to("Projects", projects_path) +
+        " > ".html_safe +
+        link_to("Systems", project_systems_path(project_id: params[:project_id])) +
+        " > ".html_safe +
+        link_to("Subsystems", project_system_subsystems_path(params[:project_id], params[:system_id]))
+    else
+      controller_name.titleize
+    end
   end
+  
+  
+  
 
   def us_states
     %w[

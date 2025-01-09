@@ -1,4 +1,4 @@
 class FireAlarmControlPanel < ApplicationRecord
-    belongs_to :project
-  end
-  
+     belongs_to :subsystem
+   end
+   

@@ -10,9 +10,34 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_07_111326) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_08_222910) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "fire_alarm_control_panels", force: :cascade do |t|
+    t.string "standards"
+    t.integer "total_no_of_panels"
+    t.integer "total_number_of_loop_cards"
+    t.integer "total_number_of_circuits_per_card_loop"
+    t.integer "total_no_of_loops"
+    t.integer "total_no_of_spare_loops"
+    t.integer "total_no_of_detectors_per_loop"
+    t.integer "spare_no_of_loops_per_panel"
+    t.string "initiating_devices_polarity_insensitivity"
+    t.integer "spare_percentage_per_loop"
+    t.integer "fa_repeater"
+    t.integer "auto_dialer"
+    t.integer "dot_matrix_printer"
+    t.string "printer_listing"
+    t.string "power_standby_24_alarm_5"
+    t.string "power_standby_24_alarm_15"
+    t.integer "internal_batteries_backup_capacity_panel"
+    t.integer "external_batteries_backup_time"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "subsystem_id", null: false
+    t.index ["subsystem_id"], name: "index_fire_alarm_control_panels_on_subsystem_id"
+  end
 
   create_table "notifications", force: :cascade do |t|
     t.string "title"
@@ -24,6 +49,29 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_07_111326) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+  end
+
+  create_table "projects", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "subsystem_suppliers", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_subsystem_suppliers_on_subsystem_id"
+    t.index ["supplier_id"], name: "index_subsystem_suppliers_on_supplier_id"
+  end
+
+  create_table "subsystems", force: :cascade do |t|
+    t.bigint "system_id", null: false
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["system_id"], name: "index_subsystems_on_system_id"
   end
 
   create_table "suppliers", force: :cascade do |t|
@@ -38,6 +86,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_07_111326) do
     t.datetime "reset_password_sent_at"
     t.string "password_digest"
     t.string "status"
+  end
+
+  create_table "systems", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id"], name: "index_systems_on_project_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -62,4 +118,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_07_111326) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "fire_alarm_control_panels", "subsystems"
+  add_foreign_key "subsystem_suppliers", "subsystems"
+  add_foreign_key "subsystem_suppliers", "suppliers"
+  add_foreign_key "subsystems", "systems"
+  add_foreign_key "systems", "projects"
 end

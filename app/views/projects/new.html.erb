@@ -1,139 +1,24 @@
-<%= form_with model: @project, local: true do |form| %>  
-  <h2>Product Data</h2>  
-  <div>  
-    <%= form.fields_for :product do |product_form| %>  
-      <div>  
-        <%= product_form.label :product_name %>  
-        <%= product_form.text_field :product_name %>  
-      </div>  
-      <div>  
-        <%= product_form.label :country_of_origin %>  
-        <%= product_form.text_field :country_of_origin %>  
-      </div>  
-      <div>  
-        <%= product_form.label :country_of_manufacture_ %>  
-        <%= product_form.text_field :country_of_manufacture_mfacp %>  
-      </div>  
-      <div>  
-        <%= product_form.label :country_of_manufacture_detectors %>  
-        <%= product_form.text_field :country_of_manufacture_detectors %>  
-      </div>  
-    <% end %>  
-  </div>  
+<%= form_with model: @project, local: true do |form| %>
+  <h1 class="text-xl font-semibold">Create New Project</h1>
 
-  <h2>Fire Alarm Control Panel</h2>  
-  <div>  
-    <%= form.fields_for :fire_alarm_control_panel do |fa_form| %>  
-      <div>  
-        <%= fa_form.label :mfacp %>  
-        <%= fa_form.text_field :mfacp %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :standards %>  
-        <%= fa_form.text_field :standards %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :total_no_of_panels %>  
-        <%= fa_form.number_field :total_no_of_panels %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :total_number_of_loop_cards %>  
-        <%= fa_form.number_field :total_number_of_loop_cards %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :total_number_of_circuits_per_card_loop %>  
-        <%= fa_form.number_field :total_number_of_circuits_per_card_loop %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :total_no_of_loops %>  
-        <%= fa_form.number_field :total_no_of_loops %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :total_no_of_spare_loops %>  
-        <%= fa_form.number_field :total_no_of_spare_loops %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :total_no_of_detectors_per_loop %>  
-        <%= fa_form.number_field :total_no_of_detectors_per_loop %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :spare_no_of_loops_per_panel %>  
-        <%= fa_form.number_field :spare_no_of_loops_per_panel %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :initiating_devices_polarity_insensitivity %>  
-        <%= fa_form.text_field :initiating_devices_polarity_insensitivity %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :spare_percentage_per_loop %>  
-        <%= fa_form.number_field :spare_percentage_per_loop %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :fa_repeater %>  
-        <%= fa_form.number_field :fa_repeater %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :auto_dialer %>  
-        <%= fa_form.number_field :auto_dialer %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :dot_matrix_printer %>  
-        <%= fa_form.number_field :dot_matrix_printer %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :printer_listing %>  
-        <%= fa_form.text_field :printer_listing %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :backup_time %>  
-        <%= fa_form.text_field :backup_time %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :power_standby_24_alarm_5 %>  
-        <%= fa_form.text_field :power_standby_24_alarm_5 %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :power_standby_24_alarm_15 %>  
-        <%= fa_form.text_field :power_standby_24_alarm_15 %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :internal_batteries_backup_capacity_panel %>  
-        <%= fa_form.number_field :internal_batteries_backup_capacity_panel %>  
-      </div>  
-      <div>  
-        <%= fa_form.label :external_batteries_backup_time %>  
-        <%= fa_form.number_field :external_batteries_backup_time %>  
-      </div>  
-    <% end %>  
-  </div>  
+  <div class="mb-4">
+    <%= form.label :name, "Project Name" %>
+    <%= form.text_field :name, class: "form-input w-full" %>
+  </div>
 
-  <h2>Graphic System</h2>  
-  <div>  
-    <%= form.fields_for :graphic_system do |graphic_form| %>  
-      <div>  
-        <%= graphic_form.label :workstation %>  
-        <%= graphic_form.text_field :workstation %>  
-      </div>  
-      <div>  
-        <%= graphic_form.label :workstation_control_feature %>  
-        <%= graphic_form.text_field :workstation_control_feature %>  
-      </div>  
-      <div>  
-        <%= graphic_form.label :softwares %>  
-        <%= graphic_form.text_field :softwares %>  
-      </div>  
-      <div>  
-        <%= graphic_form.label :licenses %>  
-        <%= graphic_form.text_field :licenses %>  
-      </div>  
-      <div>  
-        <%= graphic_form.label :screens %>  
-        <%= graphic_form.text_field :screens %>  
-      </div>  
-    <% end %>  
-  </div>  
+  <%= form.fields_for :fire_alarm_control_panel do |fa_form| %>
+    <h2 class="text-lg font-semibold mt-6">Fire Alarm Control Panel</h2>
 
-  <div>  
-    <%= form.submit 'Create Project' %>  
-  </div>  
+    <% FireAlarmControlPanel.column_names.each do |column| %>
+      <% next if %w[id project_id created_at updated_at].include?(column) %>
+      <div class="mb-4">
+        <%= fa_form.label column, column.humanize %>
+        <%= fa_form.text_field column, class: "form-input w-full" %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="mt-4">
+    <%= form.submit "Create Project", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+  </div>
 <% end %>

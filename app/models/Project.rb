@@ -1,3 +1,3 @@
 class Project < ApplicationRecord
-  has_many :light_current_systems, dependent: :destroy
+  has_many :systems, dependent: :destroy
 end

@@ -1,25 +1,15 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
-# Create a project
-project = Project.create!(name: "Almahdy Hospital")
+# Find or create the project
+project = Project.find_or_create_by!(name: "Almahdy Hospital")
 
-# Create a system
-system = System.create!(name: "Light Current", project: project)
+# Find or create the system
+system = System.find_or_create_by!(name: "Light Current", project: project)
 
-# Create a subsystem
-subsystem = Subsystem.create!(name: "Fire Alarm System", system: system)
+# Create a subsystem associated with the system
+subsystem = Subsystem.find_or_create_by!(name: "Fire Alarm System", system: system)
 
-# Create a fire alarm control panel
+# Create a fire alarm control panel associated with the subsystem
 FireAlarmControlPanel.create!(
-  project: project,
-  mfacp: "Brand XYZ",
+  subsystem: subsystem, # Correct association
   standards: "UL Listed",
   total_no_of_panels: 10,
   total_number_of_loop_cards: 20,
@@ -39,4 +29,3 @@ FireAlarmControlPanel.create!(
   internal_batteries_backup_capacity_panel: 2,
   external_batteries_backup_time: 4
 )
-

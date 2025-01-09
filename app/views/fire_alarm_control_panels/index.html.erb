@@ -1,0 +1,22 @@
+<h1>Fire Alarm Control Panels for Subsystem: <%= @subsystem.name %></h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Standards</th>
+      <th>Total No of Panels</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @fire_alarm_control_panels.each do |panel| %>
+      <tr>
+        <td><%= panel.standards %></td>
+        <td><%= panel.total_no_of_panels %></td>
+        <td>
+          <%= link_to 'Edit', edit_project_system_subsystem_fire_alarm_control_panel_path(@subsystem.system.project, @subsystem.system, @subsystem, panel) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

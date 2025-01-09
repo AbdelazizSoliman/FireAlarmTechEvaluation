@@ -1,0 +1,13 @@
+<%= form_with model: @fire_alarm_control_panel, url: project_system_subsystem_fire_alarm_control_panels_path(@project, @system, @subsystem), local: true do |form| %>
+  <h1 class="text-xl font-semibold">Create New Fire Alarm Control Panel</h1>
+  <% FireAlarmControlPanel.column_names.each do |column| %>
+    <% next if %w[id subsystem_id created_at updated_at].include?(column) %>
+    <div class="mb-4">
+      <%= form.label column, column.humanize %>
+      <%= form.text_field column, class: "form-input w-full" %>
+    </div>
+  <% end %>
+  <div class="mt-4">
+    <%= form.submit "Create", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+  </div>
+<% end %>

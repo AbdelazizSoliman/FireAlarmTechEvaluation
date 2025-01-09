@@ -15,13 +15,12 @@ Rails.application.routes.draw do
 
  
   resources :projects do
-    resources :systems, only: [:index, :show] do
+    resources :systems do
       resources :subsystems do
-        resources :fire_alarm_control_panels, only: [:new, :create, :edit, :update]
+        resources :fire_alarm_control_panels, only: [:new, :create, :edit, :update, :index]
       end
     end
-  end
-  
+  end  
 
 
   devise_for :users

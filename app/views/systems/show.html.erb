@@ -1,7 +1,26 @@
-<% @system.subsystems.each do |subsystem| %>
-  <div class="my-4">
-    <%= link_to "Fire Alarm System", 
-                new_project_system_subsystem_fire_alarm_control_panel_path(@system.project, @system, subsystem), 
-                class: "bg-buttonRed text-white py-2 px-4 rounded" %>
+<h1 class="text-xl font-bold">System: <%= @system.name %> in Project: <%= @project.name %></h1>
+
+<h2 class="text-lg font-semibold mt-6">Subsystems</h2>
+<div>
+  <% if @system.subsystems.any? %>
+    <!-- Display the Fire Alarm System -->
+    <% @system.subsystems.each do |subsystem| %>
+      <div class="mb-4">
+        <h3 class="text-md font-semibold"><%= subsystem.name %></h3>
+        <!-- Button to view or add fire alarm system -->
+        <%= link_to "View Fire Alarm System", project_system_subsystem_fire_alarm_control_panels_path(@project, @system, subsystem), class: "bg-blue-500 text-white py-2 px-4 rounded mr-4" %>
+      </div>
+    <% end %>
+  <% else %>
+    <p>No subsystems available.</p>
+  <% end %>
+
+  <!-- Button to Add a New Fire Alarm System -->
+  <div class="mt-6">
+    <% if @system.subsystems.any? %>
+      <%= link_to "Add Fire Alarm System", new_project_system_subsystem_fire_alarm_control_panel_path(@project, @system, @system.subsystems.first), class: "bg-green-500 text-white py-2 px-4 rounded" %>
+    <% else %>
+      <%= link_to "Add Subsystem", new_project_system_subsystem_path(@project, @system), class: "bg-yellow-500 text-white py-2 px-4 rounded" %>
+    <% end %>
   </div>
-<% end %>
+</div>

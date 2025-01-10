@@ -6,17 +6,6 @@
     <%= form.text_field :name, class: "form-input w-full" %>
   </div>
 
-  <%= form.fields_for :fire_alarm_control_panel do |fa_form| %>
-    <h2 class="text-lg font-semibold mt-6">Fire Alarm Control Panel</h2>
-
-    <% FireAlarmControlPanel.column_names.each do |column| %>
-      <% next if %w[id project_id created_at updated_at].include?(column) %>
-      <div class="mb-4">
-        <%= fa_form.label column, column.humanize %>
-        <%= fa_form.text_field column, class: "form-input w-full" %>
-      </div>
-    <% end %>
-  <% end %>
 
   <div class="mt-4">
     <%= form.submit "Create Project", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>

@@ -8,21 +8,19 @@ Rails.application.routes.draw do
 
   # Nested Routes for Projects, Systems, and Subsystems
   resources :projects do
-    resources :systems do
-      resources :subsystems do
-        resources :fire_alarm_control_panels, only: [:new, :create, :edit, :update, :index]
-        member do
-          get :assign  # Assign subsystem to a supplier
-          post :assign_supplier  # Handle assignment submission
-        end
-      end
-    end
+    resources :systems, only: [:index, :show, :new, :create]
   end
+  
 
   # Standalone Routes for Systems and Subsystems
-  resources :systems, only: [:index, :show]
-  resources :subsystems, only: [:index, :show]
+  resources :systems, only: [:index, :show, :new, :create]
 
+  resources :subsystems, only: [:index, :show, :new, :create] do
+    member do
+      get :assign
+      post :assign_supplier
+    end
+  end
   # Devise routes for user authentication
   devise_for :users
 

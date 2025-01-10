@@ -1,8 +1,21 @@
 <h1 class="text-xl font-bold">Systems</h1>
+
+<!-- Add New System Button -->
+<div class="mb-4">
+<% if @projects.any? %>
+  <%= link_to "Add New System", new_project_system_path(@projects.first), class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+<% else %>
+  <p>No projects available. Please create a project first.</p>
+<% end %>
+
+</div>
+
+<!-- Display Systems -->
 <ul>
   <% @systems.each do |system| %>
     <li>
       <%= link_to system.name, system_path(system), class: "text-blue-500 hover:underline" %>
+      <span class="text-gray-600 ml-4">in Project: <%= system.project.name %></span>
     </li>
   <% end %>
 </ul>

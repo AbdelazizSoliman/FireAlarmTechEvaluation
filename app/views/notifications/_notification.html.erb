@@ -1,0 +1,4 @@
+<%= link_to "Reject", reject_supplier_notification_path(notification, supplier_id: notification.notifiable_id), 
+    method: :post, 
+    data: { confirm: "Are you sure you want to reject this supplier?" }, 
+    class: "text-red-500 hover:underline" %>

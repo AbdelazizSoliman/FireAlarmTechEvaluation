@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_08_222910) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_11_073044) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -86,6 +86,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_08_222910) do
     t.datetime "reset_password_sent_at"
     t.string "password_digest"
     t.string "status"
+    t.string "membership_type"
+    t.boolean "receive_evaluation_report"
   end
 
   create_table "systems", force: :cascade do |t|

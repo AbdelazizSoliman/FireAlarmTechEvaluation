@@ -1,7 +1,8 @@
 class PagesController < ApplicationController
   def index
-
+    @notifications = Notification.where(read: false).order(created_at: :desc)
   end
+  
 
   def settings
   end

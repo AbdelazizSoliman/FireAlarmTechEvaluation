@@ -2,6 +2,9 @@ class Supplier < ApplicationRecord
   STATUSES = %w[pending approved rejected]
   has_secure_password
 
+  validates :membership_type, presence: true, if: :status_approved?
+  validates :receive_evaluation_report, inclusion: { in: [true, false] }, if: :status_approved?
+
   validates :password, presence: true, length: { minimum: 6 }, confirmation: true, if: :password_required?
   validates :password_confirmation, presence: true, if: :password_required?
 
@@ -14,6 +17,9 @@ class Supplier < ApplicationRecord
   has_many :subsystem_suppliers, dependent: :destroy
   has_many :subsystems, through: :subsystem_suppliers
 
+  has_and_belongs_to_many :projects
+  has_and_belongs_to_many :subsystems
+
   private
 
   # Skip password validation when updating non-password fields
@@ -23,5 +29,8 @@ class Supplier < ApplicationRecord
 
   def set_default_status
     self.status ||= 'pending'
+  end
+  def status_approved?
+    status == "approved"
   end
 end

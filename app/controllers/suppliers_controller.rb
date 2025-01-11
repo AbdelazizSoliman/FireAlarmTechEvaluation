@@ -1,5 +1,7 @@
 class SuppliersController < ApplicationController
   before_action :set_supplier, only: %i[show edit update destroy]
+  before_action :set_notification, only: [:manage_membership, :approve_supplier, :reject_supplier]
+  before_action :set_supplier, only: [:manage_membership, :approve_supplier, :reject_supplier]
 
   # GET /suppliers
   def index
@@ -27,11 +29,11 @@ class SuppliersController < ApplicationController
   def create
     @supplier = Supplier.new(supplier_params)
 
-    if @supplier.save
-      redirect_to @supplier, notice: "Supplier was successfully created."
-    else
-      render :new, status: :unprocessable_entity
-    end
+      if @supplier.save
+        redirect_to @supplier, notice: "Supplier was successfully created."
+       else
+        render :new, status: :unprocessable_entity
+      end
   end
 
   # PATCH/PUT /suppliers/1
@@ -49,6 +51,46 @@ class SuppliersController < ApplicationController
     redirect_to suppliers_url, notice: "Supplier was successfully destroyed.", status: :see_other
   end
 
+  
+  def approve_supplier
+    if params[:membership_type].blank? || params[:receive_evaluation_report].blank?
+      redirect_to manage_membership_notification_path(@notification), alert: "Please select all required fields."
+      return
+    end
+
+    ActiveRecord::Base.transaction do
+      @supplier.update!(
+        membership_type: params[:membership_type],
+        receive_evaluation_report: params[:receive_evaluation_report] == "true",
+        status: "approved"
+      )
+
+      if params[:membership_type] == "gold"
+        selected_projects = params[:project_ids]
+        selected_projects.each do |project_id|
+          @supplier.projects << Project.find(project_id)
+        end
+      elsif params[:membership_type] == "silver"
+        selected_subsystems = params[:subsystem_ids]
+        selected_subsystems.each do |subsystem_id|
+          SubsystemSupplier.create!(subsystem_id: subsystem_id, supplier: @supplier)
+        end
+      end
+
+      @notification.update!(status: "resolved")
+    end
+
+    redirect_to notifications_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
+  rescue => e
+    redirect_to manage_membership_notification_path(@notification), alert: "Error: #{e.message}"
+  end
+
+  def reject_supplier
+    @supplier.update!(status: "rejected")
+    @notification.update!(status: "resolved")
+    redirect_to notifications_path, notice: "#{@supplier.supplier_name} has been rejected."
+  end
+
   # Approve a supplier
   def approve
     supplier = Supplier.find(params[:id])
@@ -63,8 +105,89 @@ class SuppliersController < ApplicationController
     redirect_to suppliers_path, notice: "Supplier was successfully rejected."
   end
 
+  def assign_membership
+    supplier = Supplier.find(params[:id])
+    supplier.update!(membership_type: params[:membership_type], receive_evaluation_report: params[:receive_evaluation_report])
+    
+    if params[:membership_type] == "gold"
+      supplier.projects = Project.where(id: params[:project_ids])
+    elsif params[:membership_type] == "silver"
+      supplier.subsystems = Subsystem.where(id: params[:subsystem_ids])
+    end
+  
+    # Notify Supplier
+    Notification.create!(
+      title: "Membership Assigned",
+      body: "You have been assigned #{supplier.membership_type.capitalize} Membership.",
+      notifiable: supplier,
+      read: false,
+      status: "active"
+    )
+  
+    redirect_to suppliers_path, notice: "Supplier membership and permissions assigned successfully."
+  end
+  
+  def update_membership
+    @supplier = Supplier.find(params[:id])
+
+    @supplier.update!(
+      membership_type: params[:membership_type],
+      receive_evaluation_report: params[:receive_evaluation_report]
+    )
+
+    if params[:membership_type] == 'gold'
+      project_ids = params[:project_ids]
+      @supplier.projects = Project.where(id: project_ids)
+    elsif params[:membership_type] == 'silver'
+      subsystem_ids = params[:subsystem_ids]
+      @supplier.subsystems = Subsystem.where(id: subsystem_ids)
+    end
+
+    Notification.create!(
+      title: "Membership Updated",
+      body: "#{@supplier.supplier_name} has been assigned a #{params[:membership_type]} membership.",
+      notifiable: @supplier,
+      read: false,
+      status: "pending"
+    )
+
+    redirect_to notifications_path, notice: "Supplier membership updated successfully."
+   rescue StandardError => e
+    redirect_to notifications_path, alert: "Error updating supplier: #{e.message}"
+  end
+
+  def set_membership_and_approve
+    @supplier = Supplier.find(params[:id])
+
+    # Update membership type and permissions
+    @supplier.update!(
+      membership_type: params[:membership_type],
+      receive_evaluation_report: params[:receive_evaluation_report]
+    )
+
+    if params[:membership_type] == "gold"
+      @supplier.projects = Project.where(id: params[:project_ids])
+    elsif params[:membership_type] == "silver"
+      @supplier.subsystems = Subsystem.where(id: params[:subsystem_ids])
+    end
+
+    # Approve the supplier
+    @supplier.update!(status: "approved")
+
+    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} approved with membership type #{params[:membership_type]}."
+  end
+
+  def manage_membership
+    @projects = Project.all
+    @subsystems = Subsystem.all
+  end
+
   private
 
+  def set_notification
+    @notification = Notification.find(params[:id])
+  end
+  
   # Use callbacks to share common setup or constraints between actions.
   def set_supplier
     @supplier = Supplier.find(params[:id])
@@ -80,7 +203,10 @@ class SuppliersController < ApplicationController
       :supplier_email,
       :password,
       :password_confirmation,
-      :status # Allow status updates
+      :status,
+      :membership_type,
+      :receive_evaluation_report # Allow status updates
+     
     )
   end
 end

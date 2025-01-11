@@ -5,6 +5,39 @@ module Api
 
       before_action :set_supplier, only: %i[show edit update destroy]
 
+      def mark_all_read
+        Notification.update_all(read: true)
+        render json: { message: "All notifications marked as read" }, status: :ok
+      end
+      
+
+      def assign_membership
+        @supplier = ::Supplier.find(params[:id])
+      
+        @supplier.update!(
+          membership_type: params[:membership_type],
+          receive_evaluation_report: params[:receive_evaluation_report]
+        )
+      
+        if params[:membership_type] == "gold"
+          @supplier.projects = Project.where(id: params[:project_ids])
+        elsif params[:membership_type] == "silver"
+          @supplier.subsystems = Subsystem.where(id: params[:subsystem_ids])
+        end
+      
+        Notification.create!(
+          title: "Membership Assigned",
+          body: "You have been assigned #{params[:membership_type].capitalize} Membership.",
+          notifiable: @supplier,
+          read: false,
+          status: "active"
+        )
+      
+        render json: { message: "Membership assigned successfully" }, status: :ok
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+      
       def register
         @supplier = ::Supplier.new(supplier_params)
         if @supplier.save
@@ -86,7 +119,10 @@ module Api
           :phone,
           :supplier_email,
           :password,
-          :password_confirmation
+          :password_confirmation,
+           :status,# Allow status updates
+          :membership_type,
+    :receive_evaluation_report
         )
       end
     end

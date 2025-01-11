@@ -4,6 +4,9 @@ Rails.application.routes.draw do
     collection do
       get :search
     end
+    member do
+      post :set_membership_and_approve  # Handle membership and permissions, then approve
+    end
   end
 
   # Nested Routes for Projects, Systems, and Subsystems
@@ -36,15 +39,13 @@ Rails.application.routes.draw do
   end
 
   # Notifications routes
-  resources :notifications, only: [] do
+  resources :notifications, only: [:index] do
     member do
-      post :approve
-      post :reject
-      get :approve
-      get :reject
+      get :manage_membership # For membership form
+      post :approve_supplier  # To handle approval
+      post :reject_supplier   # To handle rejection
     end
   end
-
   # Health check route
   get "up" => "rails/health#show", as: :rails_health_check
 

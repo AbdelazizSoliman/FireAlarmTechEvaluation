@@ -14,37 +14,48 @@ class NotificationsController < ApplicationController
   end
 
   def approve_supplier
-    if params[:membership_type].blank? || params[:receive_evaluation_report].nil?
+    Rails.logger.info "Params received: #{params.inspect}"
+  
+    # Ensure supplier_id is present
+    if params[:supplier_id].blank?
+      redirect_to manage_membership_notification_path(@notification), alert: "Supplier ID is missing."
+      return
+    end
+  
+    # Find the supplier
+    @supplier = Supplier.find(params[:supplier_id])
+  
+    if params[:membership_type].blank? || params[:receive_evaluation_report].blank?
       redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Please select all required fields."
       return
     end
   
     ActiveRecord::Base.transaction do
-      # Update supplier details
+      # Update supplier attributes
       @supplier.update!(
         membership_type: params[:membership_type],
         receive_evaluation_report: params[:receive_evaluation_report] == "true",
         status: "approved"
       )
   
-      # Handle project or subsystem permissions
+      # Assign projects or subsystems based on membership type
       if params[:membership_type] == "gold"
-        project_ids = params[:project_ids] || []
-        @supplier.projects = Project.where(id: project_ids)
+        selected_projects = params[:project_ids] || []
+        @supplier.projects = Project.where(id: selected_projects)
       elsif params[:membership_type] == "silver"
-        subsystem_ids = params[:subsystem_ids] || []
-        @supplier.subsystems = Subsystem.where(id: subsystem_ids)
+        selected_subsystems = params[:subsystem_ids] || []
+        @supplier.subsystems = Subsystem.where(id: selected_subsystems)
       end
   
-      # Mark the notification as resolved
-      @notification.update!(read: true, status: "resolved")
+      # Resolve the notification
+      @notification.update!(status: "resolved")
     end
   
-    redirect_to notifications_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
+    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
   rescue => e
+    Rails.logger.error "Error in approve_supplier: #{e.message}"
     redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
   end
-  
 
   def reject_supplier
     ActiveRecord::Base.transaction do

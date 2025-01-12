@@ -1,4 +1,7 @@
 <%= form_with url: approve_supplier_notification_path(@notification), method: :post, local: true do |form| %>
+  <!-- Hidden field for supplier_id -->
+  <%= form.hidden_field :supplier_id, value: @supplier.id %>
+
   <!-- Membership Type -->
   <div class="mb-4">
     <h2 class="font-semibold">Membership Type</h2>
@@ -12,8 +15,8 @@
   <div id="gold-membership" class="hidden mb-4">
     <h2 class="font-semibold">Select Projects</h2>
     <% @projects.each do |project| %>
-      <%= check_box_tag "project_ids[]", project.id, false, id: "project_#{project.id}" %>
-      <%= label_tag "project_#{project.id}", project.name, class: "ml-2" %><br>
+      <%= form.check_box :project_ids, { multiple: true }, project.id, nil %>
+      <%= form.label "project_ids_#{project.id}", project.name, class: "ml-2" %><br>
     <% end %>
   </div>
 
@@ -21,8 +24,8 @@
   <div id="silver-membership" class="hidden mb-4">
     <h2 class="font-semibold">Select Subsystems</h2>
     <% @subsystems.each do |subsystem| %>
-      <%= check_box_tag "subsystem_ids[]", subsystem.id, false, id: "subsystem_#{subsystem.id}" %>
-      <%= label_tag "subsystem_#{subsystem.id}", subsystem.name, class: "ml-2" %><br>
+      <%= form.check_box :subsystem_ids, { multiple: true }, subsystem.id, nil %>
+      <%= form.label "subsystem_ids_#{subsystem.id}", subsystem.name, class: "ml-2" %><br>
     <% end %>
   </div>
 

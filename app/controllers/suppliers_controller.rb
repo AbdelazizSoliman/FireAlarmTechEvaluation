@@ -53,36 +53,38 @@ class SuppliersController < ApplicationController
 
   
   def approve_supplier
+    Rails.logger.info "Params received: #{params.inspect}"
+  
     if params[:membership_type].blank? || params[:receive_evaluation_report].blank?
-      redirect_to manage_membership_notification_path(@notification), alert: "Please select all required fields."
+      redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Please select all required fields."
       return
     end
-
+  
     ActiveRecord::Base.transaction do
+      # Update supplier attributes
       @supplier.update!(
         membership_type: params[:membership_type],
         receive_evaluation_report: params[:receive_evaluation_report] == "true",
         status: "approved"
       )
-
+  
+      # Assign projects or subsystems based on membership type
       if params[:membership_type] == "gold"
-        selected_projects = params[:project_ids]
-        selected_projects.each do |project_id|
-          @supplier.projects << Project.find(project_id)
-        end
+        selected_projects = params[:project_ids] || []
+        @supplier.projects = Project.where(id: selected_projects)
       elsif params[:membership_type] == "silver"
-        selected_subsystems = params[:subsystem_ids]
-        selected_subsystems.each do |subsystem_id|
-          SubsystemSupplier.create!(subsystem_id: subsystem_id, supplier: @supplier)
-        end
+        selected_subsystems = params[:subsystem_ids] || []
+        @supplier.subsystems = Subsystem.where(id: selected_subsystems)
       end
-
+  
+      # Resolve the notification
       @notification.update!(status: "resolved")
     end
-
+  
     redirect_to notifications_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
   rescue => e
-    redirect_to manage_membership_notification_path(@notification), alert: "Error: #{e.message}"
+    Rails.logger.error "Error in approve_supplier: #{e.message}"
+    redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
   end
 
   def reject_supplier

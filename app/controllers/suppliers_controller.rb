@@ -24,10 +24,11 @@ class SuppliersController < ApplicationController
   # GET /suppliers/1/edit
   def edit
     @supplier = Supplier.find(params[:id])
-
-    @supplier = Supplier.find(params[:id])
-    @projects = Project.all
-    @subsystems = Subsystem.all # Or any specific logic to fetch projects @subsystems = Subsystem.all
+    if @supplier.membership_type == "gold"
+      @projects = Project.all
+    elsif @supplier.membership_type == "silver"
+      @subsystems = Subsystem.all
+    end
   end
 
   # POST /suppliers
@@ -44,6 +45,15 @@ class SuppliersController < ApplicationController
   # PATCH/PUT /suppliers/1
   def update
     if @supplier.update(supplier_params)
+      if @supplier.membership_type == "gold"
+        selected_projects = params[:project_ids] || []
+        @supplier.projects = Project.where(id: selected_projects)
+        @supplier.subsystems.clear
+      elsif @supplier.membership_type == "silver"
+        selected_subsystems = params[:subsystem_ids] || []
+        @supplier.subsystems = Subsystem.where(id: selected_subsystems)
+        @supplier.projects.clear
+      end
       redirect_to @supplier, notice: "Supplier was successfully updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
@@ -59,6 +69,9 @@ class SuppliersController < ApplicationController
   
   def approve_supplier
     Rails.logger.info "Params received: #{params.inspect}"
+  
+    @supplier = Supplier.find(params[:supplier_id])
+    @notification = Notification.find(params[:id])
   
     if params[:membership_type].blank? || params[:receive_evaluation_report].blank?
       redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Please select all required fields."
@@ -77,27 +90,50 @@ class SuppliersController < ApplicationController
       if params[:membership_type] == "gold"
         selected_projects = params[:project_ids] || []
         @supplier.projects = Project.where(id: selected_projects)
+        @supplier.subsystems.clear
       elsif params[:membership_type] == "silver"
         selected_subsystems = params[:subsystem_ids] || []
         @supplier.subsystems = Subsystem.where(id: selected_subsystems)
+        @supplier.projects.clear
       end
   
       # Resolve the notification
       @notification.update!(status: "resolved")
     end
   
-    redirect_to notifications_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
+    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
   rescue => e
     Rails.logger.error "Error in approve_supplier: #{e.message}"
     redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
   end
 
   def reject_supplier
-    @supplier.update!(status: "rejected")
-    @notification.update!(status: "resolved")
-    redirect_to notifications_path, notice: "#{@supplier.supplier_name} has been rejected."
+    @supplier = Supplier.find(params[:supplier_id])
+    @notification = Notification.find(params[:id])
+  
+    ActiveRecord::Base.transaction do
+      # Update supplier status to "rejected"
+      @supplier.update!(status: "rejected")
+  
+      # Create a notification for the supplier
+      Notification.create!(
+        title: "Membership Rejected",
+        body: "Your membership application has been rejected.",
+        notifiable: @supplier,
+        read: false,
+        status: "active"
+      )
+  
+      # Resolve the admin notification
+      @notification.update!(status: "resolved")
+    end
+  
+    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been rejected."
+  rescue => e
+    Rails.logger.error "Error in reject_supplier: #{e.message}"
+    redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
   end
-
+  
   # Approve a supplier
   def approve
     supplier = Supplier.find(params[:id])

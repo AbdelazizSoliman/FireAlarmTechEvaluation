@@ -3,7 +3,8 @@ class NotificationsController < ApplicationController
   before_action :set_supplier, only: [:manage_membership, :approve_supplier, :reject_supplier]
 
   def index
-    @notifications = Notification.where(read: false).order(created_at: :desc)
+    @notifications = Notification.all
+    # @notifications = Notification.where(read: false).order(created_at: :desc)
     # render json: @notifications
   end
 

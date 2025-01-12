@@ -1,0 +1,23 @@
+<!-- app/views/notifications/index.html.erb -->
+<h1>Notifications</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Body</th>
+      <th>Status</th>
+      <th>Read</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @notifications.each do |notification| %>
+      <tr>
+        <td><%= notification.title %></td>
+        <td><%= notification.body %></td>
+        <td><%= notification.status %></td>
+        <td><%= notification.read ? 'Yes' : 'No' %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -108,30 +108,9 @@ class SuppliersController < ApplicationController
   end
 
   def reject_supplier
-    @supplier = Supplier.find(params[:supplier_id])
-    @notification = Notification.find(params[:id])
-  
-    ActiveRecord::Base.transaction do
-      # Update supplier status to "rejected"
-      @supplier.update!(status: "rejected")
-  
-      # Create a notification for the supplier
-      Notification.create!(
-        title: "Membership Rejected",
-        body: "Your membership application has been rejected.",
-        notifiable: @supplier,
-        read: false,
-        status: "active"
-      )
-  
-      # Resolve the admin notification
-      @notification.update!(status: "resolved")
-    end
-  
-    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been rejected."
-  rescue => e
-    Rails.logger.error "Error in reject_supplier: #{e.message}"
-    redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
+    supplier = Supplier.find(params[:id])
+    supplier.update_column(:status, 'rejected') # Bypass validations
+    redirect_to suppliers_path, notice: "Supplier was successfully rejected."
   end
   
   # Approve a supplier

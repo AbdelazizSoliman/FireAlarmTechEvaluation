@@ -23,6 +23,9 @@ class SuppliersController < ApplicationController
 
   # GET /suppliers/1/edit
   def edit
+    @supplier = Supplier.find(params[:id])
+    @projects = Project.all
+    @subsystems = Subsystem.all # Or any specific logic to fetch projects @subsystems = Subsystem.all
   end
 
   # POST /suppliers

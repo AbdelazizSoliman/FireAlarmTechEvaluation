@@ -20,7 +20,18 @@ class Supplier < ApplicationRecord
   has_and_belongs_to_many :projects
   has_and_belongs_to_many :subsystems
 
+ # Callbacks
+ before_update :clear_old_associations, if: :membership_type_changed?
+
   private
+
+  def clear_old_associations
+    if membership_type_was == "gold"
+      projects.clear
+    elsif membership_type_was == "silver"
+      subsystems.clear
+    end
+  end
 
   # Skip password validation when updating non-password fields
   def password_required?

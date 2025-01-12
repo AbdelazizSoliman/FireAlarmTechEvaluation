@@ -1,7 +1,6 @@
-<%= form_with url: approve_supplier_notification_path(@notification), method: :post, local: true do |form| %>
-  <!-- Hidden field for supplier_id -->
-  <%= form.hidden_field :supplier_id, value: @supplier.id %>
+<h1 class="text-xl font-bold">Approve Supplier: <%= @supplier.supplier_name %></h1>
 
+<%= form_with url: approve_supplier_notification_path(@notification), method: :post, local: true do |form| %>
   <!-- Membership Type -->
   <div class="mb-4">
     <h2 class="font-semibold">Membership Type</h2>
@@ -16,7 +15,7 @@
     <h2 class="font-semibold">Select Projects</h2>
     <% @projects.each do |project| %>
       <%= form.check_box :project_ids, { multiple: true }, project.id, nil %>
-      <%= form.label "project_ids_#{project.id}", project.name, class: "ml-2" %><br>
+      <%= label_tag "project_#{project.id}", project.name, class: "ml-2" %><br>
     <% end %>
   </div>
 
@@ -25,7 +24,7 @@
     <h2 class="font-semibold">Select Subsystems</h2>
     <% @subsystems.each do |subsystem| %>
       <%= form.check_box :subsystem_ids, { multiple: true }, subsystem.id, nil %>
-      <%= form.label "subsystem_ids_#{subsystem.id}", subsystem.name, class: "ml-2" %><br>
+      <%= label_tag "subsystem_#{subsystem.id}", subsystem.name, class: "ml-2" %><br>
     <% end %>
   </div>
 
@@ -69,5 +68,8 @@
 
     goldRadio.addEventListener("change", toggleMembershipSections);
     silverRadio.addEventListener("change", toggleMembershipSections);
+
+    // Trigger the function on page load to set the initial state
+    toggleMembershipSections();
   });
 </script>

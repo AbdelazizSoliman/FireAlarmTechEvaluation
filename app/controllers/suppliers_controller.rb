@@ -134,30 +134,42 @@ class SuppliersController < ApplicationController
   
   def update_membership
     @supplier = Supplier.find(params[:id])
-
-    @supplier.update!(
-      membership_type: params[:membership_type],
-      receive_evaluation_report: params[:receive_evaluation_report]
-    )
-
-    if params[:membership_type] == 'gold'
-      project_ids = params[:project_ids]
-      @supplier.projects = Project.where(id: project_ids)
-    elsif params[:membership_type] == 'silver'
-      subsystem_ids = params[:subsystem_ids]
-      @supplier.subsystems = Subsystem.where(id: subsystem_ids)
+  
+    ActiveRecord::Base.transaction do
+      # Remove existing associations based on the previous membership type
+      if @supplier.membership_type == "gold"
+        @supplier.projects.clear # Remove all project associations
+      elsif @supplier.membership_type == "silver"
+        @supplier.subsystems.clear # Remove all subsystem associations
+      end
+  
+      # Update membership type and permissions
+      @supplier.update!(
+        membership_type: params[:membership_type],
+        receive_evaluation_report: params[:receive_evaluation_report]
+      )
+  
+      # Assign new associations based on the updated membership type
+      if params[:membership_type] == "gold"
+        project_ids = params[:project_ids] || []
+        @supplier.projects = Project.where(id: project_ids)
+      elsif params[:membership_type] == "silver"
+        subsystem_ids = params[:subsystem_ids] || []
+        @supplier.subsystems = Subsystem.where(id: subsystem_ids)
+      end
+  
+      # Notify Supplier
+      Notification.create!(
+        title: "Membership Updated",
+        body: "#{@supplier.supplier_name} has been assigned a #{params[:membership_type]} membership.",
+        notifiable: @supplier,
+        read: false,
+        status: "pending"
+      )
     end
-
-    Notification.create!(
-      title: "Membership Updated",
-      body: "#{@supplier.supplier_name} has been assigned a #{params[:membership_type]} membership.",
-      notifiable: @supplier,
-      read: false,
-      status: "pending"
-    )
-
+  
     redirect_to notifications_path, notice: "Supplier membership updated successfully."
-   rescue StandardError => e
+  rescue StandardError => e
     redirect_to notifications_path, alert: "Error updating supplier: #{e.message}"
   end
 

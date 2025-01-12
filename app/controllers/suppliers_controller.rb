@@ -1,7 +1,7 @@
 class SuppliersController < ApplicationController
   before_action :set_supplier, only: %i[show edit update destroy]
   before_action :set_notification, only: [:manage_membership, :approve_supplier, :reject_supplier]
-  before_action :set_supplier, only: [:manage_membership, :approve_supplier, :reject_supplier]
+  # before_action :set_supplier, only: [:manage_membership, :approve_supplier, :reject_supplier]
 
   # GET /suppliers
   def index

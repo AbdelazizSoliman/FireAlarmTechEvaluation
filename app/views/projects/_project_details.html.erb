@@ -10,7 +10,6 @@
     <thead class="bg-tableHeaderBg">
       <tr>
         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Name</th>
-        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fire Alarm Control Panels</th>
         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
       </tr>
     </thead>
@@ -22,31 +21,12 @@
             <div class="text-sm font-medium text-gray-900"><%= project.name %></div>
           </td>
 
-          <!-- Fire Alarm Control Panels -->
-          <td class="px-6 py-4 whitespace-nowrap">
-            <% project.systems.each do |system| %>
-              <% system.subsystems.each do |subsystem| %>
-                <% subsystem.fire_alarm_control_panels.each do |fire_alarm_control_panel| %>
-                  <div class="text-sm text-gray-500 mb-4">
-                    <p><strong>Standards:</strong> <%= fire_alarm_control_panel.standards %></p>
-                    <p><strong>Total Panels:</strong> <%= fire_alarm_control_panel.total_no_of_panels %></p>
-                    <p><strong>Loop Cards:</strong> <%= fire_alarm_control_panel.total_number_of_loop_cards %></p>
-                    <p><strong>Circuits per Loop Card:</strong> <%= fire_alarm_control_panel.total_number_of_circuits_per_card_loop %></p>
-                    <p><strong>Total Loops:</strong> <%= fire_alarm_control_panel.total_no_of_loops %></p>
-                    <p><strong>Spare Loops:</strong> <%= fire_alarm_control_panel.total_no_of_spare_loops %></p>
-                    <p><strong>Detectors per Loop:</strong> <%= fire_alarm_control_panel.total_no_of_detectors_per_loop %></p>
-                    <p><strong>Spare Loops per Panel:</strong> <%= fire_alarm_control_panel.spare_no_of_loops_per_panel %></p>
-                    <p><strong>Polarity Insensitivity:</strong> <%= fire_alarm_control_panel.initiating_devices_polarity_insensitivity %></p>
-                    <p><strong>Spare Percentage per Loop:</strong> <%= fire_alarm_control_panel.spare_percentage_per_loop %> %</p>
-                    <p><strong>FA Repeater:</strong> <%= fire_alarm_control_panel.fa_repeater %></p>
-                    <p><strong>Auto Dialer:</strong> <%= fire_alarm_control_panel.auto_dialer %></p>
-                    <p><strong>Dot Matrix Printer:</strong> <%= fire_alarm_control_panel.dot_matrix_printer %></p>
-                    <p><strong>Backup Time:</strong> <%= fire_alarm_control_panel.external_batteries_backup_time %> hours</p>
-                  </div>
-                <% end %>
-              <% end %>
-            <% end %>
-          </td>
+          <td class="px-6 py-4">
+    <%= link_to "View Scopes", project_project_scopes_path(project), class: "text-blue-500 hover:underline" %>
+  </td>
+  <td class="px-6 py-4">
+    <%= link_to "View", project_path(project), class: "text-red-600 hover:text-red-900" %>
+  </td>
 
           <!-- Actions -->
           <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-4">

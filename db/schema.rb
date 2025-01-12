@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_12_004615) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_12_135320) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -49,6 +49,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_12_004615) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+  end
+
+  create_table "project_scopes", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id"], name: "index_project_scopes_on_project_id"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -105,7 +113,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_12_004615) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "project_scope_id", null: false
     t.index ["project_id"], name: "index_systems_on_project_id"
+    t.index ["project_scope_id"], name: "index_systems_on_project_scope_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -131,8 +141,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_12_004615) do
   end
 
   add_foreign_key "fire_alarm_control_panels", "subsystems"
+  add_foreign_key "project_scopes", "projects"
   add_foreign_key "subsystem_suppliers", "subsystems"
   add_foreign_key "subsystem_suppliers", "suppliers"
   add_foreign_key "subsystems", "systems"
+  add_foreign_key "systems", "project_scopes"
   add_foreign_key "systems", "projects"
 end

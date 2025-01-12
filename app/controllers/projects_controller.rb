@@ -1,41 +1,27 @@
 class ProjectsController < ApplicationController
+
   def index
-    @projects = Project.all.includes(:systems) # Include associated systems to optimize queries
+    @projects = Project.all.includes(:project_scopes) # Include associated project scopes for better query performance
   end
 
   def show
     @project = Project.find(params[:id])
-    @fire_alarm_panels = @project.systems.flat_map do |system|
-      system.subsystems.flat_map(&:fire_alarm_control_panels)
-    end
+    @project_scopes = @project.project_scopes
   end
-  
 
   def new
     @project = Project.new
-    @project.systems.build # Build associated systems
   end
 
   def create
     @project = Project.new(project_params)
-
     if @project.save
-      # Evaluate the project data after saving
-      comparison_result = evaluate_project_data(@project)
-
-      # Generate the PDF report based on the comparison results
-      generate_pdf_report(comparison_result)
-
-      # Flash message based on evaluation results
-      if comparison_result.first
-        redirect_to projects_path, notice: "The project data meets the required criteria. Report generated."
-      else
-        redirect_to projects_path, alert: "The project data does not meet the required criteria. Report generated."
-      end
+      redirect_to projects_path, notice: "Project created successfully."
     else
       render :new
     end
   end
+
 
   def download_excel
     @project = Project.find(params[:id])
@@ -71,24 +57,7 @@ class ProjectsController < ApplicationController
   private
 
   def project_params
-    params.require(:project).permit(
-      :name, # Project attributes
-      systems_attributes: [
-        :id, :name, :_destroy,
-        subsystems_attributes: [
-          :id, :name, :_destroy,
-          fire_alarm_control_panels_attributes: [
-            :id, :standards, :total_no_of_panels, :total_number_of_loop_cards, 
-            :total_number_of_circuits_per_card_loop, :total_no_of_loops, 
-            :total_no_of_spare_loops, :total_no_of_detectors_per_loop, 
-            :spare_no_of_loops_per_panel, :initiating_devices_polarity_insensitivity, 
-            :spare_percentage_per_loop, :fa_repeater, :auto_dialer, :dot_matrix_printer, 
-            :printer_listing, :power_standby_24_alarm_5, :power_standby_24_alarm_15, 
-            :internal_batteries_backup_capacity_panel, :external_batteries_backup_time
-          ]
-        ]
-      ]
-    )
+    params.require(:project).permit(:name)
   end
 
   def evaluate_project_data(project)

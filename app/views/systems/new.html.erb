@@ -1,17 +1,12 @@
 <h1 class="text-xl font-bold">Add New System</h1>
 
-<%= form_with model: @system, url: project_systems_path(@project), local: true do |form| %>
-  <div class="mb-4">
-    <%= form.label :project_id, "Select Project" %>
-    <%= form.collection_select :project_id, @projects, :id, :name, { prompt: "Choose a Project" }, class: "form-select w-full" %>
-  </div>
-
+<%= form_with model: [@project_scope, @system], local: true do |form| %>
   <div class="mb-4">
     <%= form.label :name, "System Name" %>
     <%= form.text_field :name, class: "form-input w-full" %>
   </div>
 
   <div class="mt-4">
-    <%= form.submit "Save", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+    <%= form.submit "Create System", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
   </div>
 <% end %>

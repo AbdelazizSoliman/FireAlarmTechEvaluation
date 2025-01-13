@@ -1,7 +1,16 @@
 class ProjectsController < ApplicationController
+  before_action :set_project, only: [:show, :edit, :update]
 
   def index
     @projects = Project.all.includes(:project_scopes) # Include associated project scopes for better query performance
+  end
+
+  def edit
+    # Render the edit form for the project
+  end
+
+  def update
+    # Render the edit form for the project
   end
 
   def show
@@ -56,6 +65,10 @@ class ProjectsController < ApplicationController
   end
 
   private
+
+  def set_project
+    @project = Project.find(params[:id])
+  end
 
   def project_params
     params.require(:project).permit(:name)

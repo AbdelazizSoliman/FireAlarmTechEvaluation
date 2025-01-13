@@ -10,13 +10,15 @@
     <div class="flex flex-col flex-1 overflow-y-auto">
       <nav class="flex-1 px-2 py-4">
         
-        <a href="/" class="flex items-center px-4 py-2 <%= active_class('/') %>">
+        <!-- Dashboard Link -->
+        <a href="/" class="flex items-center px-4 py-2 <%= active_class(root_path) %>">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
           Dashboard
         </a>
 
+        <!-- Suppliers Link -->
         <a href="/suppliers" class="flex items-center px-4 py-2 mt-2 <%= active_class('/suppliers') %>">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2 size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
@@ -24,6 +26,7 @@
           Suppliers
         </a>
 
+        <!-- Projects Link -->
         <a href="/projects" class="flex items-center px-4 py-2 mt-2 <%= active_class('/projects') %>">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mr-2">
             <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
@@ -31,30 +34,35 @@
           Projects
         </a>
 
-        <!-- New Link for ProjectScopes -->
-        <a href="<%= project_project_scopes_path(@project) %>" class="flex items-center px-4 py-2 mt-2 <%= active_class(project_project_scopes_path(@project)) %>">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.75V19.25M4.75 12H19.25" />
-        </svg>
-        Project Scopes
-      </a>
+        <!-- Project Scopes Link -->
+        <% if @project %>
+          <a href="<%= project_project_scopes_path(@project) %>" class="flex items-center px-4 py-2 mt-2 <%= active_class(project_project_scopes_path(@project)) %>">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.75V19.25M4.75 12H19.25" />
+            </svg>
+            Project Scopes
+          </a>
+        <% end %>
 
+        <!-- Systems Link -->
+        <% if @project && @project_scope %>
+          <a href="<%= project_project_scope_systems_path(@project, @project_scope) %>" class="flex items-center px-4 py-2 mt-2 <%= active_class(project_project_scope_systems_path(@project, @project_scope)) %>">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5h7.5M8.25 9h7.5M8.25 13.5h4.5m4.5 4.5H8.25" />
+            </svg>
+            Systems
+          </a>
+        <% end %>
 
-      
-      <a href="<%= project_project_scope_systems_path(@project, @project_scope) %>" class="flex items-center px-4 py-2 mt-2 <%= active_class(project_project_scope_systems_path(@project, @project_scope)) %>">
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5h7.5M8.25 9h7.5M8.25 13.5h4.5m4.5 4.5H8.25" />
-  </svg>
-  Systems
-</a>
-   
-
-        <a href="/subsystems" class="flex items-center px-4 py-2 mt-2 <%= active_class('/subsystems') %>">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5h14M5 12h9m-9 7h14" />
-          </svg>
-          Subsystems
-        </a>
+        <!-- Subsystems Link -->
+        <% if @project && @project_scope && @system %>
+          <a href="<%= project_project_scope_system_subsystems_path(@project, @project_scope, @system) %>" class="flex items-center px-4 py-2 mt-2 <%= active_class(project_project_scope_system_subsystems_path(@project, @project_scope, @system)) %>">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5h14M5 12h9m-9 7h14" />
+            </svg>
+            Subsystems
+          </a>
+        <% end %>
 
       </nav>
     </div>

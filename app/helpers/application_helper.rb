@@ -2,13 +2,21 @@
 
 module ApplicationHelper
   def active_class(link_path)
-    request.path.include?(link_path) && link_path != "/" ? 'bg-sidebarActiveBg text-white rounded-md' : 'text-white hover:bg-sidebarActiveBg rounded-md'
+    request.path == link_path ? 'bg-sidebarActiveBg text-white rounded-md' : 'text-white hover:bg-sidebarActiveBg rounded-md'
   end
 
   def current_page_name
     case controller_name
     when "projects"
       link_to("Projects", projects_path)
+    when "project_scopes"
+      if params[:project_id]
+        link_to("Projects", projects_path) +
+          " > ".html_safe +
+          link_to("Project Scopes", project_project_scopes_path(params[:project_id]))
+      else
+        "Project Scopes"
+      end
     when "systems"
       if params[:project_id] && params[:project_scope_id]
         link_to("Projects", projects_path) +
@@ -35,7 +43,7 @@ module ApplicationHelper
       controller_name.titleize
     end
   end
-  
+
   def us_states
     %w[
       AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD

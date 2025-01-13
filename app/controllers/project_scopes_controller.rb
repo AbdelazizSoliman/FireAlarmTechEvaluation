@@ -1,6 +1,6 @@
 class ProjectScopesController < ApplicationController
     before_action :set_project
-    before_action :set_default_project_scope
+    before_action :set_project_scope
   
     def index
       @project_scopes = @project.project_scopes
@@ -30,9 +30,14 @@ class ProjectScopesController < ApplicationController
     def set_project
       @project = Project.find(params[:project_id])
     end
+
+    def set_project_scope
+      @project_scope = @project.project_scopes.find(params[:id])
+    end
   
     def project_scope_params
       params.require(:project_scope).permit(:name)
     end
+
   end
   

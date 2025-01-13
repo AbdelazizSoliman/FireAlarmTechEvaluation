@@ -1,13 +1,10 @@
 class SubsystemsController < ApplicationController
-  # before_action :set_nested_resources, only: [:index, :show, :new, :create, :assign, :assign_supplier]
+  before_action :set_project
+  before_action :set_project_scope
   before_action :set_system
 
   def index
-    @subsystems = if @system.present?
-                    @system.subsystems
-                  else
-                    Subsystem.all
-                  end
+    @systems = @project_scope.systems
   end
 
   def show
@@ -21,7 +18,7 @@ class SubsystemsController < ApplicationController
   def create
     @subsystem = @system.subsystems.new(subsystem_params)
     if @subsystem.save
-      redirect_to @system.project_scope.project, notice: 'Subsystem was successfully created.'
+     redirect_to @project, notice: 'Subsystem was successfully created.'
     else
       render :new
     end
@@ -30,13 +27,17 @@ class SubsystemsController < ApplicationController
 
   private
 
-  def set_nested_resources
-   
-    @system = System.find(params[:system_id]) if params[:system_id]
+  
+  def set_project
+    @project = Project.find(params[:project_id])
+  end
+
+  def set_project_scope
+    @project_scope = @project.project_scopes.find(params[:project_scope_id])
   end
 
   def set_system
-    @system = System.find(params[:system_id])
+    @system = @project_scope.systems.find(params[:id])
   end
 
   def subsystem_params

@@ -22,8 +22,7 @@ end
 def create
   @system = @project_scope.systems.new(system_params)
   if @system.save
-    redirect_to project_project_scope_systems_path(@project, @project_scope), notice: 'System was successfully created.'
-  else
+    redirect_to @project, notice: 'System was successfully created.'  else
     render :new
   end
 end 

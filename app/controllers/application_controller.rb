@@ -2,6 +2,9 @@ class ApplicationController < ActionController::Base
     before_action :configure_permitted_parameters, if: :devise_controller?
     # before_action :authenticate_user!
     before_action :set_unread_notifications_count
+    before_action :set_default_project
+    before_action :set_default_project_scope
+
 
   
     protected
@@ -17,6 +20,14 @@ class ApplicationController < ActionController::Base
 
 
     private
+
+    def set_default_project_scope
+      @project_scope ||= @project.project_scopes.first # Use the first project scope as the default
+    end
+
+    def set_default_project
+      @project ||= Project.first # Use the first project as the default
+    end
 
     def set_unread_notifications_count
       if current_user

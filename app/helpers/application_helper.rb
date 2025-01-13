@@ -10,20 +10,24 @@ module ApplicationHelper
     when "projects"
       link_to("Projects", projects_path)
     when "systems"
-      if params[:project_id]
+      if params[:project_id] && params[:project_scope_id]
         link_to("Projects", projects_path) +
           " > ".html_safe +
-          link_to("Systems", project_systems_path(params[:project_id]))
+          link_to("Project Scopes", project_project_scopes_path(params[:project_id])) +
+          " > ".html_safe +
+          link_to("Systems", project_project_scope_systems_path(params[:project_id], params[:project_scope_id]))
       else
         "Systems"
       end
     when "subsystems"
-      if params[:project_id] && params[:system_id]
+      if params[:project_id] && params[:project_scope_id] && params[:system_id]
         link_to("Projects", projects_path) +
           " > ".html_safe +
-          link_to("Systems", project_systems_path(params[:project_id])) +
+          link_to("Project Scopes", project_project_scopes_path(params[:project_id])) +
           " > ".html_safe +
-          link_to("Subsystems", project_system_subsystems_path(params[:project_id], params[:system_id]))
+          link_to("Systems", project_project_scope_systems_path(params[:project_id], params[:project_scope_id])) +
+          " > ".html_safe +
+          link_to("Subsystems", project_project_scope_system_subsystems_path(params[:project_id], params[:project_scope_id], params[:system_id]))
       else
         "Subsystems"
       end
@@ -32,9 +36,6 @@ module ApplicationHelper
     end
   end
   
-  
-  
-
   def us_states
     %w[
       AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD

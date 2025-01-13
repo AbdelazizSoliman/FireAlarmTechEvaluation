@@ -4,7 +4,7 @@
   <% @subsystems.each do |subsystem| %>
     <li>
       <%= link_to subsystem.name, subsystem_path(subsystem), class: "text-blue-500 hover:underline" %>
-      <%= link_to "Assign Supplier", assign_subsystem_path(subsystem), class: "ml-4 bg-green-500 text-white px-2 py-1 rounded" %>
+     
     </li>
   <% end %>
 </ul>

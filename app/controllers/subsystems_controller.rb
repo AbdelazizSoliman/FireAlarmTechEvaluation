@@ -1,6 +1,6 @@
 class SubsystemsController < ApplicationController
-  before_action :set_nested_resources, only: [:index, :show, :new, :create, :assign, :assign_supplier]
-  before_action :set_subsystem, only: [:show, :assign, :assign_supplier]
+  # before_action :set_nested_resources, only: [:index, :show, :new, :create, :assign, :assign_supplier]
+  before_action :set_system
 
   def index
     @subsystems = if @system.present?
@@ -15,17 +15,15 @@ class SubsystemsController < ApplicationController
   end
 
   def new
-    @subsystem = Subsystem.new
-    # @projects = Project.all
+    @subsystem = @system.subsystems.new
   end
 
   def create
-    @subsystem = Subsystem.new(subsystem_params)
+    @subsystem = @system.subsystems.new(subsystem_params)
     if @subsystem.save
-      redirect_to project_scope_system_path(@system.project_scope, @system), notice: "Subsystem created successfully."
+      redirect_to @system.project_scope.project, notice: 'Subsystem was successfully created.'
     else
-      flash[:alert] = "Error creating subsystem: " + @subsystem.errors.full_messages.to_sentence
-      render :new, status: :unprocessable_entity
+      render :new
     end
   end
 
@@ -37,11 +35,11 @@ class SubsystemsController < ApplicationController
     @system = System.find(params[:system_id]) if params[:system_id]
   end
 
-  def set_subsystem
-    @subsystem = Subsystem.find(params[:id])
+  def set_system
+    @system = System.find(params[:system_id])
   end
 
   def subsystem_params
-    params.require(:subsystem).permit(:name, :system_id)
+    params.require(:subsystem).permit(:name)
   end
 end

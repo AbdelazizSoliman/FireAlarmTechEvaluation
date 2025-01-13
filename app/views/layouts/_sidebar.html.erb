@@ -32,19 +32,22 @@
         </a>
 
         <!-- New Link for ProjectScopes -->
-        <a href="/project_scopes" class="flex items-center px-4 py-2 mt-2 <%= active_class('/project_scopes') %>">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.75V19.25M4.75 12H19.25" />
-          </svg>
-          Project Scopes
-        </a>
+        <a href="<%= project_project_scopes_path(@project) %>" class="flex items-center px-4 py-2 mt-2 <%= active_class(project_project_scopes_path(@project)) %>">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.75V19.25M4.75 12H19.25" />
+        </svg>
+        Project Scopes
+      </a>
 
-        <a href="/systems" class="flex items-center px-4 py-2 mt-2 <%= active_class('/systems') %>">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5h7.5M8.25 9h7.5M8.25 13.5h4.5m4.5 4.5H8.25" />
-          </svg>
-          Systems
-        </a>
+
+      
+      <a href="<%= project_project_scope_systems_path(@project, @project_scope) %>" class="flex items-center px-4 py-2 mt-2 <%= active_class(project_project_scope_systems_path(@project, @project_scope)) %>">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5h7.5M8.25 9h7.5M8.25 13.5h4.5m4.5 4.5H8.25" />
+  </svg>
+  Systems
+</a>
+   
 
         <a href="/subsystems" class="flex items-center px-4 py-2 mt-2 <%= active_class('/subsystems') %>">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 mr-2">

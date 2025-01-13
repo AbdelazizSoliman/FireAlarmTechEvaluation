@@ -17,14 +17,8 @@ Rails.application.routes.draw do
       end
     end
   end
-
-  # Standalone Routes for Systems and Subsystems
-  resources :project_scopes, only: [:index, :show, :new, :create]
-
-  resources :systems, only: [:index, :show, :new, :create]
-
-  resources :subsystems, only: [:index, :show, :new, :create]
  
+   resources :systems, only: [:index, :show, :new, :create]
   # Devise routes for user authentication
   devise_for :users
 

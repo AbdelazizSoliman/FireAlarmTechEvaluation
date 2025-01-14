@@ -13,17 +13,7 @@ module ApplicationHelper
       if params[:project_id]
         link_to("Projects", projects_path) +
           " > ".html_safe +
-          link_to("Project Scopes", project_project_scopes_path(params[:project_id]))
-      else
-        "Project Scopes"
-      end
-    when "systems"
-      if params[:project_id] && params[:project_scope_id]
-        link_to("Projects", projects_path) +
-          " > ".html_safe +
-          link_to("Project Scopes", project_project_scopes_path(params[:project_id])) +
-          " > ".html_safe +
-          link_to("Systems", project_project_scope_systems_path(params[:project_id], params[:project_scope_id]))
+          link_to("Systems", project_systems_path(params[:project_id]))
       else
         "Systems"
       end

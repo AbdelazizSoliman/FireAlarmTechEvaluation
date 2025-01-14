@@ -19,7 +19,7 @@ Rails.application.routes.draw do
   end
 
   # Standalone Routes for Systems and Subsystems
-  resources :project_scopes, only: [:index, :show, :new, :create]
+   resources :project_scopes, only: [:index, :show, :new, :create]
 
   resources :systems, only: [:index, :show, :new, :create]
 

@@ -1,10 +1,9 @@
-<h1 class="text-xl font-bold">System: <%= @system.name %> in Project: <%= @system.project.name %></h1>
+<h1 class="text-xl font-bold">System: <%= @system.name %> in Project: <%= @system.project_scope.project.name %></h1>
 <h2 class="text-lg font-semibold mt-6">Subsystems</h2>
 <ul>
   <% @subsystems.each do |subsystem| %>
     <li>
       <%= link_to subsystem.name, subsystem_path(subsystem), class: "text-blue-500 hover:underline" %>
-      <%= link_to "Assign Supplier", assign_subsystem_path(subsystem), class: "ml-4 bg-green-500 text-white px-2 py-1 rounded" %>
     </li>
   <% end %>
 </ul>

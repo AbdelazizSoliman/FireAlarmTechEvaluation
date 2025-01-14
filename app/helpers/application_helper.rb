@@ -12,8 +12,9 @@ module ApplicationHelper
     when "systems"
       if params[:project_id]
         link_to("Projects", projects_path) +
-          " > ".html_safe +
-          link_to("Systems", project_systems_path(params[:project_id]))
+  " > ".html_safe +
+  link_to("Systems", project_project_scope_systems_path(params[:project_id], params[:project_scope_id]))
+
       else
         "Systems"
       end

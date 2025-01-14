@@ -87,11 +87,11 @@ class SuppliersController < ApplicationController
       )
   
       # Assign projects or subsystems based on membership type
-      if params[:membership_type] == "gold"
+      if params[:membership_type] == "projects"
         selected_projects = params[:project_ids] || []
         @supplier.projects = Project.where(id: selected_projects)
         @supplier.subsystems.clear
-      elsif params[:membership_type] == "silver"
+      elsif params[:membership_type] == "systems"
         selected_subsystems = params[:subsystem_ids] || []
         @supplier.subsystems = Subsystem.where(id: selected_subsystems)
         @supplier.projects.clear
@@ -101,11 +101,12 @@ class SuppliersController < ApplicationController
       @notification.update!(status: "resolved")
     end
   
-    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
+    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} evaluation type."
   rescue => e
     Rails.logger.error "Error in approve_supplier: #{e.message}"
     redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
   end
+  
 
   def reject_supplier
     supplier = Supplier.find(params[:id])

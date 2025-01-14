@@ -1,15 +1,14 @@
 <%= form_with url: approve_supplier_notification_path(@notification), method: :post, local: true do |form| %>
-  <!-- Membership Type -->
+  <!-- Membership Assignment Type -->
   <div class="mb-4">
-    <h2 class="font-semibold">Membership Type</h2>
-    <%= form.radio_button :membership_type, "gold", id: "gold" %>
-    <%= form.label :membership_type_gold, "Gold", class: "ml-2" %>
-    <%= form.radio_button :membership_type, "silver", id: "silver" %>
-    <%= form.label :membership_type_silver, "Silver", class: "ml-2" %>
+    <h2 class="font-semibold">This Account is Assigned to Evaluate By:</h2>
+    <%= form.select :membership_type, [["Projects", "projects"], ["Systems", "systems"]],
+      { prompt: "Select Evaluation Type" },
+      { id: "membership-type-dropdown", class: "form-select" } %>
   </div>
 
-  <!-- Projects List for Gold -->
-  <div id="gold-membership" class="hidden mb-4">
+  <!-- Projects List -->
+  <div id="projects-section" class="hidden mb-4">
     <h2 class="font-semibold">Select Projects</h2>
     <% @projects.each do |project| %>
       <%= form.check_box :project_ids, { multiple: true }, project.id, nil %>
@@ -17,8 +16,8 @@
     <% end %>
   </div>
 
-  <!-- Subsystems List for Silver -->
-  <div id="silver-membership" class="hidden mb-4">
+  <!-- Subsystems List -->
+  <div id="subsystems-section" class="hidden mb-4">
     <h2 class="font-semibold">Select Subsystems</h2>
     <% @subsystems.each do |subsystem| %>
       <%= form.check_box :subsystem_ids, { multiple: true }, subsystem.id, nil %>
@@ -46,31 +45,30 @@
 
 <!-- Reject Supplier Button -->
 <%= button_to "Reject Supplier", reject_supplier_notification_path(@notification, supplier_id: @supplier.id), method: :post, data: { turbo: false }, class: "bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded mt-4" %>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const goldRadio = document.getElementById("gold");
-    const silverRadio = document.getElementById("silver");
-    const goldSection = document.getElementById("gold-membership");
-    const silverSection = document.getElementById("silver-membership");
+    const membershipDropdown = document.getElementById("membership-type-dropdown");
+    const projectsSection = document.getElementById("projects-section");
+    const subsystemsSection = document.getElementById("subsystems-section");
 
-    function toggleMembershipSections() {
-      if (goldRadio.checked) {
-        goldSection.classList.remove("hidden");
-        silverSection.classList.add("hidden");
-      } else if (silverRadio.checked) {
-        silverSection.classList.remove("hidden");
-        goldSection.classList.add("hidden");
+    function toggleSections() {
+      if (membershipDropdown.value === "projects") {
+        projectsSection.classList.remove("hidden");
+        subsystemsSection.classList.add("hidden");
+      } else if (membershipDropdown.value === "systems") {
+        subsystemsSection.classList.remove("hidden");
+        projectsSection.classList.add("hidden");
       } else {
-        goldSection.classList.add("hidden");
-        silverSection.classList.add("hidden");
+        projectsSection.classList.add("hidden");
+        subsystemsSection.classList.add("hidden");
       }
     }
 
-    // Add event listeners to radio buttons
-    goldRadio.addEventListener("change", toggleMembershipSections);
-    silverRadio.addEventListener("change", toggleMembershipSections);
+    // Add event listener to the dropdown
+    membershipDropdown.addEventListener("change", toggleSections);
 
-    // Trigger the function on page load to set the initial state
-    toggleMembershipSections();
+    // Trigger on page load to set the initial state
+    toggleSections();
   });
 </script>

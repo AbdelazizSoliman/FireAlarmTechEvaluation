@@ -3,7 +3,7 @@ module Api
     class SuppliersController < ApplicationController
       skip_before_action :verify_authenticity_token
 
-      before_action :set_supplier, only: %i[show edit update destroy]
+      before_action :set_supplier, only: %i[show edit update]
 
       def mark_all_read
         Notification.update_all(read: true)
@@ -98,11 +98,54 @@ module Api
       end
 
       # DELETE /suppliers/1
-      def destroy
-        @supplier.destroy!
-        redirect_to suppliers_url, notice: "Supplier was successfully destroyed.", status: :see_other
+      def dashboard
+        supplier = Supplier.find_by(id: params[:supplier_id])
+      
+        if supplier.nil?
+          render json: { error: "Supplier not found" }, status: :not_found
+          return
+        end
+      
+        if supplier.membership_type == "projects"
+          accessible_projects = supplier.projects
+          accessible_subsystems = []
+        elsif supplier.membership_type == "systems"
+          accessible_projects = []
+          accessible_subsystems = supplier.subsystems
+        else
+          accessible_projects = []
+          accessible_subsystems = []
+        end
+      
+        render json: { projects: accessible_projects, subsystems: accessible_subsystems }
       end
 
+      def approve_supplier
+        @supplier = Supplier.find(params[:supplier_id])
+      
+        ActiveRecord::Base.transaction do
+          @supplier.update!(
+            membership_type: params[:membership_type],
+            receive_evaluation_report: params[:receive_evaluation_report] == "true",
+            status: "approved"
+          )
+      
+          # Assign projects or subsystems
+          if params[:membership_type] == "projects"
+            selected_projects = params[:project_ids] || []
+            @supplier.projects = Project.where(id: selected_projects) # Saves data to `projects_suppliers`
+          elsif params[:membership_type] == "systems"
+            selected_subsystems = params[:subsystem_ids] || []
+            @supplier.subsystems = Subsystem.where(id: selected_subsystems) # Saves data to `subsystems_suppliers`
+          end
+        end
+      
+        render json: { message: "Supplier approved and assigned evaluation scope." }, status: :ok
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      
       private
 
       # Use callbacks to share common setup or constraints between actions.

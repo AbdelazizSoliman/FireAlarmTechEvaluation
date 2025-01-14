@@ -1,8 +1,11 @@
 Rails.application.routes.draw do
   # Suppliers routes
+  get 'dashboard', to: 'suppliers#dashboard'
+
   resources :suppliers do 
     collection do
       get :search
+      get 'dashboard', to: 'suppliers#dashboard'
     end
     member do
       post :set_membership_and_approve  # Handle membership and permissions, then approve
@@ -34,6 +37,7 @@ Rails.application.routes.draw do
       post 'register', to: 'suppliers#register'
       post 'login', to: 'sessions#create'
       get  '/profile', to: 'sessions#profile'
+      get 'dashboard', to: 'suppliers#dashboard'
     end
 
     resources :notifications, only: [:index, :update]

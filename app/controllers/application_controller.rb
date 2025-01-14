@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
     before_action :configure_permitted_parameters, if: :devise_controller?
     # before_action :authenticate_user!
     before_action :set_unread_notifications_count
+    helper_method :current_supplier
 
   
     protected
@@ -15,7 +16,10 @@ class ApplicationController < ActionController::Base
       new_user_session_path # Redirect to the login page
     end
 
-
+    def current_supplier
+      @current_supplier ||= Supplier.find_by(id: params[:supplier_id])
+    end
+    
     private
 
     def set_unread_notifications_count

@@ -20,6 +20,16 @@ class Supplier < ApplicationRecord
   has_and_belongs_to_many :projects
   has_and_belongs_to_many :subsystems
 
+  def allowable_projects
+    return [] unless membership_type == "projects"
+    projects
+  end
+
+  def allowable_subsystems
+    return [] unless membership_type == "systems"
+    subsystems
+  end
+
  # Callbacks
  before_update :clear_old_associations, if: :membership_type_changed?
 

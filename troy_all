@@ -1,0 +1,11 @@
+=> 
+[[32m#<Project:0x00000193ff0a7a78[0m
+  id: [34m[1m7[0m,
+  name: [31m[1m"[0m[31mAlansar Hospital[0m[31m[1m"[0m,
+  created_at: Sun, 12 Jan 2025 17:08:34.363405000 UTC +00:00,
+  updated_at: Sun, 12 Jan 2025 17:08:34.363405000 UTC +00:00[32m>[0m,
+ [32m#<Project:0x00000193fe48dad0[0m
+  id: [34m[1m8[0m,
+  name: [31m[1m"[0m[31mInternational School[0m[31m[1m"[0m,
+  created_at: Sun, 12 Jan 2025 17:08:55.103609000 UTC +00:00,
+  updated_at: Sun, 12 Jan 2025 17:08:55.103609000 UTC +00:00[32m>[0m]

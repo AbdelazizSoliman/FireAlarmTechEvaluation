@@ -1,17 +1,9 @@
-<h1 class="text-xl font-bold">Add New Subsystem</h1>
-
-<%= form_with model: @subsystem, url: subsystems_path, local: true do |form| %>
-  <div class="mb-4">
-    <%= form.label :name, "Subsystem Name", class: "block font-medium text-gray-700" %>
-    <%= form.text_field :name, class: "form-input w-full" %>
+<%= form_with model: [@project, @project_scope, @system, @subsystem] do |form| %>
+  <div>
+    <%= form.label :name %>
+    <%= form.text_field :name %>
   </div>
-
-  <div class="mb-4">
-    <%= form.label :system_id, "Select System", class: "block font-medium text-gray-700" %>
-    <%= form.collection_select :system_id, System.all, :id, :name, { prompt: "Select a System" }, class: "form-select w-full" %>
-  </div>
-
-  <div class="mt-4">
-    <%= form.submit "Create Subsystem", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+  <div>
+    <%= form.submit 'Create Subsystem' %>
   </div>
 <% end %>

@@ -2,14 +2,14 @@
 
 module ApplicationHelper
   def active_class(link_path)
-    request.path.include?(link_path) && link_path != "/" ? 'bg-sidebarActiveBg text-white rounded-md' : 'text-white hover:bg-sidebarActiveBg rounded-md'
+    request.path == link_path ? 'bg-sidebarActiveBg text-white rounded-md' : 'text-white hover:bg-sidebarActiveBg rounded-md'
   end
 
   def current_page_name
     case controller_name
     when "projects"
       link_to("Projects", projects_path)
-    when "systems"
+    when "project_scopes"
       if params[:project_id]
         link_to("Projects", projects_path) +
   " > ".html_safe +
@@ -19,12 +19,14 @@ module ApplicationHelper
         "Systems"
       end
     when "subsystems"
-      if params[:project_id] && params[:system_id]
+      if params[:project_id] && params[:project_scope_id] && params[:system_id]
         link_to("Projects", projects_path) +
           " > ".html_safe +
-          link_to("Systems", project_systems_path(params[:project_id])) +
+          link_to("Project Scopes", project_project_scopes_path(params[:project_id])) +
           " > ".html_safe +
-          link_to("Subsystems", project_system_subsystems_path(params[:project_id], params[:system_id]))
+          link_to("Systems", project_project_scope_systems_path(params[:project_id], params[:project_scope_id])) +
+          " > ".html_safe +
+          link_to("Subsystems", project_project_scope_system_subsystems_path(params[:project_id], params[:project_scope_id], params[:system_id]))
       else
         "Subsystems"
       end
@@ -32,9 +34,6 @@ module ApplicationHelper
       controller_name.titleize
     end
   end
-  
-  
-  
 
   def us_states
     %w[

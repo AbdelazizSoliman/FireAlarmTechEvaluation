@@ -1,13 +1,17 @@
 class PagesController < ApplicationController
+
+  before_action :set_project 
+  
   def index
     @notifications = Notification.where(read: false).order(created_at: :desc)
   end
   
 
-  def settings
-  end
+  private
 
-  def disposal_cost
-
+  def set_project
+    if params[:project_id]
+      @project = Project.find(params[:project_id])
+    end
   end
 end

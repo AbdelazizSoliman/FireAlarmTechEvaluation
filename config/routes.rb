@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   # Suppliers routes
-  get 'dashboard', to: 'suppliers#dashboard'
+  get '/dashboard', to: 'suppliers#dashboard'
 
   resources :suppliers do 
     collection do
@@ -37,7 +37,7 @@ Rails.application.routes.draw do
       post 'register', to: 'suppliers#register'
       post 'login', to: 'sessions#create'
       get  '/profile', to: 'sessions#profile'
-      get 'dashboard', to: 'suppliers#dashboard'
+      get '/dashboard', to: 'suppliers#dashboard'
     end
 
     resources :notifications, only: [:index, :update]

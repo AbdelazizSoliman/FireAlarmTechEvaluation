@@ -40,10 +40,10 @@ class NotificationsController < ApplicationController
       )
   
       # Assign projects or subsystems based on membership type
-      if params[:membership_type] == "gold"
+      if params[:membership_type] == "projects"
         selected_projects = params[:project_ids] || []
         @supplier.projects = Project.where(id: selected_projects)
-      elsif params[:membership_type] == "silver"
+      elsif params[:membership_type] == "systems"
         selected_subsystems = params[:subsystem_ids] || []
         @supplier.subsystems = Subsystem.where(id: selected_subsystems)
       end

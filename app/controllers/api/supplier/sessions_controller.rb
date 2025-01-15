@@ -26,7 +26,8 @@ module Api
             supplier_email: supplier.supplier_email,
             phone: supplier.phone,
             total_years_in_saudi_market: supplier.total_years_in_saudi_market,
-            status: supplier.status
+            status: supplier.status,
+            membership_type: supplier.membership_type
           }, status: :ok
         else
           render json: { error: 'Unauthorized' }, status: :unauthorized

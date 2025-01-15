@@ -58,7 +58,7 @@
 
       <!-- Membership Type Field -->
       <div class="relative">
-        <%= form.select :membership_type, ["gold", "silver"], { selected: supplier.membership_type }, class: input_class, id: "membership-type" %>
+        <%= form.select :membership_type, ["projects", "systems"], { selected: supplier.membership_type }, class: input_class, id: "membership-type" %>
         <%= form.label :membership_type, "Membership Type", class: label_class %>
       </div>
 
@@ -74,8 +74,8 @@
       </div>
     </div>
 
-    <!-- Projects List for Gold -->
-    <div id="gold-membership" class="hidden mb-4">
+    <!-- Projects List for projects -->
+    <div id="projects-membership" class="hidden mb-4">
       <h2 class="font-semibold">Select Projects</h2>
       <% @projects.each do |project| %>
         <%= form.check_box :project_ids, { multiple: true }, project.id, nil %>
@@ -83,8 +83,8 @@
       <% end %>
     </div>
 
-    <!-- Subsystems List for Silver -->
-    <div id="silver-membership" class="hidden mb-4">
+    <!-- Subsystems List for systems -->
+    <div id="systems-membership" class="hidden mb-4">
       <h2 class="font-semibold">Select Subsystems</h2>
       <% @subsystems.each do |subsystem| %>
         <%= form.check_box :subsystem_ids, { multiple: true }, subsystem.id, nil %>
@@ -102,19 +102,19 @@
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const membershipTypeSelect = document.getElementById("membership-type");
-    const goldSection = document.getElementById("gold-membership");
-    const silverSection = document.getElementById("silver-membership");
+    const projectsSection = document.getElementById("projects-membership");
+    const systemsSection = document.getElementById("systems-membership");
 
     function toggleMembershipSections() {
-      if (membershipTypeSelect.value === "gold") {
-        goldSection.classList.remove("hidden");
-        silverSection.classList.add("hidden");
-      } else if (membershipTypeSelect.value === "silver") {
-        silverSection.classList.remove("hidden");
-        goldSection.classList.add("hidden");
+      if (membershipTypeSelect.value === "projects") {
+        projectsSection.classList.remove("hidden");
+        systemsSection.classList.add("hidden");
+      } else if (membershipTypeSelect.value === "systems") {
+        systemsSection.classList.remove("hidden");
+        projectsSection.classList.add("hidden");
       } else {
-        goldSection.classList.add("hidden");
-        silverSection.classList.add("hidden");
+        projectsSection.classList.add("hidden");
+        systemsSection.classList.add("hidden");
       }
     }
 

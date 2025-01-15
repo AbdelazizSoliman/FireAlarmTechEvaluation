@@ -24,9 +24,9 @@ class SuppliersController < ApplicationController
   # GET /suppliers/1/edit
   def edit
     @supplier = Supplier.find(params[:id])
-    if @supplier.membership_type == "gold"
+    if @supplier.membership_type == "projects"
       @projects = Project.all
-    elsif @supplier.membership_type == "silver"
+    elsif @supplier.membership_type == "systems"
       @subsystems = Subsystem.all
     end
   end
@@ -45,11 +45,11 @@ class SuppliersController < ApplicationController
   # PATCH/PUT /suppliers/1
   def update
     if @supplier.update(supplier_params)
-      if @supplier.membership_type == "gold"
+      if @supplier.membership_type == "projects"
         selected_projects = params[:project_ids] || []
         @supplier.projects = Project.where(id: selected_projects)
         @supplier.subsystems.clear
-      elsif @supplier.membership_type == "silver"
+      elsif @supplier.membership_type == "systems"
         selected_subsystems = params[:subsystem_ids] || []
         @supplier.subsystems = Subsystem.where(id: selected_subsystems)
         @supplier.projects.clear
@@ -125,9 +125,9 @@ class SuppliersController < ApplicationController
     supplier = Supplier.find(params[:id])
     supplier.update!(membership_type: params[:membership_type], receive_evaluation_report: params[:receive_evaluation_report])
     
-    if params[:membership_type] == "gold"
+    if params[:membership_type] == "projects"
       supplier.projects = Project.where(id: params[:project_ids])
-    elsif params[:membership_type] == "silver"
+    elsif params[:membership_type] == "systems"
       supplier.subsystems = Subsystem.where(id: params[:subsystem_ids])
     end
   
@@ -148,9 +148,9 @@ class SuppliersController < ApplicationController
   
     ActiveRecord::Base.transaction do
       # Remove existing associations based on the previous membership type
-      if @supplier.membership_type == "gold"
+      if @supplier.membership_type == "projects"
         @supplier.projects.clear # Remove all project associations
-      elsif @supplier.membership_type == "silver"
+      elsif @supplier.membership_type == "systems"
         @supplier.subsystems.clear # Remove all subsystem associations
       end
   
@@ -161,10 +161,10 @@ class SuppliersController < ApplicationController
       )
   
       # Assign new associations based on the updated membership type
-      if params[:membership_type] == "gold"
+      if params[:membership_type] == "projects"
         project_ids = params[:project_ids] || []
         @supplier.projects = Project.where(id: project_ids)
-      elsif params[:membership_type] == "silver"
+      elsif params[:membership_type] == "systems"
         subsystem_ids = params[:subsystem_ids] || []
         @supplier.subsystems = Subsystem.where(id: subsystem_ids)
       end
@@ -193,9 +193,9 @@ class SuppliersController < ApplicationController
       receive_evaluation_report: params[:receive_evaluation_report]
     )
 
-    if params[:membership_type] == "gold"
+    if params[:membership_type] == "projects"
       @supplier.projects = Project.where(id: params[:project_ids])
-    elsif params[:membership_type] == "silver"
+    elsif params[:membership_type] == "systems"
       @supplier.subsystems = Subsystem.where(id: params[:subsystem_ids])
     end
 
@@ -203,11 +203,6 @@ class SuppliersController < ApplicationController
     @supplier.update!(status: "approved")
 
     redirect_to suppliers_path, notice: "#{@supplier.supplier_name} approved with membership type #{params[:membership_type]}."
-  end
-
-  def manage_membership
-    @projects = Project.all
-    @subsystems = Subsystem.all
   end
 
   def dashboard
@@ -218,19 +213,66 @@ class SuppliersController < ApplicationController
       return
     end
   
-    if supplier.membership_type == "projects"
-      accessible_projects = supplier.projects
-      accessible_subsystems = []
-    elsif supplier.membership_type == "systems"
-      accessible_projects = []
-      accessible_subsystems = supplier.subsystems
-    else
-      accessible_projects = []
-      accessible_subsystems = []
+    # Log supplier details and subsystems for debugging
+    Rails.logger.info "Supplier: #{supplier.inspect}"
+    Rails.logger.info "Subsystems: #{supplier.subsystems.to_json}"
+  
+    render json: {
+      id: supplier.id,
+      supplier_name: supplier.supplier_name,
+      membership_type: supplier.membership_type,
+      projects: supplier.membership_type == "projects" ? supplier.projects.select(:id, :name) : [],
+      subsystems: supplier.membership_type == "systems" ? supplier.subsystems.select(:id, :name, :system_id) : []
+    }
+  end
+  
+
+  def dashboard
+    supplier = Supplier.find_by(id: params[:supplier_id])
+  
+    if supplier.nil?
+      render json: { error: "Supplier not found" }, status: :not_found
+      return
     end
   
-    render json: { projects: accessible_projects, subsystems: accessible_subsystems }
+    # Log supplier details and subsystems for debugging
+    Rails.logger.info "Supplier: #{supplier.inspect}"
+    Rails.logger.info "Subsystems: #{supplier.subsystems.to_json}"
+  
+    render json: {
+      id: supplier.id,
+      supplier_name: supplier.supplier_name,
+      membership_type: supplier.membership_type,
+      projects: supplier.membership_type == "projects" ? supplier.projects.select(:id, :name) : [],
+      subsystems: supplier.membership_type == "systems" ? supplier.subsystems.select(:id, :name, :system_id) : []
+    }
   end
+  
+  
+  
+
+  def profile
+    supplier = Supplier.find(params[:supplier_id])
+  
+    if supplier.nil?
+      render json: { error: "Supplier not found" }, status: :not_found
+      return
+    end
+  
+    render json: {
+      id: supplier.id,
+      supplier_name: supplier.supplier_email,
+      supplier_email: supplier.supplier_email,
+      supplier_category: supplier.supplier_category,
+      phone: supplier.phone,
+      total_years_in_saudi_market: supplier.total_years_in_saudi_market,
+      status: supplier.status,
+      membership_type: supplier.membership_type,
+      projects: supplier.membership_type == "projects" ? supplier.projects : [],
+      subsystems: supplier.membership_type == "systems" ? supplier.subsystems : []
+    }
+  end
+  
   
   
   private

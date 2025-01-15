@@ -10,6 +10,29 @@ module Api
         render json: { message: "All notifications marked as read" }, status: :ok
       end
       
+      def profile
+        supplier = Supplier.find_by(id: params[:supplier_id])
+      
+        if supplier.nil?
+          render json: { error: "Supplier not found" }, status: :not_found
+          return
+        end
+      
+        render json: {
+          id: supplier.id,
+          supplier_name: supplier.supplier_email,
+          supplier_category: supplier.supplier_category,
+          supplier_email: supplier.supplier_email,
+          phone: supplier.phone,
+          total_years_in_saudi_market: supplier.total_years_in_saudi_market,
+          status: supplier.status,
+          membership_type: supplier.membership_type,
+          projects: supplier.membership_type == "projects" ? supplier.projects.map { |project| { id: project.id, name: project.name } } : [],
+          subsystems: supplier.membership_type == "systems" ? supplier.subsystems.map { |subsystem| { id: subsystem.id, name: subsystem.name, system_id: subsystem.system_id } } : []
+        }
+      end
+      
+      
 
       def assign_membership
         @supplier = ::Supplier.find(params[:id])
@@ -19,9 +42,9 @@ module Api
           receive_evaluation_report: params[:receive_evaluation_report]
         )
       
-        if params[:membership_type] == "gold"
+        if params[:membership_type] == "projects"
           @supplier.projects = Project.where(id: params[:project_ids])
-        elsif params[:membership_type] == "silver"
+        elsif params[:membership_type] == "systems"
           @supplier.subsystems = Subsystem.where(id: params[:subsystem_ids])
         end
       
@@ -97,28 +120,29 @@ module Api
         end
       end
 
-      # DELETE /suppliers/1
       def dashboard
-        supplier = Supplier.find_by(id: params[:supplier_id])
+        supplier = ::Supplier.find_by(id: params[:supplier_id])
       
         if supplier.nil?
           render json: { error: "Supplier not found" }, status: :not_found
           return
         end
       
-        if supplier.membership_type == "projects"
-          accessible_projects = supplier.projects
-          accessible_subsystems = []
-        elsif supplier.membership_type == "systems"
-          accessible_projects = []
-          accessible_subsystems = supplier.subsystems
-        else
-          accessible_projects = []
-          accessible_subsystems = []
-        end
+        # Log supplier details and subsystems for debugging
+        Rails.logger.info "Supplier: #{supplier.inspect}"
+        Rails.logger.info "Subsystems: #{supplier.subsystems.to_json}"
       
-        render json: { projects: accessible_projects, subsystems: accessible_subsystems }
+        render json: {
+          id: supplier.id,
+          supplier_name: supplier.supplier_name,
+          membership_type: supplier.membership_type,
+          projects: supplier.membership_type == "projects" ? supplier.projects.select(:id, :name) : [],
+          subsystems: supplier.membership_type == "systems" ? supplier.subsystems.select(:id, :name, :system_id) : []
+        }
       end
+      
+          
+      
 
       def approve_supplier
         @supplier = Supplier.find(params[:supplier_id])

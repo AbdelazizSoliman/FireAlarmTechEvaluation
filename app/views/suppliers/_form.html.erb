@@ -58,7 +58,7 @@
 
       <!-- Membership Type Field -->
       <div class="relative">
-        <%= form.select :membership_type, ["gold", "silver"], { selected: supplier.membership_type }, class: input_class %>
+        <%= form.select :membership_type, ["projects", "systems"], { selected: supplier.membership_type }, class: input_class %>
         <%= form.label :membership_type, "Membership Type", class: label_class %>
       </div>
 
@@ -84,19 +84,19 @@
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const membershipTypeSelect = document.getElementById("supplier_membership_type");
-    const goldSection = document.getElementById("gold-options");
-    const silverSection = document.getElementById("silver-options");
+    const projectsSection = document.getElementById("projects-options");
+    const systemsSection = document.getElementById("systems-options");
 
     function toggleMembershipSections() {
-      if (membershipTypeSelect.value === "gold") {
-        goldSection.style.display = "block";
-        silverSection.style.display = "none";
-      } else if (membershipTypeSelect.value === "silver") {
-        silverSection.style.display = "block";
-        goldSection.style.display = "none";
+      if (membershipTypeSelect.value === "projects") {
+        projectsSection.style.display = "block";
+        systemsSection.style.display = "none";
+      } else if (membershipTypeSelect.value === "systems") {
+        systemsSection.style.display = "block";
+        projectsSection.style.display = "none";
       } else {
-        goldSection.style.display = "none";
-        silverSection.style.display = "none";
+        projectsSection.style.display = "none";
+        systemsSection.style.display = "none";
       }
     }
 

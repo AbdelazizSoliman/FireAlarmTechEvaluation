@@ -1,36 +1,4 @@
 Rails.application.routes.draw do
-  # Suppliers routes
-  get '/dashboard', to: 'suppliers#dashboard'
-
-  resources :suppliers do 
-    collection do
-      get :search
-      get 'dashboard', to: 'suppliers#dashboard'
-    end
-    member do
-      post :set_membership_and_approve  # Handle membership and permissions, then approve
-    end
-  end
-
-  # Nested Routes for Projects, Systems, and Subsystems
-  resources :projects do
-    resources :project_scopes do
-      resources :systems do
-        resources :subsystems
-      end
-    end
-  end
-
-  # Standalone Routes for Systems and Subsystems
-   resources :project_scopes, only: [:index, :show, :new, :create]
-
-  resources :systems, only: [:index, :show, :new, :create]
-
-  resources :subsystems, only: [:index, :show, :new, :create]
- 
-  # Devise routes for user authentication
-  devise_for :users
-
   # API namespace
   namespace :api do
     namespace :supplier do
@@ -40,7 +8,38 @@ Rails.application.routes.draw do
       get '/dashboard', to: 'suppliers#dashboard'
     end
 
+    # Nested Routes for Projects, Systems, and Subsystems within API namespace
+    resources :projects do
+      resources :project_scopes do
+        resources :systems do
+          resources :subsystems do
+            resources :fire_alarm_control_panels, only: [:create, :index] # Add :index for GET
+          end
+        end
+      end
+    end
+
     resources :notifications, only: [:index, :update]
+  end
+
+  resources :projects do
+    resources :project_scopes do
+      resources :systems do
+        resources :subsystems do
+          resources :fire_alarm_control_panels, only: [:create, :index] # Add :index for GET
+        end
+      end
+    end
+  end
+  # Non-API routes
+  resources :suppliers do
+    collection do
+      get :search
+      get 'dashboard', to: 'suppliers#dashboard'
+    end
+    member do
+      post :set_membership_and_approve  # Handle membership and permissions, then approve
+    end
   end
 
   # Notifications routes
@@ -51,6 +50,17 @@ Rails.application.routes.draw do
       post :reject_supplier   # To handle rejection
     end
   end
+
+  # Standalone Routes for Systems and Subsystems
+  resources :project_scopes, only: [:index, :show, :new, :create]
+
+  resources :systems, only: [:index, :show, :new, :create]
+
+  resources :subsystems, only: [:index, :show, :new, :create]
+ 
+  # Devise routes for user authentication
+  devise_for :users
+
   # Health check route
   get "up" => "rails/health#show", as: :rails_health_check
 

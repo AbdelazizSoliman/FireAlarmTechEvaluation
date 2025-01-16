@@ -205,27 +205,10 @@ class SuppliersController < ApplicationController
     redirect_to suppliers_path, notice: "#{@supplier.supplier_name} approved with membership type #{params[:membership_type]}."
   end
 
-  def dashboard
-    supplier = Supplier.find_by(id: params[:supplier_id])
-  
-    if supplier.nil?
-      render json: { error: "Supplier not found" }, status: :not_found
-      return
-    end
-  
-    # Log supplier details and subsystems for debugging
-    Rails.logger.info "Supplier: #{supplier.inspect}"
-    Rails.logger.info "Subsystems: #{supplier.subsystems.to_json}"
-  
-    render json: {
-      id: supplier.id,
-      supplier_name: supplier.supplier_name,
-      membership_type: supplier.membership_type,
-      projects: supplier.membership_type == "projects" ? supplier.projects.select(:id, :name) : [],
-      subsystems: supplier.membership_type == "systems" ? supplier.subsystems.select(:id, :name, :system_id) : []
-    }
+  def manage_membership
+    @projects = Project.all
+    @subsystems = Subsystem.all
   end
-  
 
   def dashboard
     supplier = Supplier.find_by(id: params[:supplier_id])
@@ -235,18 +218,26 @@ class SuppliersController < ApplicationController
       return
     end
   
-    # Log supplier details and subsystems for debugging
-    Rails.logger.info "Supplier: #{supplier.inspect}"
-    Rails.logger.info "Subsystems: #{supplier.subsystems.to_json}"
+    # Fetch subsystems associated with the supplier
+    subsystems = supplier.subsystems.map do |subsystem|
+      {
+        id: subsystem.id,
+        name: subsystem.name,
+        system_id: subsystem.system_id,
+        project_id: subsystem.system.project_scope.project_id, # Assuming associations are correctly set up
+        project_scope_id: subsystem.system.project_scope.id   # Assuming associations are correctly set up
+      }
+    end
   
     render json: {
       id: supplier.id,
       supplier_name: supplier.supplier_name,
       membership_type: supplier.membership_type,
       projects: supplier.membership_type == "projects" ? supplier.projects.select(:id, :name) : [],
-      subsystems: supplier.membership_type == "systems" ? supplier.subsystems.select(:id, :name, :system_id) : []
+      subsystems: supplier.membership_type == "systems" ? subsystems : []
     }
   end
+  
   
   
   

@@ -6,22 +6,31 @@ module Api
       project = Project.find(params[:project_id])
       project_scope = project.project_scopes.find(params[:project_scope_id])
       system = project_scope.systems.find(params[:system_id])
-      subsystem = system.subsystems.find(params[:subsystem_id])
+      subsystem = Subsystem.find(params[:subsystem_id])
 
+      # Create a new FireAlarmControlPanel associated with the subsystem
       fire_alarm_control_panel = subsystem.fire_alarm_control_panels.new(fire_alarm_control_panel_params)
 
       if fire_alarm_control_panel.save
-        # Automatically set notification_type as 'evaluation'
+        # Evaluate the submitted data against standards
+        comparison_result = evaluate_fire_alarm_data(fire_alarm_control_panel)
+
+        # Generate the evaluation report as a PDF
+        report_path = generate_pdf_report(fire_alarm_control_panel, comparison_result)
+
+        # Create a notification for the evaluation
         Notification.create!(
           title: "New Evaluation Submitted",
-          body: "a supplier has submitted an evaluation for #{subsystem.name}.",
+          body: "#{subsystem.name}: Evaluation report has been generated.",
           notifiable: fire_alarm_control_panel,
-          read: false,
-          status: "pending",
-          notification_type: "evaluation" # Automatically set type
+          notification_type: "evaluation",
+          additional_data: {
+            evaluation_report_path: report_path.sub(Rails.root.join('public').to_s, '') # Use relative path
+          }.to_json
         )
+        
 
-        render json: { message: "Fire Alarm Control Panel created successfully." }, status: :created
+        render json: { message: "Fire Alarm Control Panel created successfully. Report generated." }, status: :created
       else
         render json: { errors: fire_alarm_control_panel.errors.full_messages }, status: :unprocessable_entity
       end
@@ -57,6 +66,41 @@ module Api
         :internal_batteries_backup_capacity_panel,
         :external_batteries_backup_time
       )
+    end
+
+    # Method to evaluate data
+    def evaluate_fire_alarm_data(panel)
+      standard_file_path = Rails.root.join('lib', 'standard_fire_alarm_control_panel.xlsx')
+      standard_workbook = RubyXL::Parser.parse(standard_file_path)
+      standard_sheet = standard_workbook[0]
+
+      total_no_of_panels = panel.total_no_of_panels
+      standard_value = standard_sheet[1][2].value
+
+      comparison_result = total_no_of_panels.present? && total_no_of_panels.to_i >= standard_value.to_i
+      [comparison_result, total_no_of_panels, standard_value]
+    end
+
+    # Method to generate PDF report
+    def generate_pdf_report(panel, comparison_result)
+      file_name = "evaluation_report_#{panel.id}_#{Time.now.to_i}.pdf"
+      file_path = Rails.root.join('public', 'reports', file_name)
+
+      Prawn::Document.generate(file_path) do |pdf|
+        pdf.text "Evaluation Report", size: 30, style: :bold
+        pdf.move_down 20
+        pdf.text "Evaluation Results:", size: 20, style: :bold
+
+        is_accepted, uploaded, standard = comparison_result
+        status = is_accepted ? "Accepted" : "Rejected"
+        pdf.text "Total No of Panels: #{status} (Uploaded: #{uploaded}, Standard: #{standard})"
+
+        overall_status = is_accepted ? "Accepted" : "Rejected"
+        pdf.move_down 20
+        pdf.text "Overall Status: #{overall_status}", size: 25, style: :bold
+      end
+
+      file_path.to_s
     end
   end
 end

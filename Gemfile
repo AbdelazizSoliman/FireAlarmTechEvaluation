@@ -85,3 +85,6 @@ gem 'prawn'
 gem 'rubyXL'
 
 gem 'jwt'
+
+gem 'wicked_pdf'
+gem 'wkhtmltopdf-binary'

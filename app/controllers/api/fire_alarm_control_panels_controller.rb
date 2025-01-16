@@ -2,11 +2,6 @@ module Api
   class FireAlarmControlPanelsController < ApplicationController
     skip_before_action :verify_authenticity_token
 
-
-    def index
-      render json: { error: "This action is not supported" }, status: :method_not_allowed
-    end
-
     def create
       project = Project.find(params[:project_id])
       project_scope = project.project_scopes.find(params[:project_scope_id])
@@ -16,10 +11,27 @@ module Api
       fire_alarm_control_panel = subsystem.fire_alarm_control_panels.new(fire_alarm_control_panel_params)
 
       if fire_alarm_control_panel.save
+        # Automatically set notification_type as 'evaluation'
+        Notification.create!(
+          title: "New Evaluation Submitted",
+          body: "a supplier has submitted an evaluation for #{subsystem.name}.",
+          notifiable: fire_alarm_control_panel,
+          read: false,
+          status: "pending",
+          notification_type: "evaluation" # Automatically set type
+        )
+
         render json: { message: "Fire Alarm Control Panel created successfully." }, status: :created
       else
         render json: { errors: fire_alarm_control_panel.errors.full_messages }, status: :unprocessable_entity
       end
+    end
+
+    def index
+      subsystem = Subsystem.find(params[:subsystem_id])
+      fire_alarm_control_panels = subsystem.fire_alarm_control_panels
+
+      render json: fire_alarm_control_panels, status: :ok
     end
 
     private

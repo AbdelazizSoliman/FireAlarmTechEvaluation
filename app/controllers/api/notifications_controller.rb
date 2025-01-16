@@ -4,9 +4,36 @@ module Api
     before_action :set_supplier, only: [:manage_membership, :approve_supplier, :reject_supplier]
 
     def index
-      @notifications = Notification.where(read: false).order(created_at: :desc)
-      render json: @notifications
+      notifications = Notification.order(created_at: :desc).map do |notification|
+        {
+          id: notification.id,
+          title: notification.title,
+          body: notification.body,
+          read: notification.read,
+          status: notification.status,
+          notification_type: notification.notification_type, # Include notification_type
+          link: generate_link(notification) # Generate appropriate link
+        }
+      end
+  
+      render json: notifications
     end
+
+    def generate_link(notification)
+      case notification.notification_type
+      when "registration"
+        "/suppliers/#{notification.notifiable_id}"
+      when "membership"
+        "/notifications/#{notification.id}/manage_membership"
+      when "evaluation"
+        "/notifications/#{notification.id}/show"
+      when "approval"
+        "/suppliers/#{notification.notifiable_id}"
+      else
+        "/notifications/#{notification.id}" # Default link
+      end
+    end
+ 
 
     def manage_membership
       @projects = Project.all

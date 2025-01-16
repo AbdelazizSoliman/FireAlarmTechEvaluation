@@ -5,6 +5,7 @@
     <tr>
       <th>Standards</th>
       <th>Total No of Panels</th>
+      <th>Created At</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -13,8 +14,9 @@
       <tr>
         <td><%= panel.standards %></td>
         <td><%= panel.total_no_of_panels %></td>
+        <td><%= panel.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
         <td>
-          <%= link_to 'Edit', edit_project_system_subsystem_fire_alarm_control_panel_path(@subsystem.system.project, @subsystem.system, @subsystem, panel) %>
+          <%= link_to 'View Details', notification_path(panel.notification) %>
         </td>
       </tr>
     <% end %>

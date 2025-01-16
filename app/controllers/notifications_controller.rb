@@ -69,6 +69,31 @@ class NotificationsController < ApplicationController
     redirect_to notifications_path, alert: "Error: #{e.message}"
   end
   
+  def show
+    @notification = Notification.find(params[:id])
+  
+    case request.format.symbol
+    when :html
+      case @notification.notification_type
+      when "registration"
+        redirect_to manage_membership_notification_path(@notification)
+      when "evaluation"
+        @fire_alarm_control_panel = @notification.notifiable
+      else
+        redirect_to notifications_path, alert: "Unknown notification type."
+      end
+    when :pdf
+      @fire_alarm_control_panel = @notification.notifiable
+      render pdf: "fire_alarm_control_panel", template: "notifications/show_pdf", layout: "pdf"
+    when :xlsx
+      @fire_alarm_control_panel = @notification.notifiable
+      render xlsx: "show", template: "notifications/show_excel", filename: "fire_alarm_control_panel.xlsx"
+    else
+      redirect_to notifications_path, alert: "Unsupported format."
+    end
+  end
+  
+  
 
   private
 

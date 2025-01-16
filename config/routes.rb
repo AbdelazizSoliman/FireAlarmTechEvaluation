@@ -43,7 +43,7 @@ Rails.application.routes.draw do
   end
 
   # Notifications routes
-  resources :notifications, only: [:index] do
+  resources :notifications, only: [:index, :show, :show] do
     member do
       get :manage_membership # For membership form
       post :approve_supplier  # To handle approval

@@ -1,0 +1,16 @@
+<h1><%= @notification.title %></h1>
+<p><%= @notification.body %></p>
+
+<% if @fire_alarm_control_panel %>
+  <h2>Fire Alarm Control Panel Details</h2>
+  <ul>
+    <% @fire_alarm_control_panel.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+
+  <div>
+    <%= link_to 'Download as PDF', notification_path(@notification, format: :pdf) %> |
+    <%= link_to 'Download as Excel', notification_path(@notification, format: :xlsx) %>
+  </div>
+<% end %>

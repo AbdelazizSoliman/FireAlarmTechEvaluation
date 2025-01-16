@@ -51,7 +51,16 @@
           <% if @notifications.present? %>
             <% @notifications.each do |notification| %>
               <li>
-                <%= link_to notification.body, manage_membership_notification_path(notification, supplier_id: notification.notifiable_id), class: "text-blue-500 hover:underline" %>
+                <%# Dynamically generate the link based on notification type %>
+                <% link = case notification.notification_type
+                         when "registration"
+                           manage_membership_notification_path(notification, supplier_id: notification.notifiable_id)
+                         when "evaluation"
+                           notification_path(notification) # Direct to show view
+                         else
+                           "#"
+                         end %>
+                <%= link_to notification.body, link, class: "text-blue-500 hover:underline" %>
               </li>
             <% end %>
           <% else %>

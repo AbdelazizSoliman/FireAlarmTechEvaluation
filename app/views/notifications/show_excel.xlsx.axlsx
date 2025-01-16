@@ -1,0 +1,5 @@
+wb = xlsx_package.workbook
+wb.add_worksheet(name: "Fire Alarm Control Panel") do |sheet|
+  sheet.add_row @fire_alarm_control_panel.attributes.keys.map(&:humanize)
+  sheet.add_row @fire_alarm_control_panel.attributes.values
+end

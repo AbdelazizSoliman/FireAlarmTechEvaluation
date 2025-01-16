@@ -84,7 +84,19 @@ class NotificationsController < ApplicationController
       end
     when :pdf
       @fire_alarm_control_panel = @notification.notifiable
-      render pdf: "fire_alarm_control_panel", template: "notifications/show_pdf", layout: "pdf"
+  
+      pdf = Prawn::Document.new
+      pdf.text "Fire Alarm Control Panel Details", size: 18, style: :bold
+      pdf.move_down 10
+  
+      @fire_alarm_control_panel.attributes.each do |key, value|
+        pdf.text "#{key.humanize}: #{value}", size: 12
+      end
+  
+      send_data pdf.render,
+                filename: "fire_alarm_control_panel_#{@notification.id}.pdf",
+                type: "application/pdf",
+                disposition: "inline"
     when :xlsx
       @fire_alarm_control_panel = @notification.notifiable
       render xlsx: "show", template: "notifications/show_excel", filename: "fire_alarm_control_panel.xlsx"

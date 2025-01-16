@@ -81,6 +81,8 @@ gem 'phonelib'
 gem 'axlsx_rails'
 
 gem 'prawn'
+gem 'prawn-table'
+
 
 gem 'rubyXL'
 

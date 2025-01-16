@@ -119,22 +119,48 @@ module Api
       file_path = Rails.root.join('public', 'reports', file_name)
     
       Prawn::Document.generate(file_path) do |pdf|
-        pdf.text "Evaluation Report", size: 30, style: :bold
+        # Title
+        pdf.text "Evaluation Report", size: 30, style: :bold, align: :center
         pdf.move_down 20
-        pdf.text "Evaluation Results:", size: 20, style: :bold
     
+        # Subtitle
+        pdf.text "Evaluation Results", size: 20, style: :bold, align: :left
+        pdf.move_down 10
+    
+        # Prepare data for the table
+        table_data = [
+          ["Attribute", "Submitted", "Standard", "Status"] # Header row
+        ]
+    
+        # Populate table rows
         comparison_results.each do |result|
-          status = result[:is_accepted] ? "Accepted" : "Rejected"
-          pdf.text "#{result[:field].to_s.humanize}: #{status} (Submitted: #{result[:submitted_value]}, Standard: #{result[:standard_value]})"
+          status = result[:is_accepted] ? "1" : "0" # 1 for Accepted, 0 for Rejected
+          table_data << [
+            result[:field].to_s.humanize,          # Field name
+            result[:submitted_value] || "N/A",    # Submitted value
+            result[:standard_value] || "N/A",     # Standard value
+            status                                # Status
+          ]
         end
     
-        overall_status = comparison_results.all? { |r| r[:is_accepted] } ? "Accepted" : "Rejected"
+        # Add the table to the PDF with styles
+        pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
+          row(0).font_style = :bold
+          row(0).background_color = "00FF00" # Green for the header
+          self.row_colors = ["F0F8FF", "FFFFFF"] # Alternate row colors
+          self.cell_style = { borders: [:top, :bottom], padding: [5, 10] }
+        end
+    
         pdf.move_down 20
-        pdf.text "Overall Status: #{overall_status}", size: 25, style: :bold
+    
+        # Overall Status
+        overall_status = comparison_results.all? { |r| r[:is_accepted] } ? "Accepted" : "Rejected"
+        pdf.text "Overall Status: #{overall_status}", size: 25, style: :bold, align: :center, color: overall_status == "Accepted" ? "008000" : "FF0000"
       end
     
       file_path.to_s
     end
+    
     
   end
 end

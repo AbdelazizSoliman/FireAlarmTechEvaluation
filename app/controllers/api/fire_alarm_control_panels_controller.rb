@@ -2,21 +2,21 @@ module Api
   class FireAlarmControlPanelsController < ApplicationController
     skip_before_action :verify_authenticity_token
 
-    COMPARISON_FIELDS = {
-  total_no_of_panels: { sheet_row: 1, sheet_column: 2 },
-  total_number_of_loop_cards: { sheet_row: 1, sheet_column: 3 },
-  total_number_of_circuits_per_card_loop: { sheet_row: 1, sheet_column: 4 },
-  total_no_of_loops: { sheet_row: 1, sheet_column: 5 },
-  total_no_of_spare_loops: { sheet_row: 1, sheet_column: 6 },
-  total_no_of_detectors_per_loop: { sheet_row: 1, sheet_column: 7 },
-  spare_no_of_loops_per_panel: { sheet_row: 1, sheet_column: 8 },
-  spare_percentage_per_loop: { sheet_row: 1, sheet_column: 10},
-  fa_repeater: { sheet_row: 1, sheet_column: 11 },
-  auto_dialer: { sheet_row: 1, sheet_column: 12 },
-  dot_matrix_printer: { sheet_row: 1, sheet_column: 13 },
-  internal_batteries_backup_capacity_panel: { sheet_row: 1, sheet_column: 17 },
-  external_batteries_backup_time: { sheet_row: 1, sheet_column: 18 }
-}
+      COMPARISON_FIELDS = {
+      total_no_of_panels: { sheet_row: 1, sheet_column: 2 },
+      total_number_of_loop_cards: { sheet_row: 1, sheet_column: 3 },
+      total_number_of_circuits_per_card_loop: { sheet_row: 1, sheet_column: 4 },
+      total_no_of_loops: { sheet_row: 1, sheet_column: 5 },
+      total_no_of_spare_loops: { sheet_row: 1, sheet_column: 6 },
+      total_no_of_detectors_per_loop: { sheet_row: 1, sheet_column: 7 },
+      spare_no_of_loops_per_panel: { sheet_row: 1, sheet_column: 8 },
+      spare_percentage_per_loop: { sheet_row: 1, sheet_column: 10},
+      fa_repeater: { sheet_row: 1, sheet_column: 11 },
+      auto_dialer: { sheet_row: 1, sheet_column: 12 },
+      dot_matrix_printer: { sheet_row: 1, sheet_column: 13 },
+      internal_batteries_backup_capacity_panel: { sheet_row: 1, sheet_column: 17 },
+      external_batteries_backup_time: { sheet_row: 1, sheet_column: 18 }
+    }
 
     def create
       project = Project.find(params[:project_id])
@@ -133,8 +133,13 @@ module Api
         ]
     
         # Populate table rows
+        total_items = comparison_results.size
+        accepted_items = 0
+    
         comparison_results.each do |result|
           status = result[:is_accepted] ? "1" : "0" # 1 for Accepted, 0 for Rejected
+          accepted_items += 1 if result[:is_accepted]
+    
           table_data << [
             result[:field].to_s.humanize,          # Field name
             result[:submitted_value] || "N/A",    # Submitted value
@@ -142,6 +147,10 @@ module Api
             status                                # Status
           ]
         end
+    
+        # Calculate the percentage of accepted items
+        acceptance_percentage = ((accepted_items.to_f / total_items) * 100).round(2)
+        overall_status = acceptance_percentage >= 60 ? "Accepted" : "Rejected"
     
         # Add the table to the PDF with styles
         pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
@@ -153,13 +162,17 @@ module Api
     
         pdf.move_down 20
     
-        # Overall Status
-        overall_status = comparison_results.all? { |r| r[:is_accepted] } ? "Accepted" : "Rejected"
+        # Overall Status and Percentage
+        
+        pdf.text "Percentage: #{acceptance_percentage}%", size: 15, align: :center
+        pdf.move_down 10
         pdf.text "Overall Status: #{overall_status}", size: 25, style: :bold, align: :center, color: overall_status == "Accepted" ? "008000" : "FF0000"
+
       end
     
       file_path.to_s
     end
+    
     
     
   end

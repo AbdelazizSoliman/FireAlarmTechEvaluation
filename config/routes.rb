@@ -6,14 +6,15 @@ Rails.application.routes.draw do
       post 'login', to: 'sessions#create'
       get  '/profile', to: 'sessions#profile'
       get '/dashboard', to: 'suppliers#dashboard'
+      get '/supplier_data', to: 'supplier_data#index'
     end
 
     # Nested Routes for Projects, Systems, and Subsystems within API namespace
     resources :projects do
       resources :project_scopes do
         resources :systems do
-          resources :subsystems do
-            resources :fire_alarm_control_panels, only: [:create, :index] # Add :index for GET
+          resources :subsystems, only: [] do
+            post :submit_all, on: :member
           end
         end
       end

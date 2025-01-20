@@ -10,9 +10,38 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_16_202051) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_19_175024) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "detectors_field_devices", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "subsystem_id", null: false
+    t.integer "smoke_detectors", comment: "Smoke Detectors: Basic type of detectors"
+    t.integer "smoke_detectors_with_built_in_isolator", comment: "Smoke Detectors with Built-in Isolator"
+    t.integer "smoke_detectors_wall_mounted_with_built_in_isolator", comment: "Wall-mounted Smoke Detectors with Built-in Isolator"
+    t.integer "smoke_detectors_with_led_indicators", comment: "Smoke Detectors with LED Indicators above False Ceiling"
+    t.integer "smoke_detectors_with_led_and_built_in_isolator", comment: "Smoke Detectors with LED Indicators and Built-in Isolator above False Ceiling"
+    t.integer "heat_detector", comment: "Heat Detectors: Detect heat for fire safety"
+    t.integer "heat_detectors_with_built_in_isolator", comment: "Heat Detectors with Built-in Isolator"
+    t.integer "high_temperature_heat_detector", comment: "High-Temperature Heat Detectors for industrial use"
+    t.integer "heat_rate_of_rise", comment: "Heat Detectors with Rate of Rise functionality"
+    t.integer "multi_detectors", comment: "Multi-criteria Detectors for fire safety"
+    t.integer "multi_detectors_with_built_in_isolator", comment: "Multi-criteria Detectors with Built-in Isolator"
+    t.integer "high_sensitive_detectors_for_harsh", comment: "High-sensitive Detectors for harsh environments"
+    t.integer "sensitivity_range", comment: "Sensitivity Range: Configurable range for detectors"
+    t.integer "beam_detector_transmitter", comment: "Beam Detector Transmitter"
+    t.integer "beam_detector_receiver", comment: "Beam Detector Receiver"
+    t.integer "duct_smoke_detectors", comment: "Duct Smoke Detectors for HVAC systems"
+    t.integer "flow_switches_interface_module", comment: "Flow Switches Interface Module"
+    t.integer "tamper_switches_interface_module", comment: "Tamper Switches Interface Module"
+    t.integer "gas_detectors", comment: "Gas Detectors for detecting combustible gases"
+    t.integer "flame_detectors", comment: "Flame Detectors for early fire detection"
+    t.decimal "unit_rate_smoke_detectors", precision: 10, scale: 2, comment: "Unit Rate for Smoke Detectors"
+    t.decimal "amount_smoke_detectors", precision: 15, scale: 2, comment: "Total Amount for Smoke Detectors (calculated as Value * Unit Rate)"
+    t.index ["subsystem_id"], name: "index_detectors_field_devices_on_subsystem_id"
+  end
 
   create_table "fire_alarm_control_panels", force: :cascade do |t|
     t.string "standards"
@@ -98,6 +127,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_16_202051) do
     t.index ["supplier_id", "subsystem_id"], name: "index_subsystems_suppliers_on_supplier_id_and_subsystem_id"
   end
 
+  create_table "supplier_data", force: :cascade do |t|
+    t.string "supplier_name", null: false, comment: "The name of the supplier"
+    t.string "supplier_category", null: false, comment: "The category or type of the supplier"
+    t.integer "total_years_in_saudi_market", null: false, comment: "The total number of years the supplier has been active in the Saudi market"
+    t.text "similar_projects", comment: "Details of similar projects carried out (mention 3 projects)"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "subsystem_id", null: false
+    t.index ["subsystem_id"], name: "index_supplier_data_on_subsystem_id"
+  end
+
   create_table "suppliers", force: :cascade do |t|
     t.string "supplier_name"
     t.string "supplier_category"
@@ -144,10 +184,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_16_202051) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "detectors_field_devices", "subsystems"
   add_foreign_key "fire_alarm_control_panels", "subsystems"
   add_foreign_key "project_scopes", "projects"
   add_foreign_key "subsystem_suppliers", "subsystems"
   add_foreign_key "subsystem_suppliers", "suppliers"
   add_foreign_key "subsystems", "systems"
+  add_foreign_key "supplier_data", "subsystems"
   add_foreign_key "systems", "project_scopes"
 end

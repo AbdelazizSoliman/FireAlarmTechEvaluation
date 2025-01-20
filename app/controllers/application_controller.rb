@@ -1,5 +1,8 @@
 class ApplicationController < ActionController::Base
     before_action :configure_permitted_parameters, if: :devise_controller?
+    protect_from_forgery with: :exception, unless: -> { request.format.json? }
+  
+    before_action :set_cors_headers
     # before_action :authenticate_user!
     before_action :set_unread_notifications_count
     helper_method :current_supplier
@@ -17,10 +20,24 @@ class ApplicationController < ActionController::Base
     end
 
     def current_supplier
-      @current_supplier ||= Supplier.find_by(id: params[:supplier_id])
+      header = request.headers['Authorization']
+      token = header.split(' ').last if header
+      decoded = JsonWebToken.decode(token) rescue nil
+      @current_supplier ||= Supplier.find_by(id: decoded[:supplier_id]) if decoded
     end
     
+    # def current_supplier
+    #   Rails.logger.info "Session supplier_id: #{session[:supplier_id]}"
+    #   @current_supplier ||= Supplier.find_by(id: session[:supplier_id])
+    # end
+    
+    
     private
+
+    def set_cors_headers
+      response.set_header('Access-Control-Allow-Origin', 'http://localhost:5173') # Frontend origin
+      response.set_header('Access-Control-Allow-Credentials', 'true')
+    end
 
     def set_unread_notifications_count
       if current_user

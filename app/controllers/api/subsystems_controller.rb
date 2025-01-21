@@ -11,15 +11,16 @@ module Api
         fire_alarm_data = fire_alarm_control_panel_params()
         detectors_data = detectors_field_devices_params()
   
-        # Create or update the supplier_data record
-        supplier_data_record = subsystem.supplier_data || subsystem.build_supplier_data(supplier_data_params)
+        # Fetch or build the single supplier_data record
+        supplier_data_record = subsystem.supplier_data.first_or_initialize
+        supplier_data_record.assign_attributes(supplier_data_params)
   
         # Create the fire_alarm_control_panel record
         fire_alarm_control_panel = subsystem.fire_alarm_control_panels.new(fire_alarm_data)
   
         # Create detectors_field_devices records
         detectors_field_devices = detectors_data.to_h.map do |key, attributes|
-          subsystem.detectors_field_devices.new(attributes.merge(device_type: key))
+          subsystem.detectors_field_devices.new(attributes)
         end
   
         # Use a transaction to ensure atomicity
@@ -57,9 +58,8 @@ module Api
         render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
       end
   
-
       private
-
+  
       def fire_alarm_control_panel_params
         params.require(:fire_alarm_control_panel).permit(
           :standards, :total_no_of_panels, :total_number_of_loop_cards,
@@ -72,7 +72,7 @@ module Api
           :external_batteries_backup_time
         )
       end
-
+  
       def detectors_field_devices_params
         params.require(:detectors_field_devices).permit(
           smoke_detectors: [:value, :unit_rate, :amount, :notes],
@@ -97,7 +97,7 @@ module Api
           flame_detectors: [:value, :unit_rate, :amount, :notes]
         )
       end
-      
+  
       def supplier_data_params
         params.require(:supplier_data).permit(
           :supplier_name,
@@ -106,8 +106,6 @@ module Api
           :similar_projects
         )
       end
-      
-
     end
   end
   

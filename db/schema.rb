@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_19_175024) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_21_123537) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_19_175024) do
     t.integer "flame_detectors", comment: "Flame Detectors for early fire detection"
     t.decimal "unit_rate_smoke_detectors", precision: 10, scale: 2, comment: "Unit Rate for Smoke Detectors"
     t.decimal "amount_smoke_detectors", precision: 15, scale: 2, comment: "Total Amount for Smoke Detectors (calculated as Value * Unit Rate)"
+    t.integer "value"
+    t.integer "unit_rate"
+    t.integer "amount"
+    t.text "notes"
     t.index ["subsystem_id"], name: "index_detectors_field_devices_on_subsystem_id"
   end
 

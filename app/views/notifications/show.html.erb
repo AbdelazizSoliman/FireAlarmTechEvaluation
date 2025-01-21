@@ -8,6 +8,8 @@
       <li><strong><%= key.humanize %>:</strong> <%= value %></li>
     <% end %>
   </ul>
+<% else %>
+  <p>No Supplier Data available.</p>
 <% end %>
 
 <% if @fire_alarm_control_panel.present? %>
@@ -17,6 +19,8 @@
       <li><strong><%= key.humanize %>:</strong> <%= value %></li>
     <% end %>
   </ul>
+<% else %>
+  <p>No Fire Alarm Control Panel data available.</p>
 <% end %>
 
 <% if @detectors_field_device.present? %>
@@ -45,6 +49,8 @@
       <% end %>
     </tbody>
   </table>
+<% else %>
+  <p>No Detectors Field Devices data available.</p>
 <% end %>
 
 <div>

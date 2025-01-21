@@ -78,28 +78,82 @@ class NotificationsController < ApplicationController
       when "registration"
         redirect_to manage_membership_notification_path(@notification)
       when "evaluation"
-        @fire_alarm_control_panel = @notification.notifiable
+        if @notification.notifiable.is_a?(Subsystem)
+          subsystem = @notification.notifiable
+          @supplier_data = subsystem.supplier_data.first
+          @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
+          @detectors_field_device = subsystem.detectors_field_devices.first
+        else
+          redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
+        end
       else
         redirect_to notifications_path, alert: "Unknown notification type."
       end
     when :pdf
-      @fire_alarm_control_panel = @notification.notifiable
+      if @notification.notifiable.is_a?(Subsystem)
+        subsystem = @notification.notifiable
+        @supplier_data = subsystem.supplier_data.first
+        @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
+        @detectors_field_device = subsystem.detectors_field_devices.first
   
-      pdf = Prawn::Document.new
-      pdf.text "Fire Alarm Control Panel Details", size: 18, style: :bold
-      pdf.move_down 10
+        pdf = Prawn::Document.new
+        pdf.text "Evaluation Report", size: 18, style: :bold
+        pdf.move_down 20
   
-      @fire_alarm_control_panel.attributes.each do |key, value|
-        pdf.text "#{key.humanize}: #{value}", size: 12
+        # Add Supplier Data
+        if @supplier_data
+          pdf.text "Supplier Data", size: 16, style: :bold
+          pdf.move_down 10
+          @supplier_data.attributes.each do |key, value|
+            pdf.text "#{key.humanize}: #{value}"
+          end
+          pdf.move_down 20
+        end
+  
+        # Add Fire Alarm Control Panel Data
+        if @fire_alarm_control_panel
+          pdf.text "Fire Alarm Control Panel Details", size: 16, style: :bold
+          pdf.move_down 10
+          @fire_alarm_control_panel.attributes.each do |key, value|
+            pdf.text "#{key.humanize}: #{value}"
+          end
+          pdf.move_down 20
+        end
+  
+        # Add Detectors Field Device Data
+        if @detectors_field_device
+          pdf.text "Detectors Field Devices", size: 16, style: :bold
+          pdf.move_down 10
+          @detectors_field_device.attributes.each do |key, value|
+            next unless key.ends_with?('_value')
+  
+            detector_type = key.sub('_value', '').humanize
+            pdf.text "Type: #{detector_type}"
+            pdf.text "Value: #{@detectors_field_device[key]}"
+            pdf.text "Unit Rate: #{@detectors_field_device["#{key.sub('_value', '_unit_rate')}"]}"
+            pdf.text "Amount: #{@detectors_field_device["#{key.sub('_value', '_amount')}"]}"
+            pdf.text "Notes: #{@detectors_field_device["#{key.sub('_value', '_notes')}"]}"
+            pdf.move_down 10
+          end
+        end
+  
+        send_data pdf.render,
+                  filename: "evaluation_report_#{@notification.id}.pdf",
+                  type: "application/pdf",
+                  disposition: "inline"
+      else
+        redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
       end
-  
-      send_data pdf.render,
-                filename: "fire_alarm_control_panel_#{@notification.id}.pdf",
-                type: "application/pdf",
-                disposition: "inline"
     when :xlsx
-      @fire_alarm_control_panel = @notification.notifiable
-      render xlsx: "show", template: "notifications/show_excel", filename: "fire_alarm_control_panel.xlsx"
+      if @notification.notifiable.is_a?(Subsystem)
+        subsystem = @notification.notifiable
+        @supplier_data = subsystem.supplier_data.first
+        @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
+        @detectors_field_device = subsystem.detectors_field_devices.first
+        render xlsx: "show", template: "notifications/show_excel", filename: "evaluation_report.xlsx"
+      else
+        redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
+      end
     else
       redirect_to notifications_path, alert: "Unsupported format."
     end

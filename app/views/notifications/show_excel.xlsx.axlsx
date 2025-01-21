@@ -1,7 +1,41 @@
+# app/views/notifications/show_excel.xlsx.axlsx
 wb = xlsx_package.workbook
-wb.add_worksheet(name: "Fire Alarm Control Panel") do |sheet|
-  @fire_alarm_control_panel.attributes.each do |key, value|
-    # Write each attribute name and value in separate columns
-    sheet.add_row [key.humanize, value]
+
+# Fire Alarm Control Panel Sheet
+if @fire_alarm_control_panel
+  wb.add_worksheet(name: "Fire Alarm Control Panel") do |sheet|
+    sheet.add_row ["Key", "Value"]
+    @fire_alarm_control_panel.attributes.each do |key, value|
+      sheet.add_row [key.humanize, value]
+    end
+  end
+end
+
+# Supplier Data Sheet
+if @supplier_data
+  wb.add_worksheet(name: "Supplier Data") do |sheet|
+    sheet.add_row ["Key", "Value"]
+    @supplier_data.attributes.each do |key, value|
+      sheet.add_row [key.humanize, value]
+    end
+  end
+end
+
+# Detectors Field Devices Sheet
+if @detectors_field_device
+  wb.add_worksheet(name: "Detectors Field Devices") do |sheet|
+    sheet.add_row ["Type", "Value", "Unit Rate", "Amount", "Notes"]
+    @detectors_field_device.attributes.each do |key, value|
+      next unless key.ends_with?('_value')
+
+      detector_type = key.sub('_value', '').humanize
+      sheet.add_row [
+        detector_type,
+        @detectors_field_device[key],
+        @detectors_field_device["#{key.sub('_value', '_unit_rate')}"],
+        @detectors_field_device["#{key.sub('_value', '_amount')}"],
+        @detectors_field_device["#{key.sub('_value', '_notes')}"]
+      ]
+    end
   end
 end

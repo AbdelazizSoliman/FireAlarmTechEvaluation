@@ -18,9 +18,17 @@ module Api
         # Create the fire_alarm_control_panel record
         fire_alarm_control_panel = subsystem.fire_alarm_control_panels.new(fire_alarm_data)
   
-        # Create detectors_field_devices records
-        detectors_field_devices = detectors_data.to_h.map do |key, attributes|
-          subsystem.detectors_field_devices.new(attributes)
+        # Fetch or build detectors_field_device record
+        detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
+  
+        # Map detectors data to the appropriate columns in the database
+        detectors_data.each do |key, attributes|
+          detectors_field_device.assign_attributes(
+            "#{key}_value": attributes[:value],
+            "#{key}_unit_rate": attributes[:unit_rate],
+            "#{key}_amount": attributes[:amount],
+            "#{key}_notes": attributes[:notes]
+          )
         end
   
         # Use a transaction to ensure atomicity
@@ -35,11 +43,9 @@ module Api
             raise ActiveRecord::RecordInvalid.new(fire_alarm_control_panel)
           end
   
-          # Save detectors_field_devices
-          detectors_field_devices.each do |device|
-            unless device.save
-              raise ActiveRecord::RecordInvalid.new(device)
-            end
+          # Save detectors_field_device
+          unless detectors_field_device.save
+            raise ActiveRecord::RecordInvalid.new(detectors_field_device)
           end
         end
   
@@ -78,15 +84,15 @@ module Api
           smoke_detectors: [:value, :unit_rate, :amount, :notes],
           smoke_detectors_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
           smoke_detectors_wall_mounted_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
-          smoke_detectors_with_led_indicators_above_false_ceiling: [:value, :unit_rate, :amount, :notes],
-          smoke_detectors_with_led_indicators_above_false_ceiling_with_isolator: [:value, :unit_rate, :amount, :notes],
+          smoke_detectors_with_led_indicators: [:value, :unit_rate, :amount, :notes],
+          smoke_detectors_with_led_and_built_in_isolator: [:value, :unit_rate, :amount, :notes],
           heat_detectors: [:value, :unit_rate, :amount, :notes],
           heat_detectors_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
           high_temperature_heat_detectors: [:value, :unit_rate, :amount, :notes],
           heat_rate_of_rise: [:value, :unit_rate, :amount, :notes],
           multi_detectors: [:value, :unit_rate, :amount, :notes],
           multi_detectors_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
-          high_sensitive_detectors_for_harsh_conditions: [:value, :unit_rate, :amount, :notes],
+          high_sensitive_detectors_for_harsh_environments: [:value, :unit_rate, :amount, :notes],
           sensitivity_range: [:value, :unit_rate, :amount, :notes],
           beam_detector_transmitter: [:value, :unit_rate, :amount, :notes],
           beam_detector_receiver: [:value, :unit_rate, :amount, :notes],

@@ -1,24 +1,60 @@
 <h1><%= @notification.title %></h1>
 <p><%= @notification.body %></p>
 
-<% if @fire_alarm_control_panel %>
+<% if @supplier_data.present? %>
+  <h2>Supplier Data</h2>
+  <ul>
+    <% @supplier_data.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @fire_alarm_control_panel.present? %>
   <h2>Fire Alarm Control Panel Details</h2>
   <ul>
     <% @fire_alarm_control_panel.attributes.each do |key, value| %>
       <li><strong><%= key.humanize %>:</strong> <%= value %></li>
     <% end %>
   </ul>
+<% end %>
 
-  <div>
-    <%= link_to 'Download as PDF', notification_path(@notification, format: :pdf), class: "text-blue-500 hover:underline" %> |
-    <%= link_to 'Download as Excel', notification_path(@notification, format: :xlsx), class: "text-blue-500 hover:underline" %>
+<% if @detectors_field_device.present? %>
+  <h2>Detectors Field Devices</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Detector Type</th>
+        <th>Value</th>
+        <th>Unit Rate</th>
+        <th>Amount</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @detectors_field_device.attributes.each do |key, value| %>
+        <% if key.ends_with?('_value') %>
+          <tr>
+            <td><%= key.sub('_value', '').humanize %></td>
+            <td><%= value %></td>
+            <td><%= @detectors_field_device["#{key.sub('_value', '_unit_rate')}"] %></td>
+            <td><%= @detectors_field_device["#{key.sub('_value', '_amount')}"] %></td>
+            <td><%= @detectors_field_device["#{key.sub('_value', '_notes')}"] %></td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
 
-    <% if @notification.additional_data.present? %>
+<div>
+  <%= link_to 'Download as PDF', notification_path(@notification, format: :pdf), class: "text-blue-500 hover:underline" %> |
+  <%= link_to 'Download as Excel', notification_path(@notification, format: :xlsx), class: "text-blue-500 hover:underline" %>
+
+  <% if @notification.additional_data.present? %>
     <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
     <% if additional_data["evaluation_report_path"].present? %>
       | <%= link_to 'Download Evaluation Report', additional_data["evaluation_report_path"], target: "_blank", rel: "noopener", class: "text-blue-500 hover:underline" %>
     <% end %>
   <% end %>
-  
-  </div>
-<% end %>
+</div>

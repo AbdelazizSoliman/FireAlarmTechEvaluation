@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_21_151023) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_22_084122) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -123,6 +123,21 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_21_151023) do
     t.index ["subsystem_id"], name: "index_detectors_field_devices_on_subsystem_id"
   end
 
+  create_table "door_holders", force: :cascade do |t|
+    t.integer "total_no_of_devices"
+    t.integer "total_no_of_devices_unit_rate"
+    t.integer "total_no_of_devices_amount"
+    t.text "total_no_of_devices_notes"
+    t.integer "total_no_of_relays"
+    t.integer "total_no_of_relays_unit_rate"
+    t.integer "total_no_of_relays_amount"
+    t.text "total_no_of_relays_notes"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_door_holders_on_subsystem_id"
+  end
+
   create_table "fire_alarm_control_panels", force: :cascade do |t|
     t.string "standards"
     t.integer "total_no_of_panels"
@@ -148,6 +163,28 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_21_151023) do
     t.index ["subsystem_id"], name: "index_fire_alarm_control_panels_on_subsystem_id"
   end
 
+  create_table "graphic_systems", force: :cascade do |t|
+    t.string "workstation"
+    t.string "workstation_control_feature"
+    t.string "softwares"
+    t.string "licenses"
+    t.string "screens"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_graphic_systems_on_subsystem_id"
+  end
+
+  create_table "manual_pull_stations", force: :cascade do |t|
+    t.string "type"
+    t.integer "break_glass"
+    t.integer "break_glass_weather_proof"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_manual_pull_stations_on_subsystem_id"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.string "title"
     t.text "body"
@@ -160,6 +197,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_21_151023) do
     t.string "notification_type"
     t.text "additional_data"
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+  end
+
+  create_table "product_data", force: :cascade do |t|
+    t.string "manufacturer"
+    t.string "submitted_product"
+    t.string "product_certifications"
+    t.integer "total_years_in_saudi_market"
+    t.string "coo"
+    t.string "com_for_mfacp"
+    t.string "com_for_detectors"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_product_data_on_subsystem_id"
   end
 
   create_table "project_scopes", force: :cascade do |t|
@@ -265,7 +316,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_21_151023) do
   end
 
   add_foreign_key "detectors_field_devices", "subsystems"
+  add_foreign_key "door_holders", "subsystems"
   add_foreign_key "fire_alarm_control_panels", "subsystems"
+  add_foreign_key "graphic_systems", "subsystems"
+  add_foreign_key "manual_pull_stations", "subsystems"
+  add_foreign_key "product_data", "subsystems"
   add_foreign_key "project_scopes", "projects"
   add_foreign_key "subsystem_suppliers", "subsystems"
   add_foreign_key "subsystem_suppliers", "suppliers"

@@ -1,6 +1,7 @@
 <h1><%= @notification.title %></h1>
 <p><%= @notification.body %></p>
 
+<!-- Supplier Data -->
 <% if @supplier_data.present? %>
   <h2>Supplier Data</h2>
   <ul>
@@ -12,6 +13,19 @@
   <p>No Supplier Data available.</p>
 <% end %>
 
+<!-- Product Data -->
+<% if @product_data.present? %>
+  <h2>Product Data</h2>
+  <ul>
+    <% @product_data.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No Product Data available.</p>
+<% end %>
+
+<!-- Fire Alarm Control Panel -->
 <% if @fire_alarm_control_panel.present? %>
   <h2>Fire Alarm Control Panel Details</h2>
   <ul>
@@ -23,6 +37,19 @@
   <p>No Fire Alarm Control Panel data available.</p>
 <% end %>
 
+<!-- Graphic Systems -->
+<% if @graphic_system.present? %>
+  <h2>Graphic Systems</h2>
+  <ul>
+    <% @graphic_system.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No Graphic Systems data available.</p>
+<% end %>
+
+<!-- Detectors Field Devices -->
 <% if @detectors_field_device.present? %>
   <h2>Detectors Field Devices</h2>
   <table>
@@ -51,6 +78,30 @@
   </table>
 <% else %>
   <p>No Detectors Field Devices data available.</p>
+<% end %>
+
+<!-- Manual Pull Station -->
+<% if @manual_pull_station.present? %>
+  <h2>Manual Pull Station</h2>
+  <ul>
+    <% @manual_pull_station.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No Manual Pull Station data available.</p>
+<% end %>
+
+<!-- Door Holders -->
+<% if @door_holder.present? %>
+  <h2>Door Holders</h2>
+  <ul>
+    <% @door_holder.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No Door Holders data available.</p>
 <% end %>
 
 <div>

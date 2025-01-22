@@ -3,25 +3,22 @@ module Api
       skip_before_action :verify_authenticity_token
   
       def submit_all
-        # Locate the subsystem
         subsystem = Subsystem.find(params[:id])
-  
-        # Extract and filter parameters using strong parameter methods
+      
         supplier_data_params = supplier_data_params()
         fire_alarm_data = fire_alarm_control_panel_params()
         detectors_data = detectors_field_devices_params()
-  
-        # Fetch or build the single supplier_data record
+        manual_pull_station_data = manual_pull_station_params()
+        door_holders_data = door_holders_params()
+        product_data_params = product_data_params()
+        graphic_systems_params = graphic_systems_params()
+      
         supplier_data_record = subsystem.supplier_data.first_or_initialize
         supplier_data_record.assign_attributes(supplier_data_params)
-  
-        # Create the fire_alarm_control_panel record
+      
         fire_alarm_control_panel = subsystem.fire_alarm_control_panels.new(fire_alarm_data)
-  
-        # Fetch or build detectors_field_device record
+      
         detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
-  
-        # Map detectors data to the appropriate columns in the database
         detectors_data.each do |key, attributes|
           detectors_field_device.assign_attributes(
             "#{key}_value": attributes[:value],
@@ -30,26 +27,28 @@ module Api
             "#{key}_notes": attributes[:notes]
           )
         end
-  
-        # Use a transaction to ensure atomicity
+      
+        manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
+        manual_pull_station.assign_attributes(manual_pull_station_data)
+      
+        door_holders = subsystem.door_holders.first_or_initialize
+        door_holders.assign_attributes(door_holders_data)
+      
+        product_data_record = subsystem.product_data.first_or_initialize
+        product_data_record.assign_attributes(product_data_params)
+      
+        graphic_systems_record = subsystem.graphic_systems.first_or_initialize
+        graphic_systems_record.assign_attributes(graphic_systems_params)
+      
         ActiveRecord::Base.transaction do
-          # Save supplier_data
-          unless supplier_data_record.save
-            raise ActiveRecord::RecordInvalid.new(supplier_data_record)
-          end
-  
-          # Save fire_alarm_control_panel
-          unless fire_alarm_control_panel.save
-            raise ActiveRecord::RecordInvalid.new(fire_alarm_control_panel)
-          end
-  
-          # Save detectors_field_device
-          unless detectors_field_device.save
-            raise ActiveRecord::RecordInvalid.new(detectors_field_device)
+          [supplier_data_record, fire_alarm_control_panel, detectors_field_device, 
+           manual_pull_station, door_holders, product_data_record, graphic_systems_record].each do |record|
+            unless record.save
+              raise ActiveRecord::RecordInvalid.new(record)
+            end
           end
         end
-  
-        # If we reach this point, data was successfully saved
+      
         Notification.create!(
           title: "Evaluation Submitted",
           body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
@@ -57,12 +56,12 @@ module Api
           notification_type: "evaluation",
           additional_data: { subsystem_id: subsystem.id }.to_json
         )
-  
+      
         render json: { message: "Data submitted successfully." }, status: :created
       rescue ActiveRecord::RecordInvalid => e
-        # Handle any errors in saving records
         render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
       end
+      
   
       private
   
@@ -82,36 +81,43 @@ module Api
       def detectors_field_devices_params
         params.require(:detectors_field_devices).permit(
           smoke_detectors: [:value, :unit_rate, :amount, :notes],
-          smoke_detectors_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
-          smoke_detectors_wall_mounted_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
-          smoke_detectors_with_led_indicators: [:value, :unit_rate, :amount, :notes],
-          smoke_detectors_with_led_and_built_in_isolator: [:value, :unit_rate, :amount, :notes],
-          heat_detectors: [:value, :unit_rate, :amount, :notes],
-          heat_detectors_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
-          high_temperature_heat_detectors: [:value, :unit_rate, :amount, :notes],
-          heat_rate_of_rise: [:value, :unit_rate, :amount, :notes],
-          multi_detectors: [:value, :unit_rate, :amount, :notes],
-          multi_detectors_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
-          high_sensitive_detectors_for_harsh_environments: [:value, :unit_rate, :amount, :notes],
-          sensitivity_range: [:value, :unit_rate, :amount, :notes],
-          beam_detector_transmitter: [:value, :unit_rate, :amount, :notes],
-          beam_detector_receiver: [:value, :unit_rate, :amount, :notes],
-          duct_smoke_detectors: [:value, :unit_rate, :amount, :notes],
-          flow_switches_interface_module: [:value, :unit_rate, :amount, :notes],
-          tamper_switches_interface_module: [:value, :unit_rate, :amount, :notes],
-          gas_detectors: [:value, :unit_rate, :amount, :notes],
-          flame_detectors: [:value, :unit_rate, :amount, :notes]
+          heat_detectors: [:value, :unit_rate, :amount, :notes]
+        )
+      end
+  
+      def manual_pull_station_params
+        params.require(:manual_pull_station).permit(
+          :type, :break_glass, :break_glass_weather_proof
+        )
+      end
+  
+      def door_holders_params
+        params.require(:door_holders).permit(
+          :total_no_of_devices, :total_no_of_devices_unit_rate, :total_no_of_devices_amount, :total_no_of_devices_notes,
+          :total_no_of_relays, :total_no_of_relays_unit_rate, :total_no_of_relays_amount, :total_no_of_relays_notes
         )
       end
   
       def supplier_data_params
         params.require(:supplier_data).permit(
-          :supplier_name,
-          :supplier_category,
-          :total_years_in_saudi_market,
-          :similar_projects
+          :supplier_name, :supplier_category,
+          :total_years_in_saudi_market, :similar_projects
         )
       end
+
+      def product_data_params
+        params.require(:product_data).permit(
+          :manufacturer, :submitted_product, :product_certifications,
+          :total_years_in_saudi_market, :coo, :com_for_mfacp, :com_for_detectors
+        )
+      end
+      
+      def graphic_systems_params
+        params.require(:graphic_systems).permit(
+          :workstation, :workstation_control_feature, :softwares, :licenses, :screens
+        )
+      end
+      
     end
   end
   

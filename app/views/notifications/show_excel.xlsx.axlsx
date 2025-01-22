@@ -1,5 +1,14 @@
-# app/views/notifications/show_excel.xlsx.axlsx
 wb = xlsx_package.workbook
+
+# Supplier Data Sheet
+if @supplier_data
+  wb.add_worksheet(name: "Supplier Data") do |sheet|
+    sheet.add_row ["Key", "Value"]
+    @supplier_data.attributes.each do |key, value|
+      sheet.add_row [key.humanize, value]
+    end
+  end
+end
 
 # Fire Alarm Control Panel Sheet
 if @fire_alarm_control_panel
@@ -11,11 +20,21 @@ if @fire_alarm_control_panel
   end
 end
 
-# Supplier Data Sheet
-if @supplier_data
-  wb.add_worksheet(name: "Supplier Data") do |sheet|
+# Product Data Sheet
+if @product_data
+  wb.add_worksheet(name: "Product Data") do |sheet|
     sheet.add_row ["Key", "Value"]
-    @supplier_data.attributes.each do |key, value|
+    @product_data.attributes.each do |key, value|
+      sheet.add_row [key.humanize, value]
+    end
+  end
+end
+
+# Graphic Systems Sheet
+if @graphic_system
+  wb.add_worksheet(name: "Graphic Systems") do |sheet|
+    sheet.add_row ["Key", "Value"]
+    @graphic_system.attributes.each do |key, value|
       sheet.add_row [key.humanize, value]
     end
   end
@@ -36,6 +55,35 @@ if @detectors_field_device
         @detectors_field_device["#{key.sub('_value', '_amount')}"],
         @detectors_field_device["#{key.sub('_value', '_notes')}"]
       ]
+    end
+  end
+end
+
+# Manual Pull Station Sheet
+if @manual_pull_station
+  wb.add_worksheet(name: "Manual Pull Station") do |sheet|
+    sheet.add_row ["Key", "Value"]
+    @manual_pull_station.attributes.each do |key, value|
+      sheet.add_row [key.humanize, value]
+    end
+  end
+end
+
+# Door Holders Sheet
+if @door_holders
+  wb.add_worksheet(name: "Door Holders") do |sheet|
+    sheet.add_row ["Type", "Value", "Unit Rate", "Amount", "Notes"]
+    @door_holders.attributes.each do |key, value|
+      if key == "total_devices_value" || key == "total_relays_value"
+        holder_type = key.sub('_value', '').humanize
+        sheet.add_row [
+          holder_type,
+          @door_holders[key],
+          @door_holders["#{key.sub('_value', '_unit_rate')}"],
+          @door_holders["#{key.sub('_value', '_amount')}"],
+          @door_holders["#{key.sub('_value', '_notes')}"]
+        ]
+      end
     end
   end
 end

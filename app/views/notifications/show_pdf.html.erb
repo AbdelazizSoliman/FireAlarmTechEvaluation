@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Fire Alarm Control Panel Details</title>
+  <title>Subsystem Evaluation Report</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,11 +23,25 @@
   </style>
 </head>
 <body>
-  <h1>Fire Alarm Control Panel Evaluation</h1>
+  <h1>Subsystem Evaluation Report</h1>
   <p><strong>Notification:</strong> <%= @notification.title %></p>
   <p><strong>Submitted By:</strong> <%= @notification.body %></p>
 
-  <h2>Fire Alarm Control Panel Details</h2>
+  <h2>Supplier Data</h2>
+  <ul>
+    <% @supplier_data.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+
+  <h2>Product Data</h2>
+  <ul>
+    <% @product_data.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+
+  <h2>Fire Alarm Control Panel</h2>
   <table>
     <thead>
       <tr>
@@ -41,6 +55,39 @@
           <td><%= key.humanize %></td>
           <td><%= value %></td>
         </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <h2>Graphic Systems</h2>
+  <ul>
+    <% @graphic_system.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+
+  <h2>Detectors Field Devices</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Value</th>
+        <th>Unit Rate</th>
+        <th>Amount</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @detectors_field_device.attributes.each do |key, value| %>
+        <% if key.ends_with?('_value') %>
+          <tr>
+            <td><%= key.sub('_value', '').humanize %></td>
+            <td><%= value %></td>
+            <td><%= @detectors_field_device["#{key.sub('_value', '_unit_rate')}"] %></td>
+            <td><%= @detectors_field_device["#{key.sub('_value', '_amount')}"] %></td>
+            <td><%= @detectors_field_device["#{key.sub('_value', '_notes')}"] %></td>
+          </tr>
+        <% end %>
       <% end %>
     </tbody>
   </table>

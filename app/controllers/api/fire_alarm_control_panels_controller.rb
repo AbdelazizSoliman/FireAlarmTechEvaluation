@@ -3,20 +3,20 @@ module Api
     skip_before_action :verify_authenticity_token
 
       COMPARISON_FIELDS = {
-      total_no_of_panels: { sheet_row: 1, sheet_column: 2 },
-      total_number_of_loop_cards: { sheet_row: 1, sheet_column: 3 },
-      total_number_of_circuits_per_card_loop: { sheet_row: 1, sheet_column: 4 },
-      total_no_of_loops: { sheet_row: 1, sheet_column: 5 },
-      total_no_of_spare_loops: { sheet_row: 1, sheet_column: 6 },
-      total_no_of_detectors_per_loop: { sheet_row: 1, sheet_column: 7 },
-      spare_no_of_loops_per_panel: { sheet_row: 1, sheet_column: 8 },
-      spare_percentage_per_loop: { sheet_row: 1, sheet_column: 10},
-      fa_repeater: { sheet_row: 1, sheet_column: 11 },
-      auto_dialer: { sheet_row: 1, sheet_column: 12 },
-      dot_matrix_printer: { sheet_row: 1, sheet_column: 13 },
-      internal_batteries_backup_capacity_panel: { sheet_row: 1, sheet_column: 17 },
-      external_batteries_backup_time: { sheet_row: 1, sheet_column: 18 }
-    }
+        total_no_of_panels: { sheet_row: 1, sheet_column: 2 },
+        total_number_of_loop_cards: { sheet_row: 1, sheet_column: 3 },
+        total_number_of_circuits_per_card_loop: { sheet_row: 1, sheet_column: 4 },
+        total_no_of_loops: { sheet_row: 1, sheet_column: 5 },
+        total_no_of_spare_loops: { sheet_row: 1, sheet_column: 6 },
+        total_no_of_detectors_per_loop: { sheet_row: 1, sheet_column: 7 },
+        spare_no_of_loops_per_panel: { sheet_row: 1, sheet_column: 8 },
+        spare_percentage_per_loop: { sheet_row: 1, sheet_column: 10},
+        fa_repeater: { sheet_row: 1, sheet_column: 11 },
+        auto_dialer: { sheet_row: 1, sheet_column: 12 },
+        dot_matrix_printer: { sheet_row: 1, sheet_column: 13 },
+        internal_batteries_backup_capacity_panel: { sheet_row: 1, sheet_column: 17 },
+        external_batteries_backup_time: { sheet_row: 1, sheet_column: 18 }
+     }
 
     def create
       project = Project.find(params[:project_id])

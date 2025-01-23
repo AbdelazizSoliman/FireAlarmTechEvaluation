@@ -109,9 +109,9 @@
   <%= link_to 'Download as Excel', notification_path(@notification, format: :xlsx), class: "text-blue-500 hover:underline" %>
 
   <% if @notification.additional_data.present? %>
-    <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
-    <% if additional_data["evaluation_report_path"].present? %>
-      | <%= link_to 'Download Evaluation Report', additional_data["evaluation_report_path"], target: "_blank", rel: "noopener", class: "text-blue-500 hover:underline" %>
-    <% end %>
+  <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
+  <% if additional_data["evaluation_report_path"].present? %>
+      <%= link_to 'Download Evaluation Report', additional_data["evaluation_report_path"], target: "_blank", rel: "noopener", class: "text-blue-500 hover:underline" %>
   <% end %>
+<% end %>
 </div>

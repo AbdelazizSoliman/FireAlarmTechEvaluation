@@ -1,24 +1,52 @@
 module Api
-    class SubsystemsController < ApplicationController
+  class SubsystemsController < ApplicationController
       skip_before_action :verify_authenticity_token
   
       COMPARISON_FIELDS = {
-      total_no_of_panels: { sheet_row: 1, sheet_column: 2 },
-      total_number_of_loop_cards: { sheet_row: 1, sheet_column: 3 },
-      total_number_of_circuits_per_card_loop: { sheet_row: 1, sheet_column: 4 },
-      total_no_of_loops: { sheet_row: 1, sheet_column: 5 },
-      total_no_of_spare_loops: { sheet_row: 1, sheet_column: 6 },
-      total_no_of_detectors_per_loop: { sheet_row: 1, sheet_column: 7 },
-      spare_no_of_loops_per_panel: { sheet_row: 1, sheet_column: 8 },
-      spare_percentage_per_loop: { sheet_row: 1, sheet_column: 10},
-      fa_repeater: { sheet_row: 1, sheet_column: 11 },
-      auto_dialer: { sheet_row: 1, sheet_column: 12 },
-      dot_matrix_printer: { sheet_row: 1, sheet_column: 13 },
-      internal_batteries_backup_capacity_panel: { sheet_row: 1, sheet_column: 17 },
-      external_batteries_backup_time: { sheet_row: 1, sheet_column: 18 }
-    }
+        fire_alarm_control_panels: {
+          total_no_of_panels: { sheet_row: 3, sheet_column: 1 },
+          total_number_of_loop_cards: { sheet_row: 4, sheet_column: 1 },
+          total_number_of_circuits_per_card_loop: { sheet_row: 5, sheet_column: 1 },
+          total_no_of_loops: { sheet_row: 6, sheet_column: 1 },
+          total_no_of_spare_loops: { sheet_row: 7, sheet_column: 1 },
+          total_no_of_detectors_per_loop: { sheet_row: 8, sheet_column: 1 },
+          spare_no_of_loops_per_panel: { sheet_row: 9, sheet_column: 1 },
+          spare_percentage_per_loop: { sheet_row: 11, sheet_column: 1},
+          fa_repeater: { sheet_row: 12, sheet_column: 1 },
+          auto_dialer: { sheet_row: 13, sheet_column: 1 },
+          dot_matrix_printer: { sheet_row: 14, sheet_column: 1 },
+          internal_batteries_backup_capacity_panel: { sheet_row: 18, sheet_column: 1 },
+          external_batteries_backup_time: { sheet_row: 19, sheet_column: 1 }
+        },
 
-    
+        detectors_field_devices: {
+          smoke_detectors_amount: { sheet_row: 1, sheet_column: 3 },
+          smoke_detectors_with_built_in_isolator_amount: { sheet_row: 2, sheet_column: 3 },
+          smoke_detectors_wall_mounted_with_built_in_isolator_amount: { sheet_row: 3, sheet_column: 3 },
+          smoke_detectors_with_led_indicators_amount: { sheet_row: 4, sheet_column: 3 },
+          smoke_detectors_with_led_and_built_in_isolator_amount: { sheet_row: 5, sheet_column: 3 },
+          heat_detectors_amount: { sheet_row: 6, sheet_column: 3 },
+          heat_detectors_with_built_in_isolator_amount: { sheet_row: 7, sheet_column: 3 },
+          high_temperature_heat_detectors_amount: { sheet_row: 8, sheet_column: 3 },
+          heat_rate_of_rise_amount: { sheet_row: 9, sheet_column: 3 },
+          multi_detectors_amount: { sheet_row: 10, sheet_column: 3 },
+          multi_detectors_with_built_in_isolator_amount: { sheet_row: 11, sheet_column: 3 },
+          high_sensitive_detectors_for_harsh_environments_amount: { sheet_row: 12, sheet_column: 3 },
+          sensitivity_range_amount: { sheet_row: 13, sheet_column: 3 },
+          beam_detector_transmitter_amount: { sheet_row: 14, sheet_column: 3 },
+          beam_detector_receiver_amount: { sheet_row: 15, sheet_column: 3 },
+          duct_smoke_detectors_amount: { sheet_row: 16, sheet_column: 3 },
+          flow_switches_interface_module_amount: { sheet_row: 17, sheet_column: 3 },
+          tamper_switches_interface_module_amount: { sheet_row: 18, sheet_column: 3 },
+          gas_detectors_amount: { sheet_row: 19, sheet_column: 3 },
+          flame_detectors_amount: { sheet_row: 20, sheet_column: 3 }
+        },
+
+        door_holders: {
+          total_no_of_devices: { sheet_row: 1, sheet_column: 3 },
+          total_no_of_relays: { sheet_row: 2, sheet_column: 3 },
+        },
+      }
 
       def submit_all
         subsystem = Subsystem.find(params[:id])
@@ -154,6 +182,68 @@ module Api
         )
       end
       
-    end
-  end
+      def evaluate_data(record, table_name)
+        # Load the standard Excel file
+        standard_file_path = Rails.root.join('lib', 'standards.xlsx')
+        standard_workbook = RubyXL::Parser.parse(standard_file_path)
+        standard_sheet = standard_workbook[0]
+
+        results = []
+        comparison_fields = COMPARISON_FIELDS[table_name]
+
+        comparison_fields.each do |field, location|
+          # Fetch submitted value
+          submitted_value = record.send(field)
+
+          # Fetch standard value from the Excel sheet
+          standard_value = standard_sheet[location[:sheet_row]][location[:sheet_column]].value
+
+          # Compare values
+          is_accepted = submitted_value.present? && submitted_value.to_i >= standard_value.to_i
+
+          # Append comparison result
+          results << {
+            field: field.to_s.humanize,
+            submitted_value: submitted_value || "N/A",
+            standard_value: standard_value || "N/A",
+            is_accepted: is_accepted
+          }
+       end
+
+        results
+      end
+
+      def generate_evaluation_report(subsystem, comparison_results)
+        file_name = "evaluation_report_subsystem_#{subsystem.id}_#{Time.now.to_i}.pdf"
+        file_path = Rails.root.join('public', 'reports', file_name)
+      
+        Prawn::Document.generate(file_path) do |pdf|
+          pdf.text "Evaluation Report", size: 30, style: :bold, align: :center
+          pdf.move_down 20
+      
+          # Add results for each table
+          comparison_results.each do |table_name, results|
+            pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
+            pdf.move_down 10
+      
+            table_data = [["Attribute", "Submitted Value", "Standard Value", "Status"]]
+            results.each do |result|
+              status = result[:is_accepted] ? "Accepted" : "Rejected"
+              table_data << [result[:field], result[:submitted_value], result[:standard_value], status]
+            end
+      
+            pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
+              row(0).font_style = :bold
+              row(0).background_color = "cccccc"
+              self.row_colors = ["f0f0f0", "ffffff"]
+            end
+            pdf.move_down 20
+          end
+        end
+      
+        file_path.to_s
+      end
+      
+ end
+end
   

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_22_084122) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_23_124906) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -29,7 +29,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_22_084122) do
     t.integer "heat_rate_of_rise", comment: "Heat Detectors with Rate of Rise functionality"
     t.integer "multi_detectors", comment: "Multi-criteria Detectors for fire safety"
     t.integer "multi_detectors_with_built_in_isolator", comment: "Multi-criteria Detectors with Built-in Isolator"
-    t.integer "high_sensitive_detectors_for_harsh", comment: "High-sensitive Detectors for harsh environments"
+    t.integer "high_sensitive_detectors_for_harsh_environments", comment: "High-sensitive Detectors for harsh environments"
     t.integer "sensitivity_range", comment: "Sensitivity Range: Configurable range for detectors"
     t.integer "beam_detector_transmitter", comment: "Beam Detector Transmitter"
     t.integer "beam_detector_receiver", comment: "Beam Detector Receiver"

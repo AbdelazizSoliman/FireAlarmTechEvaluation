@@ -69,21 +69,27 @@ if @manual_pull_station
   end
 end
 
+
 # Door Holders Sheet
-if @door_holders
+if @door_holder
   wb.add_worksheet(name: "Door Holders") do |sheet|
     sheet.add_row ["Type", "Value", "Unit Rate", "Amount", "Notes"]
-    @door_holders.attributes.each do |key, value|
-      if key == "total_devices_value" || key == "total_relays_value"
-        holder_type = key.sub('_value', '').humanize
-        sheet.add_row [
-          holder_type,
-          @door_holders[key],
-          @door_holders["#{key.sub('_value', '_unit_rate')}"],
-          @door_holders["#{key.sub('_value', '_amount')}"],
-          @door_holders["#{key.sub('_value', '_notes')}"]
-        ]
-      end
+    # Map Door Holders attributes explicitly
+    [
+      { type: 'total_no_of_devices', label: 'Total Number of Devices' },
+      { type: 'total_no_of_relays', label: 'Total Number of Relays' }
+    ].each do |attribute|
+      type_key = attribute[:type]
+      holder_type = attribute[:label]
+      sheet.add_row [
+        holder_type,
+        @door_holder[type_key],
+        @door_holder["#{type_key}_unit_rate"],
+        @door_holder["#{type_key}_amount"],
+        @door_holder["#{type_key}_notes"]
+      ]
     end
   end
+else
+  Rails.logger.debug "No Door Holder data available for Excel"
 end

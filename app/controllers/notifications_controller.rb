@@ -69,99 +69,159 @@ class NotificationsController < ApplicationController
     redirect_to notifications_path, alert: "Error: #{e.message}"
   end
   
+
   def show
     @notification = Notification.find(params[:id])
-  
+
     case request.format.symbol
     when :html
-      case @notification.notification_type
-      when "registration"
-        redirect_to manage_membership_notification_path(@notification)
-      when "evaluation"
-        if @notification.notifiable.is_a?(Subsystem)
-          subsystem = @notification.notifiable
-          @supplier_data = subsystem.supplier_data.first
-          @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
-          @detectors_field_device = subsystem.detectors_field_devices.first
-        else
-          redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
-        end
-      else
-        redirect_to notifications_path, alert: "Unknown notification type."
-      end
+      handle_html_request
     when :pdf
-      if @notification.notifiable.is_a?(Subsystem)
-        subsystem = @notification.notifiable
-        @supplier_data = subsystem.supplier_data.first
-        @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
-        @detectors_field_device = subsystem.detectors_field_devices.first
-  
-        pdf = Prawn::Document.new
-        pdf.text "Evaluation Report", size: 18, style: :bold
-        pdf.move_down 20
-  
-        # Add Supplier Data
-        if @supplier_data
-          pdf.text "Supplier Data", size: 16, style: :bold
-          pdf.move_down 10
-          @supplier_data.attributes.each do |key, value|
-            pdf.text "#{key.humanize}: #{value}"
-          end
-          pdf.move_down 20
-        end
-  
-        # Add Fire Alarm Control Panel Data
-        if @fire_alarm_control_panel
-          pdf.text "Fire Alarm Control Panel Details", size: 16, style: :bold
-          pdf.move_down 10
-          @fire_alarm_control_panel.attributes.each do |key, value|
-            pdf.text "#{key.humanize}: #{value}"
-          end
-          pdf.move_down 20
-        end
-  
-        # Add Detectors Field Device Data
-        if @detectors_field_device
-          pdf.text "Detectors Field Devices", size: 16, style: :bold
-          pdf.move_down 10
-          @detectors_field_device.attributes.each do |key, value|
-            next unless key.ends_with?('_value')
-  
-            detector_type = key.sub('_value', '').humanize
-            pdf.text "Type: #{detector_type}"
-            pdf.text "Value: #{@detectors_field_device[key]}"
-            pdf.text "Unit Rate: #{@detectors_field_device["#{key.sub('_value', '_unit_rate')}"]}"
-            pdf.text "Amount: #{@detectors_field_device["#{key.sub('_value', '_amount')}"]}"
-            pdf.text "Notes: #{@detectors_field_device["#{key.sub('_value', '_notes')}"]}"
-            pdf.move_down 10
-          end
-        end
-  
-        send_data pdf.render,
-                  filename: "evaluation_report_#{@notification.id}.pdf",
-                  type: "application/pdf",
-                  disposition: "inline"
-      else
-        redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
-      end
+      handle_pdf_request
     when :xlsx
-      if @notification.notifiable.is_a?(Subsystem)
-        subsystem = @notification.notifiable
-        @supplier_data = subsystem.supplier_data.first
-        @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
-        @detectors_field_device = subsystem.detectors_field_devices.first
-        render xlsx: "show", template: "notifications/show_excel", filename: "evaluation_report.xlsx"
-      else
-        redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
-      end
+      handle_xlsx_request
     else
       redirect_to notifications_path, alert: "Unsupported format."
     end
   end
-  
-  
 
   private
+
+  def handle_html_request
+    case @notification.notification_type
+    when "registration"
+      redirect_to manage_membership_notification_path(@notification)
+    when "evaluation"
+      if @notification.notifiable.is_a?(Subsystem)
+        assign_subsystem_data
+      else
+        redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
+      end
+    else
+      redirect_to notifications_path, alert: "Unknown notification type."
+    end
+  end
+
+  def handle_pdf_request
+    if @notification.notifiable.is_a?(Subsystem)
+      assign_subsystem_data
+
+      pdf = Prawn::Document.new
+      pdf.text "Evaluation Report", size: 18, style: :bold
+      pdf.move_down 20
+
+      # Supplier Data
+      add_pdf_section(pdf, "Supplier Data", @supplier_data)
+
+      # Product Data
+      add_pdf_section(pdf, "Product Data", @product_data)
+
+      # Fire Alarm Control Panel Data
+      add_pdf_section(pdf, "Fire Alarm Control Panel", @fire_alarm_control_panel)
+
+      # Graphic System Data
+      add_pdf_section(pdf, "Graphic Systems", @graphic_system)
+
+      # Detectors Field Devices
+      add_pdf_detectors(pdf, @detectors_field_device)
+
+      # Manual Pull Station Data
+      add_pdf_section(pdf, "Manual Pull Station", @manual_pull_station)
+
+      # Door Holders
+      add_pdf_door_holders(pdf, @door_holder)
+
+      send_data pdf.render,
+                filename: "evaluation_report_#{@notification.id}.pdf",
+                type: "application/pdf",
+                disposition: "inline"
+    else
+      redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
+    end
+  end
+
+  def handle_xlsx_request
+    if @notification.notifiable.is_a?(Subsystem)
+      assign_subsystem_data
+
+      render xlsx: "show", template: "notifications/show_excel", filename: "evaluation_report.xlsx"
+    else
+      redirect_to notifications_path, alert: "Invalid notifiable type for evaluation."
+    end
+  end
+
+  def assign_subsystem_data
+    subsystem = @notification.notifiable
+    @supplier_data = subsystem.supplier_data.first
+    @product_data = subsystem.product_data.first
+    @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
+    @graphic_system = subsystem.graphic_systems.first
+    @detectors_field_device = subsystem.detectors_field_devices.first
+    @manual_pull_station = subsystem.manual_pull_stations.first
+    @door_holder = subsystem.door_holders.first
+    Rails.logger.debug "Door Holder: #{@door_holder.inspect}"
+  end
+  
+
+  def add_pdf_section(pdf, section_title, data)
+    if data
+      pdf.text section_title, size: 16, style: :bold
+      pdf.move_down 10
+      data.attributes.each do |key, value|
+        pdf.text "#{key.humanize}: #{value}"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "#{section_title} data not available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_detectors(pdf, detectors)
+    if detectors
+      pdf.text "Detectors Field Devices", size: 16, style: :bold
+      pdf.move_down 10
+      detectors.attributes.each do |key, value|
+        next unless key.ends_with?('_value')
+
+        detector_type = key.sub('_value', '').humanize
+        pdf.text "Type: #{detector_type}"
+        pdf.text "Value: #{value}"
+        pdf.text "Unit Rate: #{detectors["#{key.sub('_value', '_unit_rate')}"]}"
+        pdf.text "Amount: #{detectors["#{key.sub('_value', '_amount')}"]}"
+        pdf.text "Notes: #{detectors["#{key.sub('_value', '_notes')}"]}"
+        pdf.move_down 10
+      end
+    else
+      pdf.text "No Detectors Field Devices data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_door_holders(pdf, door_holders)
+    if door_holders
+      pdf.text "Door Holders", size: 16, style: :bold
+      pdf.move_down 10
+      # Explicitly map the attributes
+      [
+        { type: 'total_no_of_devices', label: 'Total Number of Devices' },
+        { type: 'total_no_of_relays', label: 'Total Number of Relays' }
+      ].each do |attribute|
+        type_key = attribute[:type]
+        pdf.text "Type: #{attribute[:label]}"
+        pdf.text "Value: #{door_holders[type_key]}"
+        pdf.text "Unit Rate: #{door_holders["#{type_key}_unit_rate"]}"
+        pdf.text "Amount: #{door_holders["#{type_key}_amount"]}"
+        pdf.text "Notes: #{door_holders["#{type_key}_notes"]}"
+        pdf.move_down 10
+      end
+    else
+      pdf.text "No Door Holders data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+  
+  
 
   def set_notification
     @notification = Notification.find(params[:id])

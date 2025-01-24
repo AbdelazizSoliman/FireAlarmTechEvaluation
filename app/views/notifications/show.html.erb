@@ -104,6 +104,18 @@
   <p>No Door Holders data available.</p>
 <% end %>
 
+<!-- Notification Devices -->
+<% if @notification_devices.present? %>
+  <h2>Notification Devices</h2>
+  <ul>
+    <% @notification_devices.attributes.each do |key, value| %>
+      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No Notification Devices data available.</p>
+<% end %>
+
 <div>
   <%= link_to 'Download as PDF', notification_path(@notification, format: :pdf), class: "text-blue-500 hover:underline" %> |
   <%= link_to 'Download as Excel', notification_path(@notification, format: :xlsx), class: "text-blue-500 hover:underline" %>

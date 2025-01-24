@@ -69,12 +69,10 @@ if @manual_pull_station
   end
 end
 
-
 # Door Holders Sheet
 if @door_holder
   wb.add_worksheet(name: "Door Holders") do |sheet|
     sheet.add_row ["Type", "Value", "Unit Rate", "Amount", "Notes"]
-    # Map Door Holders attributes explicitly
     [
       { type: 'total_no_of_devices', label: 'Total Number of Devices' },
       { type: 'total_no_of_relays', label: 'Total Number of Relays' }
@@ -92,4 +90,16 @@ if @door_holder
   end
 else
   Rails.logger.debug "No Door Holder data available for Excel"
+end
+
+# Notification Devices Sheet
+if @notification_devices
+  wb.add_worksheet(name: "Notification Devices") do |sheet|
+    sheet.add_row ["Key", "Value"]
+    @notification_devices.attributes.each do |key, value|
+      sheet.add_row [key.humanize, value]
+    end
+  end
+else
+  Rails.logger.debug "No Notification Devices data available for Excel"
 end

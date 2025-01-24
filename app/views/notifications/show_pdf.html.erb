@@ -91,5 +91,64 @@
       <% end %>
     </tbody>
   </table>
+
+  <!-- Manual Pull Station -->
+  <% if @manual_pull_station.present? %>
+    <h2>Manual Pull Station</h2>
+    <ul>
+      <% @manual_pull_station.attributes.each do |key, value| %>
+        <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No Manual Pull Station data available.</p>
+  <% end %>
+
+  <!-- Door Holders -->
+  <% if @door_holder.present? %>
+    <h2>Door Holders</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Value</th>
+          <th>Unit Rate</th>
+          <th>Amount</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% # Just like your existing logic in the Excel template %>
+        <%[
+          { type: 'total_no_of_devices', label: 'Total Number of Devices' },
+          { type: 'total_no_of_relays', label: 'Total Number of Relays' }
+        ].each do |attribute| %>
+          <% type_key = attribute[:type] %>
+          <tr>
+            <td><%= attribute[:label] %></td>
+            <td><%= @door_holder[type_key] %></td>
+            <td><%= @door_holder["#{type_key}_unit_rate"] %></td>
+            <td><%= @door_holder["#{type_key}_amount"] %></td>
+            <td><%= @door_holder["#{type_key}_notes"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No Door Holders data available.</p>
+  <% end %>
+
+  <!-- Notification Devices -->
+  <% if @notification_devices.present? %>
+    <h2>Notification Devices</h2>
+    <ul>
+      <% @notification_devices.attributes.each do |key, value| %>
+        <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No Notification Devices data available.</p>
+  <% end %>
+
 </body>
 </html>

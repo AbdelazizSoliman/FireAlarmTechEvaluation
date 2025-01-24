@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_23_124906) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_24_150840) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -185,6 +185,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_23_124906) do
     t.index ["subsystem_id"], name: "index_manual_pull_stations_on_subsystem_id"
   end
 
+  create_table "notification_devices", force: :cascade do |t|
+    t.string "notification_addressing"
+    t.integer "fire_alarm_strobe"
+    t.integer "fire_alarm_strobe_wp"
+    t.integer "fire_alarm_horn"
+    t.integer "fire_alarm_horn_wp"
+    t.integer "fire_alarm_horn_with_strobe"
+    t.integer "fire_alarm_horn_with_strobe_wp"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_notification_devices_on_subsystem_id"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.string "title"
     t.text "body"
@@ -320,6 +334,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_23_124906) do
   add_foreign_key "fire_alarm_control_panels", "subsystems"
   add_foreign_key "graphic_systems", "subsystems"
   add_foreign_key "manual_pull_stations", "subsystems"
+  add_foreign_key "notification_devices", "subsystems"
   add_foreign_key "product_data", "subsystems"
   add_foreign_key "project_scopes", "projects"
   add_foreign_key "subsystem_suppliers", "subsystems"

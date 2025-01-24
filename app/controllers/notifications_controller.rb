@@ -131,6 +131,9 @@ class NotificationsController < ApplicationController
       # Door Holders
       add_pdf_door_holders(pdf, @door_holder)
 
+       # Notification Devices (NEW)
+       add_pdf_notification_devices(pdf, @notification_devices)
+
       send_data pdf.render,
                 filename: "evaluation_report_#{@notification.id}.pdf",
                 type: "application/pdf",
@@ -151,14 +154,15 @@ class NotificationsController < ApplicationController
   end
 
   def assign_subsystem_data
-    subsystem = @notification.notifiable
-    @supplier_data = subsystem.supplier_data.first
-    @product_data = subsystem.product_data.first
-    @fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first
-    @graphic_system = subsystem.graphic_systems.first
-    @detectors_field_device = subsystem.detectors_field_devices.first
-    @manual_pull_station = subsystem.manual_pull_stations.first
-    @door_holder = subsystem.door_holders.first
+    @subsystem = @notification.notifiable
+    @supplier_data = @subsystem.supplier_data.first
+    @product_data = @subsystem.product_data.first
+    @fire_alarm_control_panel = @subsystem.fire_alarm_control_panels.first
+    @graphic_system = @subsystem.graphic_systems.first
+    @detectors_field_device = @subsystem.detectors_field_devices.first
+    @manual_pull_station = @subsystem.manual_pull_stations.first
+    @door_holder = @subsystem.door_holders.first
+    @notification_devices = @subsystem.notification_devices.first
     Rails.logger.debug "Door Holder: #{@door_holder.inspect}"
   end
   
@@ -220,6 +224,37 @@ class NotificationsController < ApplicationController
       pdf.move_down 10
     end
   end
+  
+  def add_pdf_notification_devices(pdf, notification_devices)
+    if notification_devices
+      pdf.text "Notification Devices", size: 16, style: :bold
+      pdf.move_down 10
+  
+      # Build a 2-column table with headers
+      data = []
+      data << ["Attribute", "Value"]
+  
+      data << ["Notification Addressing", notification_devices.notification_addressing]
+      data << ["Fire Alarm Strobe", notification_devices.fire_alarm_strobe]
+      data << ["Fire Alarm Strobe (WP)", notification_devices.fire_alarm_strobe_wp]
+      data << ["Fire Alarm Horn", notification_devices.fire_alarm_horn]
+      data << ["Fire Alarm Horn (WP)", notification_devices.fire_alarm_horn_wp]
+      data << ["Fire Alarm Horn w/ Strobe", notification_devices.fire_alarm_horn_with_strobe]
+      data << ["Fire Alarm Horn w/ Strobe (WP)", notification_devices.fire_alarm_horn_with_strobe_wp]
+  
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+        self.row_colors = ["f0f0f0", "ffffff"]
+      end
+  
+      pdf.move_down 20
+    else
+      pdf.text "No Notification Devices data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+  
   
   
 

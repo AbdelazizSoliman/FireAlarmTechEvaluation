@@ -53,7 +53,19 @@ module Api
             total_no_of_devices_amount: { sheet_row: 1, sheet_column: 3 },
             total_no_of_relays_amount: { sheet_row: 2, sheet_column: 3 }
           }  
+      },
+      notification_devices: {
+        sheet_name: "Notification Devices",
+        fields: {
+          fire_alarm_strobe: { sheet_row: 3, sheet_column: 1 },
+          fire_alarm_strobe_wp: { sheet_row: 4, sheet_column: 1 },
+          fire_alarm_horn: { sheet_row: 5, sheet_column: 1 },
+          fire_alarm_horn_wp: { sheet_row: 6, sheet_column: 1 },
+          fire_alarm_horn_with_strobe: { sheet_row: 7, sheet_column: 1 },
+          fire_alarm_horn_with_strobe_wp:{sheet_row: 8, sheet_column: 1}
+        }
       }
+
     }
 
     def submit_all
@@ -67,6 +79,8 @@ module Api
       door_holders_data = door_holders_params()
       product_data_params = product_data_params()
       graphic_systems_params = graphic_systems_params()
+      notification_devices_data = notification_devices_params()
+
     
       # Build and assign data to their respective models
       supplier_data_record = subsystem.supplier_data.first_or_initialize
@@ -96,13 +110,17 @@ module Api
     
       graphic_systems_record = subsystem.graphic_systems.first_or_initialize
       graphic_systems_record.assign_attributes(graphic_systems_params)
+
+      notification_devices_record = subsystem.notification_devices.first_or_initialize
+      notification_devices_record.assign_attributes(notification_devices_data)
     
       # Perform evaluation
       evaluation_results = perform_evaluation(
         subsystem: subsystem,
         fire_alarm_control_panel: fire_alarm_control_panel,
         detectors_field_device: detectors_field_device,
-        door_holders: door_holders
+        door_holders: door_holders,
+        notification_devices: notification_devices_record
       )
     
       # Save all records and generate the report
@@ -114,7 +132,8 @@ module Api
           manual_pull_station,
           door_holders,
           product_data_record,
-          graphic_systems_record
+          graphic_systems_record,
+          notification_devices_record
         ].each do |record|
           unless record.save
             raise ActiveRecord::RecordInvalid.new(record)
@@ -150,13 +169,15 @@ relative_url_path = "/" + relative_path
 
     private
 
-    def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:)
+    def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:)
       {
         fire_alarm_control_panels: evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels),
         detectors_field_devices: evaluate_data(detectors_field_device, :detectors_field_devices),
-        door_holders: evaluate_data(door_holders, :door_holders)
+        door_holders: evaluate_data(door_holders, :door_holders),
+        notification_devices: evaluate_data(notification_devices, :notification_devices)
       }
     end
+    
     
     def evaluate_data(record, table_name)
       Rails.logger.debug "Evaluating table: #{table_name}"
@@ -252,7 +273,7 @@ relative_url_path = "/" + relative_path
       )
     end
 
-   def detectors_field_devices_params
+    def detectors_field_devices_params
         params.require(:detectors_field_devices).permit(
           smoke_detectors: [:value, :unit_rate, :amount, :notes],
           smoke_detectors_with_built_in_isolator: [:value, :unit_rate, :amount, :notes],
@@ -275,7 +296,7 @@ relative_url_path = "/" + relative_path
           gas_detectors: [:value, :unit_rate, :amount, :notes],
           flame_detectors: [:value, :unit_rate, :amount, :notes]
         )
-      end
+    end
 
     def manual_pull_station_params
       params.require(:manual_pull_station).permit(
@@ -309,5 +330,18 @@ relative_url_path = "/" + relative_path
         :workstation, :workstation_control_feature, :softwares, :licenses, :screens
       )
     end
+
+    def notification_devices_params
+      params.require(:notification_devices).permit(
+        :notification_addressing,
+        :fire_alarm_strobe,
+        :fire_alarm_strobe_wp,
+        :fire_alarm_horn,
+        :fire_alarm_horn_wp,
+        :fire_alarm_horn_with_strobe,
+        :fire_alarm_horn_with_strobe_wp
+      )
+    end
+    
   end
 end

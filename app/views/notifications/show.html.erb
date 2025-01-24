@@ -1,133 +1,317 @@
-<h1><%= @notification.title %></h1>
-<p><%= @notification.body %></p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Notification Show</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9fafb;
+      color: #333;
+    }
 
-<!-- Supplier Data -->
-<% if @supplier_data.present? %>
-  <h2>Supplier Data</h2>
-  <ul>
-    <% @supplier_data.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No Supplier Data available.</p>
-<% end %>
+    h1, h2 {
+      color: #2c3e50;
+    }
 
-<!-- Product Data -->
-<% if @product_data.present? %>
-  <h2>Product Data</h2>
-  <ul>
-    <% @product_data.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No Product Data available.</p>
-<% end %>
+    h2 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.4rem;
+      padding: 0.3rem 0.6rem;
+      background-color: #ecf0f1;
+      border-radius: 4px;
+    }
 
-<!-- Fire Alarm Control Panel -->
-<% if @fire_alarm_control_panel.present? %>
-  <h2>Fire Alarm Control Panel Details</h2>
-  <ul>
-    <% @fire_alarm_control_panel.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No Fire Alarm Control Panel data available.</p>
-<% end %>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      background-color: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 4px;
+      overflow: hidden; /* so the rounded corners apply to table */
+    }
 
-<!-- Graphic Systems -->
-<% if @graphic_system.present? %>
-  <h2>Graphic Systems</h2>
-  <ul>
-    <% @graphic_system.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No Graphic Systems data available.</p>
-<% end %>
+    table thead th {
+      background-color: #009688; /* teal */
+      color: #fff;
+      text-align: left;
+      padding: 12px;
+    }
 
-<!-- Detectors Field Devices -->
-<% if @detectors_field_device.present? %>
-  <h2>Detectors Field Devices</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Detector Type</th>
-        <th>Value</th>
-        <th>Unit Rate</th>
-        <th>Amount</th>
-        <th>Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @detectors_field_device.attributes.each do |key, value| %>
-        <% if key.ends_with?('_value') %>
+    table tbody tr:nth-child(odd) {
+      background-color: #f2f2f2;
+    }
+
+    table tbody td {
+      border-bottom: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      vertical-align: top;
+    }
+
+    table tbody tr:last-child td {
+      border-bottom: none; /* remove border for last row */
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-link {
+      # color: #007BFF;
+      text-decoration: none;
+      margin-right: 1rem;
+      border: 1px solid #e0e0e0;
+    }
+    .btn-link:hover {
+      text-decoration: underline;
+    }
+
+    .footer-links {
+      margin-top: 2rem;
+      font-size: 0.95rem;
+      
+    }
+
+    .footer-links a.btn-link {
+     background-color: #009688;
+     color: #fff;
+     padding: 0.5rem 1rem;
+     border-radius: 4px;
+     
+    }
+  </style>
+</head>
+<body>
+
+  <h1><%= @notification.title %></h1>
+  <p><%= @notification.body %></p>
+
+  <!-- Supplier Data -->
+  <div class="section">
+    <h2>Supplier Data</h2>
+    <% if @supplier_data.present? %>
+      <table>
+        <thead>
           <tr>
-            <td><%= key.sub('_value', '').humanize %></td>
-            <td><%= value %></td>
-            <td><%= @detectors_field_device["#{key.sub('_value', '_unit_rate')}"] %></td>
-            <td><%= @detectors_field_device["#{key.sub('_value', '_amount')}"] %></td>
-            <td><%= @detectors_field_device["#{key.sub('_value', '_notes')}"] %></td>
+            <th>Attribute</th>
+            <th>Value</th>
           </tr>
-        <% end %>
-      <% end %>
-    </tbody>
-  </table>
-<% else %>
-  <p>No Detectors Field Devices data available.</p>
-<% end %>
-
-<!-- Manual Pull Station -->
-<% if @manual_pull_station.present? %>
-  <h2>Manual Pull Station</h2>
-  <ul>
-    <% @manual_pull_station.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+        </thead>
+        <tbody>
+          <% @supplier_data.attributes.each do |key, value| %>
+            <tr>
+              <td><strong><%= key.humanize %></strong></td>
+              <td><%= value %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Supplier Data available.</p>
     <% end %>
-  </ul>
-<% else %>
-  <p>No Manual Pull Station data available.</p>
-<% end %>
+  </div>
 
-<!-- Door Holders -->
-<% if @door_holder.present? %>
-  <h2>Door Holders</h2>
-  <ul>
-    <% @door_holder.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+  <!-- Product Data -->
+  <div class="section">
+    <h2>Product Data</h2>
+    <% if @product_data.present? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @product_data.attributes.each do |key, value| %>
+            <tr>
+              <td><strong><%= key.humanize %></strong></td>
+              <td><%= value %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Product Data available.</p>
     <% end %>
-  </ul>
-<% else %>
-  <p>No Door Holders data available.</p>
-<% end %>
+  </div>
 
-<!-- Notification Devices -->
-<% if @notification_devices.present? %>
-  <h2>Notification Devices</h2>
-  <ul>
-    <% @notification_devices.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+  <!-- Fire Alarm Control Panel -->
+  <div class="section">
+    <h2>Fire Alarm Control Panel Details</h2>
+    <% if @fire_alarm_control_panel.present? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @fire_alarm_control_panel.attributes.each do |key, value| %>
+            <tr>
+              <td><strong><%= key.humanize %></strong></td>
+              <td><%= value %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Fire Alarm Control Panel data available.</p>
     <% end %>
-  </ul>
-<% else %>
-  <p>No Notification Devices data available.</p>
-<% end %>
+  </div>
 
-<div>
-  <%= link_to 'Download as PDF', notification_path(@notification, format: :pdf), class: "text-blue-500 hover:underline" %> |
-  <%= link_to 'Download as Excel', notification_path(@notification, format: :xlsx), class: "text-blue-500 hover:underline" %>
+  <!-- Graphic Systems -->
+  <div class="section">
+    <h2>Graphic Systems</h2>
+    <% if @graphic_system.present? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @graphic_system.attributes.each do |key, value| %>
+            <tr>
+              <td><strong><%= key.humanize %></strong></td>
+              <td><%= value %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Graphic Systems data available.</p>
+    <% end %>
+  </div>
+
+  <!-- Detectors Field Devices -->
+  <div class="section">
+    <h2>Detectors Field Devices</h2>
+    <% if @detectors_field_device.present? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Detector Type</th>
+            <th>Value</th>
+            <th>Unit Rate</th>
+            <th>Amount</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @detectors_field_device.attributes.each do |key, value| %>
+            <% if key.ends_with?('_value') %>
+              <tr>
+                <td><%= key.sub('_value', '').humanize %></td>
+                <td><%= value %></td>
+                <td><%= @detectors_field_device["#{key.sub('_value', '_unit_rate')}"] %></td>
+                <td><%= @detectors_field_device["#{key.sub('_value', '_amount')}"] %></td>
+                <td><%= @detectors_field_device["#{key.sub('_value', '_notes')}"] %></td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Detectors Field Devices data available.</p>
+    <% end %>
+  </div>
+
+  <!-- Manual Pull Station -->
+  <div class="section">
+    <h2>Manual Pull Station</h2>
+    <% if @manual_pull_station.present? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @manual_pull_station.attributes.each do |key, value| %>
+            <tr>
+              <td><strong><%= key.humanize %></strong></td>
+              <td><%= value %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Manual Pull Station data available.</p>
+    <% end %>
+  </div>
+
+  <!-- Door Holders -->
+  <div class="section">
+    <h2>Door Holders</h2>
+    <% if @door_holder.present? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @door_holder.attributes.each do |key, value| %>
+            <tr>
+              <td><strong><%= key.humanize %></strong></td>
+              <td><%= value %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Door Holders data available.</p>
+    <% end %>
+  </div>
+
+  <!-- Notification Devices -->
+  <div class="section">
+    <h2>Notification Devices</h2>
+    <% if @notification_devices.present? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @notification_devices.attributes.each do |key, value| %>
+            <tr>
+              <td><strong><%= key.humanize %></strong></td>
+              <td><%= value %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No Notification Devices data available.</p>
+    <% end %>
+  </div>
+
+  <div class="footer-links">
+  <%= link_to 'Download as PDF', notification_path(@notification, format: :pdf), class: "btn-link" %>
+  <%= link_to 'Download as Excel', notification_path(@notification, format: :xlsx), class: "btn-link" %>
+
   <% if @notification.additional_data.present? %>
-  <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
-  <% if additional_data["evaluation_report_path"].present? %>
-    <%= link_to 'Download Evaluation Report',
-                additional_data["evaluation_report_path"],
-                target: "_blank",
-                rel: "noopener",
-                class: "text-blue-500 hover:underline" %>
+    <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
+    <% if additional_data["evaluation_report_path"].present? %>
+      <%= link_to 'Download Evaluation Report',
+                  additional_data["evaluation_report_path"],
+                  target: "_blank",
+                  rel: "noopener",
+                  class: "btn-link" %>
+    <% end %>
   <% end %>
-<% end %>
-
 </div>
+
+</body>
+</html>

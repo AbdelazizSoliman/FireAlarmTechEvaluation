@@ -123,6 +123,14 @@ module Api
       end
     
       report_path = generate_evaluation_report(subsystem, evaluation_results)
+# => "D:/evaluation/supplier_api/public/reports/evaluation_report_subsystem_4_1737668733.pdf"
+
+relative_path = Pathname.new(report_path)
+  .relative_path_from(Rails.root.join('public'))
+  .to_s
+# => "reports/evaluation_report_subsystem_4_1737668733.pdf"
+
+relative_url_path = "/" + relative_path
     
       # Create notification for evaluation
       Notification.create!(
@@ -130,7 +138,9 @@ module Api
         body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
         notifiable: subsystem,
         notification_type: "evaluation",
-        additional_data: { evaluation_report_path: report_path }.to_json
+        additional_data: {
+          evaluation_report_path: relative_url_path
+        }.to_json
       )
     
       render json: { message: "Data submitted successfully." }, status: :created

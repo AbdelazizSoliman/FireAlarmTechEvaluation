@@ -58,7 +58,7 @@ module Api
 
     def submit_all
       subsystem = Subsystem.find(params[:id])
-
+    
       # Gather parameters for various subsystem data
       supplier_data_params = supplier_data_params()
       fire_alarm_data = fire_alarm_control_panel_params()
@@ -67,13 +67,14 @@ module Api
       door_holders_data = door_holders_params()
       product_data_params = product_data_params()
       graphic_systems_params = graphic_systems_params()
-
+    
       # Build and assign data to their respective models
       supplier_data_record = subsystem.supplier_data.first_or_initialize
       supplier_data_record.assign_attributes(supplier_data_params)
-
-      fire_alarm_control_panel = subsystem.fire_alarm_control_panels.new(fire_alarm_data)
-
+    
+      fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first_or_initialize
+      fire_alarm_control_panel.assign_attributes(fire_alarm_data)
+    
       detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
       detectors_data.each do |key, attributes|
         detectors_field_device.assign_attributes(
@@ -83,38 +84,46 @@ module Api
           "#{key}_notes": attributes[:notes]
         )
       end
-
+    
       manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
       manual_pull_station.assign_attributes(manual_pull_station_data)
-
+    
       door_holders = subsystem.door_holders.first_or_initialize
       door_holders.assign_attributes(door_holders_data)
-
+    
       product_data_record = subsystem.product_data.first_or_initialize
       product_data_record.assign_attributes(product_data_params)
-
+    
       graphic_systems_record = subsystem.graphic_systems.first_or_initialize
       graphic_systems_record.assign_attributes(graphic_systems_params)
-
+    
       # Perform evaluation
-      evaluation_results = {
-        fire_alarm_control_panels: evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels),
-        detectors_field_devices: evaluate_data(detectors_field_device, :detectors_field_devices),
-        door_holders: evaluate_data(door_holders, :door_holders)
-      }
-
-      # Save all records and generate report
+      evaluation_results = perform_evaluation(
+        subsystem: subsystem,
+        fire_alarm_control_panel: fire_alarm_control_panel,
+        detectors_field_device: detectors_field_device,
+        door_holders: door_holders
+      )
+    
+      # Save all records and generate the report
       ActiveRecord::Base.transaction do
-        [supplier_data_record, fire_alarm_control_panel, detectors_field_device,
-         manual_pull_station, door_holders, product_data_record, graphic_systems_record].each do |record|
+        [
+          supplier_data_record,
+          fire_alarm_control_panel,
+          detectors_field_device,
+          manual_pull_station,
+          door_holders,
+          product_data_record,
+          graphic_systems_record
+        ].each do |record|
           unless record.save
             raise ActiveRecord::RecordInvalid.new(record)
           end
         end
       end
-
+    
       report_path = generate_evaluation_report(subsystem, evaluation_results)
-
+    
       # Create notification for evaluation
       Notification.create!(
         title: "Evaluation Submitted",
@@ -123,7 +132,7 @@ module Api
         notification_type: "evaluation",
         additional_data: { evaluation_report_path: report_path }.to_json
       )
-
+    
       render json: { message: "Data submitted successfully." }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
@@ -131,8 +140,15 @@ module Api
 
     private
 
+    def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:)
+      {
+        fire_alarm_control_panels: evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels),
+        detectors_field_devices: evaluate_data(detectors_field_device, :detectors_field_devices),
+        door_holders: evaluate_data(door_holders, :door_holders)
+      }
+    end
+    
     def evaluate_data(record, table_name)
-      # Debugging: Log the table name and comparison fields
       Rails.logger.debug "Evaluating table: #{table_name}"
       table_config = COMPARISON_FIELDS[table_name]
     
@@ -149,7 +165,6 @@ module Api
         return []
       end
     
-      # Load the standard Excel file
       standard_file_path = Rails.root.join('lib', 'standards.xlsx')
       standard_workbook = RubyXL::Parser.parse(standard_file_path)
       standard_sheet = standard_workbook.worksheets.find { |sheet| sheet.sheet_name == sheet_name }
@@ -162,10 +177,7 @@ module Api
       results = []
     
       fields.each do |field, location|
-        # Fetch submitted value
         submitted_value = record.send(field) rescue nil
-    
-        # Check and fetch the standard value
         cell = standard_sheet[location[:sheet_row]][location[:sheet_column]] rescue nil
         standard_value = cell&.value
     
@@ -173,10 +185,8 @@ module Api
           Rails.logger.error "Missing standard value for #{field} at row #{location[:sheet_row]}, column #{location[:sheet_column]} in #{sheet_name}"
         end
     
-        # Compare values
         is_accepted = submitted_value.present? && standard_value.present? && submitted_value.to_i >= standard_value.to_i
     
-        # Append the comparison result
         results << {
           field: field.to_s.humanize,
           submitted_value: submitted_value || "N/A",
@@ -187,25 +197,25 @@ module Api
     
       results
     end
-
+    
     def generate_evaluation_report(subsystem, comparison_results)
       file_name = "evaluation_report_subsystem_#{subsystem.id}_#{Time.now.to_i}.pdf"
       file_path = Rails.root.join('public', 'reports', file_name)
-
+    
       Prawn::Document.generate(file_path) do |pdf|
         pdf.text "Evaluation Report", size: 30, style: :bold, align: :center
         pdf.move_down 20
-
+    
         comparison_results.each do |table_name, results|
           pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
           pdf.move_down 10
-
+    
           table_data = [["Attribute", "Submitted Value", "Standard Value", "Status"]]
           results.each do |result|
             status = result[:is_accepted] ? "Accepted" : "Rejected"
             table_data << [result[:field], result[:submitted_value], result[:standard_value], status]
           end
-
+    
           pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
             row(0).font_style = :bold
             row(0).background_color = "cccccc"
@@ -214,7 +224,7 @@ module Api
           pdf.move_down 20
         end
       end
-
+    
       file_path.to_s
     end
 

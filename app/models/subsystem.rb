@@ -7,6 +7,7 @@ class Subsystem < ApplicationRecord
   has_many :door_holders, dependent: :destroy
   has_many :graphic_systems, dependent: :destroy
   has_many :notification_devices, dependent: :destroy
+  has_many :isolations, dependent: :destroy
   has_many :product_data, class_name: 'ProductData', dependent: :destroy
   has_many :supplier_data, class_name: "SupplierData", dependent: :destroy
   has_many :suppliers, through: :subsystem_suppliers

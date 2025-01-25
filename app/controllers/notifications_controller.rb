@@ -134,6 +134,8 @@ class NotificationsController < ApplicationController
        # Notification Devices (NEW)
        add_pdf_notification_devices(pdf, @notification_devices)
 
+       add_pdf_isolation(pdf, @isolation)
+
       send_data pdf.render,
                 filename: "evaluation_report_#{@notification.id}.pdf",
                 type: "application/pdf",
@@ -163,7 +165,8 @@ class NotificationsController < ApplicationController
     @manual_pull_station = @subsystem.manual_pull_stations.first
     @door_holder = @subsystem.door_holders.first
     @notification_devices = @subsystem.notification_devices.first
-    Rails.logger.debug "Door Holder: #{@door_holder.inspect}"
+    @isolation = @subsystem.isolations.first
+    Rails.logger.debug "Isolation Data: #{@isolation.inspect}"
   end
   
 
@@ -254,9 +257,38 @@ class NotificationsController < ApplicationController
       pdf.move_down 10
     end
   end
+
+  def add_pdf_isolation(pdf, isolation)
+    Rails.logger.debug "Isolation passed to PDF: #{isolation.inspect}"
+    if isolation
+      pdf.text "Isolation Devices", size: 16, style: :bold
+      pdf.move_down 10
   
+      # Build a table with headers
+      data = []
+      data << ["Attribute", "Value"]
   
+      # Add each attribute to the table
+      data << ["Built-In Fault Isolator for Each Detector", isolation.built_in_fault_isolator_for_each_detector]
+      data << ["Built-In Fault Isolator for Each MCP/BG", isolation.built_in_fault_isolator_for_each_mcp_bg]
+      data << ["Built-In Fault Isolator for Each Sounder/Horn", isolation.built_in_fault_isolator_for_each_sounder_horn]
+      data << ["Built-In Fault Isolator for Monitor/Control Modules", isolation.built_in_fault_isolator_for_monitor_control_modules]
+      data << ["Grouping for Each 12-15 (No.)", isolation.grouping_for_each_12_15]
   
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+        self.row_colors = ["f0f0f0", "ffffff"]
+      end
+  
+      pdf.move_down 20
+    else
+      pdf.text "No Isolation Devices data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+  
+
 
   def set_notification
     @notification = Notification.find(params[:id])

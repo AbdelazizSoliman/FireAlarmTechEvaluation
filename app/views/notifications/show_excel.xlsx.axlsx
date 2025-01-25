@@ -103,3 +103,12 @@ if @notification_devices
 else
   Rails.logger.debug "No Notification Devices data available for Excel"
 end
+
+if @isolation_data
+  wb.add_worksheet(name: "Isolation Data") do |sheet|
+    sheet.add_row ["Key", "Value"]
+    @isolation_data.attributes.each do |key, value|
+      sheet.add_row [key.humanize, value]
+    end
+  end
+end

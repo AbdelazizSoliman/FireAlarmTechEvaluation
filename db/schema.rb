@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_24_150840) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -175,6 +175,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_24_150840) do
     t.index ["subsystem_id"], name: "index_graphic_systems_on_subsystem_id"
   end
 
+  create_table "isolations", force: :cascade do |t|
+    t.integer "built_in_fault_isolator_for_each_detector"
+    t.integer "built_in_fault_isolator_for_each_mcp_bg"
+    t.integer "built_in_fault_isolator_for_each_sounder_horn"
+    t.integer "built_in_fault_isolator_for_monitor_control_modules"
+    t.integer "grouping_for_each_12_15"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_isolations_on_subsystem_id"
+  end
+
   create_table "manual_pull_stations", force: :cascade do |t|
     t.string "type"
     t.integer "break_glass"
@@ -333,6 +345,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_24_150840) do
   add_foreign_key "door_holders", "subsystems"
   add_foreign_key "fire_alarm_control_panels", "subsystems"
   add_foreign_key "graphic_systems", "subsystems"
+  add_foreign_key "isolations", "subsystems"
   add_foreign_key "manual_pull_stations", "subsystems"
   add_foreign_key "notification_devices", "subsystems"
   add_foreign_key "product_data", "subsystems"

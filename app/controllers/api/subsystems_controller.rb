@@ -66,30 +66,43 @@ module Api
           fire_alarm_horn_with_strobe: { sheet_row: 6, sheet_column: 1 },
           fire_alarm_horn_with_strobe_wp: { sheet_row: 7, sheet_column: 1 }
         }
+      },
+      isolations: {
+        sheet_name: "Isolation Data", 
+        fields: {
+         
+        built_in_fault_isolator_for_each_detector: { sheet_row: 2, sheet_column: 1 },
+        built_in_fault_isolator_for_each_mcp_bg: { sheet_row: 3, sheet_column: 1 },
+        built_in_fault_isolator_for_each_sounder_horn: { sheet_row: 4, sheet_column: 1 },
+        built_in_fault_isolator_for_monitor_control_modules: { sheet_row: 5, sheet_column: 1 },
+        grouping_for_each_12_15: { sheet_row: 6, sheet_column: 1 }
+         
+        }
       }
-    }
-
+  }
+  
     def submit_all
       subsystem = Subsystem.find(params[:id])
-
+    
       # Gather parameters for various subsystem data
-      supplier_data_params = supplier_data_params()
-      fire_alarm_data = fire_alarm_control_panel_params()
-      detectors_data = detectors_field_devices_params()
-      manual_pull_station_data = manual_pull_station_params()
-      door_holders_data = door_holders_params()
-      product_data_params = product_data_params()
-      graphic_systems_params = graphic_systems_params()
-      notification_devices_data = notification_devices_params()
-
+      supplier_data_params        = supplier_data_params()
+      fire_alarm_data             = fire_alarm_control_panel_params()
+      detectors_data              = detectors_field_devices_params()
+      manual_pull_station_data    = manual_pull_station_params()
+      door_holders_data           = door_holders_params()
+      product_data_params         = product_data_params()
+      graphic_systems_params      = graphic_systems_params()
+      notification_devices_data   = notification_devices_params()
+      isolation_data              = isolation_params()
+    
       # Build and assign data
-      supplier_data_record = subsystem.supplier_data.first_or_initialize
+      supplier_data_record         = subsystem.supplier_data.first_or_initialize
       supplier_data_record.assign_attributes(supplier_data_params)
-
-      fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first_or_initialize
+    
+      fire_alarm_control_panel     = subsystem.fire_alarm_control_panels.first_or_initialize
       fire_alarm_control_panel.assign_attributes(fire_alarm_data)
-
-      detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
+    
+      detectors_field_device       = subsystem.detectors_field_devices.first_or_initialize
       detectors_data.each do |key, attributes|
         detectors_field_device.assign_attributes(
           "#{key}_value": attributes[:value],
@@ -98,31 +111,36 @@ module Api
           "#{key}_notes": attributes[:notes]
         )
       end
-
-      manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
+    
+      manual_pull_station          = subsystem.manual_pull_stations.first_or_initialize
       manual_pull_station.assign_attributes(manual_pull_station_data)
-
-      door_holders = subsystem.door_holders.first_or_initialize
+    
+      door_holders                 = subsystem.door_holders.first_or_initialize
       door_holders.assign_attributes(door_holders_data)
-
-      product_data_record = subsystem.product_data.first_or_initialize
+    
+      product_data_record          = subsystem.product_data.first_or_initialize
       product_data_record.assign_attributes(product_data_params)
-
-      graphic_systems_record = subsystem.graphic_systems.first_or_initialize
+    
+      graphic_systems_record       = subsystem.graphic_systems.first_or_initialize
       graphic_systems_record.assign_attributes(graphic_systems_params)
-
-      notification_devices_record = subsystem.notification_devices.first_or_initialize
+    
+      notification_devices_record  = subsystem.notification_devices.first_or_initialize
       notification_devices_record.assign_attributes(notification_devices_data)
-
-      # Perform evaluation (now includes notification_devices!)
+    
+      isolation_record             = subsystem.isolations.first_or_initialize
+      isolation_record.assign_attributes(isolation_data)
+    
+      # Perform evaluation
       evaluation_results = perform_evaluation(
         subsystem: subsystem,
         fire_alarm_control_panel: fire_alarm_control_panel,
         detectors_field_device: detectors_field_device,
         door_holders: door_holders,
-        notification_devices: notification_devices_record
+        notification_devices: notification_devices_record,
+        isolation_record: isolation_record
       )
-
+    
+      # Save all records and generate the report
       ActiveRecord::Base.transaction do
         [
           supplier_data_record,
@@ -132,16 +150,17 @@ module Api
           door_holders,
           product_data_record,
           graphic_systems_record,
-          notification_devices_record
+          notification_devices_record,
+          isolation_record
         ].each do |record|
           raise ActiveRecord::RecordInvalid.new(record) unless record.save
         end
       end
-
+    
       report_path = generate_evaluation_report(subsystem, evaluation_results)
       relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
       relative_url_path = "/" + relative_path
-
+    
       # Create notification for evaluation
       Notification.create!(
         title: "Evaluation Submitted",
@@ -152,41 +171,44 @@ module Api
           evaluation_report_path: relative_url_path
         }.to_json
       )
-
+    
       render json: { message: "Data submitted successfully." }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
     end
+    
 
     private
 
-    def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:)
-      fire_alarm_results      = evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels)
-      detector_results        = evaluate_data(detectors_field_device,  :detectors_field_devices)
-      door_holder_results     = evaluate_data(door_holders,            :door_holders)
-      notification_dev_results= evaluate_data(notification_devices,    :notification_devices)
-
+    def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:, isolation_record:)
+      fire_alarm_results       = evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels)
+      detector_results         = evaluate_data(detectors_field_device, :detectors_field_devices)
+      door_holder_results      = evaluate_data(door_holders, :door_holders)
+      notification_dev_results = evaluate_data(notification_devices, :notification_devices)
+      isolation_results        = evaluate_data(isolation_record, :isolations)
+    
       results_hash = {
         fire_alarm_control_panels: fire_alarm_results,
-        detectors_field_devices:   detector_results,
-        door_holders:             door_holder_results,
-        notification_devices:     notification_dev_results
+        detectors_field_devices: detector_results,
+        door_holders: door_holder_results,
+        notification_devices: notification_dev_results,
+        isolations: isolation_results
       }
-
-      # Flatten all results into a single array
-      all_items = fire_alarm_results + detector_results + door_holder_results + notification_dev_results
-
+    
+      all_items = fire_alarm_results + detector_results + door_holder_results + notification_dev_results + isolation_results
+    
       total_items = all_items.size
-      total_accepted = all_items.sum { |item| item[:is_accepted] }  # 1 for accepted, 0 for rejected
-
+      total_accepted = all_items.sum { |item| item[:is_accepted] } # 1 for accepted, 0 for rejected
+    
       acceptance_percentage = total_items.zero? ? 0 : (total_accepted.to_f / total_items) * 100
       overall_status = acceptance_percentage >= 60 ? "Accepted" : "Rejected"
-
-      results_hash[:overall_status]        = overall_status
+    
+      results_hash[:overall_status] = overall_status
       results_hash[:acceptance_percentage] = acceptance_percentage
-
+    
       results_hash
     end
+    
 
     def evaluate_data(record, table_name)
       table_config = COMPARISON_FIELDS[table_name]
@@ -357,5 +379,16 @@ module Api
         :fire_alarm_horn_with_strobe_wp
       )
     end
+
+    def isolation_params
+      params.require(:isolations).permit(
+        :built_in_fault_isolator_for_each_detector,
+        :built_in_fault_isolator_for_each_mcp_bg,
+        :built_in_fault_isolator_for_each_sounder_horn,
+        :built_in_fault_isolator_for_monitor_control_modules,
+        :grouping_for_each_12_15
+      )
+    end
+    
   end
 end

@@ -140,7 +140,7 @@
 
   <!-- Notification Devices -->
   <% if @notification_devices.present? %>
-    <h2>Notification Devices</h2>
+    
     <ul>
       <% @notification_devices.attributes.each do |key, value| %>
         <li><strong><%= key.humanize %>:</strong> <%= value %></li>
@@ -149,6 +149,19 @@
   <% else %>
     <p>No Notification Devices data available.</p>
   <% end %>
+
+  <!-- Isolations -->
+<% if @isolation_data.present? %>
+<h2>Isolations </h2>
+      <% @isolation_data.attributes.each do |key, value| %>
+        <ul>
+          <li><strong><%= key.humanize %>:</strong> <%= value %></li>
+      <% end %>
+      </ul>
+<% else %>
+  <p>No Isolation Data available.</p>
+<% end %>
+
 
 </body>
 </html>

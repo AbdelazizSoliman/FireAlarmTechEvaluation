@@ -11,6 +11,15 @@ class Subsystem < ApplicationRecord
   has_many :product_data, class_name: 'ProductData', dependent: :destroy
   has_many :supplier_data, class_name: "SupplierData", dependent: :destroy
   has_many :suppliers, through: :subsystem_suppliers
+  has_many :connection_betweens, dependent: :destroy
+  has_many :interfaces_with_other_systems, dependent: :destroy
+  has_many :evacuation_systems, dependent: :destroy
+  has_many :prerecorded_messages, dependent: :destroy
+  has_many :telephone_systems, dependent: :destroy
+  has_many :spare_parts, dependent: :destroy
+  has_many :scope_of_works, dependent: :destroy
+  has_many :material_deliveries, dependent: :destroy
+  has_many :general_commercial_data, dependent: :destroy
 
   has_and_belongs_to_many :suppliers
 end

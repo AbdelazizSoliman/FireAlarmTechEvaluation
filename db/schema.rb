@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_25_160653) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "connection_betweens", force: :cascade do |t|
+    t.string "connection_type"
+    t.string "network_module"
+    t.string "cables_for_connection"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_connection_betweens_on_subsystem_id"
+  end
 
   create_table "detectors_field_devices", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -138,6 +148,28 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.index ["subsystem_id"], name: "index_door_holders_on_subsystem_id"
   end
 
+  create_table "evacuation_systems", force: :cascade do |t|
+    t.string "bms_connection"
+    t.string "elevator_control_system"
+    t.string "fire_suppression_system"
+    t.string "staircase_pressurization_system"
+    t.string "hvac_system"
+    t.string "cctv_system"
+    t.string "access_control_system"
+    t.string "pa_va_system"
+    t.string "lighting_control_system"
+    t.string "electrical_panels"
+    t.integer "no_of_interface_modules"
+    t.integer "total_no_of_control_modules"
+    t.integer "total_no_of_monitor_modules"
+    t.integer "total_no_of_dual_monitor_modules"
+    t.integer "total_no_of_zone_module"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_evacuation_systems_on_subsystem_id"
+  end
+
   create_table "fire_alarm_control_panels", force: :cascade do |t|
     t.string "standards"
     t.integer "total_no_of_panels"
@@ -163,6 +195,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.index ["subsystem_id"], name: "index_fire_alarm_control_panels_on_subsystem_id"
   end
 
+  create_table "general_commercial_data", force: :cascade do |t|
+    t.integer "warranty_for_materials"
+    t.integer "warranty_for_configuration_programming"
+    t.integer "support_and_maintenance"
+    t.integer "spare_parts_availability"
+    t.integer "advanced_payment_minimum"
+    t.integer "performance_bond"
+    t.decimal "total_price_excluding_vat"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_general_commercial_data_on_subsystem_id"
+  end
+
   create_table "graphic_systems", force: :cascade do |t|
     t.string "workstation"
     t.string "workstation_control_feature"
@@ -173,6 +219,27 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["subsystem_id"], name: "index_graphic_systems_on_subsystem_id"
+  end
+
+  create_table "interface_with_other_systems", force: :cascade do |t|
+    t.string "integration_type1"
+    t.string "integration_type2"
+    t.string "integration_type3"
+    t.string "integration_type4"
+    t.string "integration_type5"
+    t.string "integration_type6"
+    t.string "integration_type7"
+    t.string "integration_type8"
+    t.string "integration_type9"
+    t.string "integration_type10"
+    t.integer "total_no_of_control_modules"
+    t.integer "total_no_of_monitor_modules"
+    t.integer "total_no_of_dual_monitor_modules"
+    t.integer "total_no_of_zone_module"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_interface_with_other_systems_on_subsystem_id"
   end
 
   create_table "isolations", force: :cascade do |t|
@@ -195,6 +262,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["subsystem_id"], name: "index_manual_pull_stations_on_subsystem_id"
+  end
+
+  create_table "material_and_deliveries", force: :cascade do |t|
+    t.string "material_availability"
+    t.string "delivery_time_period"
+    t.string "delivery_type"
+    t.string "delivery_to"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_material_and_deliveries_on_subsystem_id"
   end
 
   create_table "notification_devices", force: :cascade do |t|
@@ -223,6 +301,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.string "notification_type"
     t.text "additional_data"
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+  end
+
+  create_table "prerecorded_message_audio_modules", force: :cascade do |t|
+    t.string "message_type"
+    t.integer "total_time_for_messages"
+    t.integer "total_no_of_voice_messages"
+    t.string "message_storage_location"
+    t.string "master_microphone"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_prerecorded_message_audio_modules_on_subsystem_id"
   end
 
   create_table "product_data", force: :cascade do |t|
@@ -258,6 +348,42 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.bigint "supplier_id", null: false
     t.index ["project_id", "supplier_id"], name: "index_projects_suppliers_on_project_id_and_supplier_id", unique: true
     t.index ["supplier_id", "project_id"], name: "index_projects_suppliers_on_supplier_id_and_project_id"
+  end
+
+  create_table "scope_of_works", force: :cascade do |t|
+    t.string "supply"
+    t.string "install"
+    t.string "supervision_test_commissioning"
+    t.string "cables_supply"
+    t.integer "cables_size_2cx1_5mm"
+    t.integer "cables_size_2cx2_5mm"
+    t.string "pulling_cables"
+    t.string "cables_terminations"
+    t.string "design_review_verification"
+    t.string "heat_map_study"
+    t.string "voltage_drop_study_for_initiating_devices_loop"
+    t.string "voltage_drop_notification_circuits"
+    t.string "battery_calculation"
+    t.string "cause_and_effect_matrix"
+    t.string "high_level_riser_diagram"
+    t.string "shop_drawings"
+    t.string "shop_drawings_verification"
+    t.integer "training_days"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_scope_of_works_on_subsystem_id"
+  end
+
+  create_table "spare_parts", force: :cascade do |t|
+    t.integer "total_no_of_device1"
+    t.integer "total_no_of_device2"
+    t.integer "total_no_of_device3"
+    t.integer "total_no_of_device4"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_spare_parts_on_subsystem_id"
   end
 
   create_table "subsystem_suppliers", force: :cascade do |t|
@@ -319,6 +445,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.index ["project_scope_id"], name: "index_systems_on_project_scope_id"
   end
 
+  create_table "telephone_systems", force: :cascade do |t|
+    t.integer "number_of_firefighter_telephone_circuits_per_panel"
+    t.integer "total_no_of_firefighter_telephone_cabinet"
+    t.integer "total_no_of_firefighter_phones"
+    t.integer "total_no_of_firefighter_jacks"
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_telephone_systems_on_subsystem_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "first_name", default: "", null: false
     t.string "last_name", default: "", null: false
@@ -341,18 +478,27 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_25_105041) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "connection_betweens", "subsystems"
   add_foreign_key "detectors_field_devices", "subsystems"
   add_foreign_key "door_holders", "subsystems"
+  add_foreign_key "evacuation_systems", "subsystems"
   add_foreign_key "fire_alarm_control_panels", "subsystems"
+  add_foreign_key "general_commercial_data", "subsystems"
   add_foreign_key "graphic_systems", "subsystems"
+  add_foreign_key "interface_with_other_systems", "subsystems"
   add_foreign_key "isolations", "subsystems"
   add_foreign_key "manual_pull_stations", "subsystems"
+  add_foreign_key "material_and_deliveries", "subsystems"
   add_foreign_key "notification_devices", "subsystems"
+  add_foreign_key "prerecorded_message_audio_modules", "subsystems"
   add_foreign_key "product_data", "subsystems"
   add_foreign_key "project_scopes", "projects"
+  add_foreign_key "scope_of_works", "subsystems"
+  add_foreign_key "spare_parts", "subsystems"
   add_foreign_key "subsystem_suppliers", "subsystems"
   add_foreign_key "subsystem_suppliers", "suppliers"
   add_foreign_key "subsystems", "systems"
   add_foreign_key "supplier_data", "subsystems"
   add_foreign_key "systems", "project_scopes"
+  add_foreign_key "telephone_systems", "subsystems"
 end

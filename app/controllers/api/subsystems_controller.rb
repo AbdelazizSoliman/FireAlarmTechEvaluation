@@ -18,8 +18,8 @@ module Api
           auto_dialer: { sheet_row: 13, sheet_column: 1 },
           dot_matrix_printer: { sheet_row: 14, sheet_column: 1 },
           internal_batteries_backup_capacity_panel: { sheet_row: 18, sheet_column: 1 },
-          external_batteries_backup_time: { sheet_row: 19, sheet_column: 1 }
-        }
+          external_batteries_backup_time: { sheet_row: 19, sheet_column: 1 },
+        },
       },
       detectors_field_devices: {
         sheet_name: "Detectors Field Devices",
@@ -43,15 +43,15 @@ module Api
           flow_switches_interface_module_amount: { sheet_row: 17, sheet_column: 3 },
           tamper_switches_interface_module_amount: { sheet_row: 18, sheet_column: 3 },
           gas_detectors_amount: { sheet_row: 19, sheet_column: 3 },
-          flame_detectors_amount: { sheet_row: 20, sheet_column: 3 }
-        }
+          flame_detectors_amount: { sheet_row: 20, sheet_column: 3 },
+        },
       },
       door_holders: {
         sheet_name: "Door Holders",
         fields: {
           total_no_of_devices_amount: { sheet_row: 1, sheet_column: 3 },
-          total_no_of_relays_amount: { sheet_row: 2, sheet_column: 3 }
-        }
+          total_no_of_relays_amount: { sheet_row: 2, sheet_column: 3 },
+        },
       },
       # ADDING NOTIFICATION DEVICES EVALUATION
       notification_devices: {
@@ -64,151 +64,196 @@ module Api
           fire_alarm_horn: { sheet_row: 4, sheet_column: 1 },
           fire_alarm_horn_wp: { sheet_row: 5, sheet_column: 1 },
           fire_alarm_horn_with_strobe: { sheet_row: 6, sheet_column: 1 },
-          fire_alarm_horn_with_strobe_wp: { sheet_row: 7, sheet_column: 1 }
-        }
+          fire_alarm_horn_with_strobe_wp: { sheet_row: 7, sheet_column: 1 },
+        },
       },
       isolations: {
-        sheet_name: "Isolation Data", 
+        sheet_name: "Isolation Data",
         fields: {
-         
-        built_in_fault_isolator_for_each_detector: { sheet_row: 2, sheet_column: 1 },
-        built_in_fault_isolator_for_each_mcp_bg: { sheet_row: 3, sheet_column: 1 },
-        built_in_fault_isolator_for_each_sounder_horn: { sheet_row: 4, sheet_column: 1 },
-        built_in_fault_isolator_for_monitor_control_modules: { sheet_row: 5, sheet_column: 1 },
-        grouping_for_each_12_15: { sheet_row: 6, sheet_column: 1 }
-         
-        }
-      }
-  }
-  
+
+          built_in_fault_isolator_for_each_detector: { sheet_row: 2, sheet_column: 1 },
+          built_in_fault_isolator_for_each_mcp_bg: { sheet_row: 3, sheet_column: 1 },
+          built_in_fault_isolator_for_each_sounder_horn: { sheet_row: 4, sheet_column: 1 },
+          built_in_fault_isolator_for_monitor_control_modules: { sheet_row: 5, sheet_column: 1 },
+          grouping_for_each_12_15: { sheet_row: 6, sheet_column: 1 },
+
+        },
+      },
+    }
+
     def submit_all
       subsystem = Subsystem.find(params[:id])
-    
-      # Gather parameters for various subsystem data
-      supplier_data_params        = supplier_data_params()
-      fire_alarm_data             = fire_alarm_control_panel_params()
-      detectors_data              = detectors_field_devices_params()
-      manual_pull_station_data    = manual_pull_station_params()
-      door_holders_data           = door_holders_params()
-      product_data_params         = product_data_params()
-      graphic_systems_params      = graphic_systems_params()
-      notification_devices_data   = notification_devices_params()
-      isolation_data              = isolation_params()
-    
-      # Build and assign data
-      supplier_data_record         = subsystem.supplier_data.first_or_initialize
-      supplier_data_record.assign_attributes(supplier_data_params)
-    
-      fire_alarm_control_panel     = subsystem.fire_alarm_control_panels.first_or_initialize
-      fire_alarm_control_panel.assign_attributes(fire_alarm_data)
-    
-      detectors_field_device       = subsystem.detectors_field_devices.first_or_initialize
-      detectors_data.each do |key, attributes|
-        detectors_field_device.assign_attributes(
-          "#{key}_value": attributes[:value],
-          "#{key}_unit_rate": attributes[:unit_rate],
-          "#{key}_amount": attributes[:amount],
-          "#{key}_notes": attributes[:notes]
-        )
-      end
-    
-      manual_pull_station          = subsystem.manual_pull_stations.first_or_initialize
-      manual_pull_station.assign_attributes(manual_pull_station_data)
-    
-      door_holders                 = subsystem.door_holders.first_or_initialize
-      door_holders.assign_attributes(door_holders_data)
-    
-      product_data_record          = subsystem.product_data.first_or_initialize
-      product_data_record.assign_attributes(product_data_params)
-    
-      graphic_systems_record       = subsystem.graphic_systems.first_or_initialize
-      graphic_systems_record.assign_attributes(graphic_systems_params)
-    
-      notification_devices_record  = subsystem.notification_devices.first_or_initialize
-      notification_devices_record.assign_attributes(notification_devices_data)
-    
-      isolation_record             = subsystem.isolations.first_or_initialize
-      isolation_record.assign_attributes(isolation_data)
-    
-      # Perform evaluation
-      evaluation_results = perform_evaluation(
-        subsystem: subsystem,
-        fire_alarm_control_panel: fire_alarm_control_panel,
-        detectors_field_device: detectors_field_device,
-        door_holders: door_holders,
-        notification_devices: notification_devices_record,
-        isolation_record: isolation_record
-      )
-    
-      # Save all records and generate the report
+
       ActiveRecord::Base.transaction do
-        [
-          supplier_data_record,
-          fire_alarm_control_panel,
-          detectors_field_device,
-          manual_pull_station,
-          door_holders,
-          product_data_record,
-          graphic_systems_record,
-          notification_devices_record,
-          isolation_record
-        ].each do |record|
-          raise ActiveRecord::RecordInvalid.new(record) unless record.save
+        # Supplier Data
+        if params[:supplier_data].present?
+          supplier_data_record = subsystem.supplier_data.first_or_initialize
+          supplier_data_record.assign_attributes(supplier_data_params)
+          supplier_data_record.save!
+        end
+
+        # Fire Alarm Control Panel
+        if params[:fire_alarm_control_panel].present?
+          fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first_or_initialize
+          fire_alarm_control_panel.assign_attributes(fire_alarm_control_panel_params)
+          fire_alarm_control_panel.save!
+        end
+
+        # Detectors Field Devices
+        if params[:detectors_field_devices].present?
+          detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
+          params[:detectors_field_devices].each do |key, attributes|
+            detectors_field_device.assign_attributes(
+              "#{key}_value": attributes[:value],
+              "#{key}_unit_rate": attributes[:unit_rate],
+              "#{key}_amount": attributes[:amount],
+              "#{key}_notes": attributes[:notes],
+            )
+          end
+          detectors_field_device.save!
+        end
+
+        # Manual Pull Station
+        if params[:manual_pull_station].present?
+          manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
+          manual_pull_station.assign_attributes(manual_pull_station_params)
+          manual_pull_station.save!
+        end
+
+        # Door Holders
+        if params[:door_holders].present?
+          door_holders = subsystem.door_holders.first_or_initialize
+          door_holders.assign_attributes(door_holders_params)
+          door_holders.save!
+        end
+
+        # Product Data
+        if params[:product_data].present?
+          product_data_record = subsystem.product_data.first_or_initialize
+          product_data_record.assign_attributes(product_data_params)
+          product_data_record.save!
+        end
+
+        # Graphic Systems
+        if params[:graphic_systems].present?
+          graphic_systems_record = subsystem.graphic_systems.first_or_initialize
+          graphic_systems_record.assign_attributes(graphic_systems_params)
+          graphic_systems_record.save!
+        end
+
+        # Notification Devices
+        if params[:notification_devices].present?
+          notification_devices_record = subsystem.notification_devices.first_or_initialize
+          notification_devices_record.assign_attributes(notification_devices_params)
+          notification_devices_record.save!
+        end
+
+        # Isolations
+        if params[:isolations].present?
+          isolation_record = subsystem.isolations.first_or_initialize
+          isolation_record.assign_attributes(isolation_params)
+          isolation_record.save!
+        end
+
+        # Connection Betweens
+        if params[:connection_betweens].present?
+          connection_betweens_record = subsystem.connection_betweens.first_or_initialize
+          connection_betweens_record.assign_attributes(connection_betweens_params)
+          connection_betweens_record.save!
+        end
+
+        # Interface With Other Systems
+        if params[:interface_with_other_systems].present?
+          interface_with_other_record = subsystem.interface_with_other_systems.first_or_initialize
+          interface_with_other_record.assign_attributes(interface_with_other_params)
+          interface_with_other_record.save!
+        end
+
+        # Evacuation Systems
+        if params[:evacuation_systems].present?
+          evacuation_systems_record = subsystem.evacuation_systems.first_or_initialize
+          evacuation_systems_record.assign_attributes(evacuation_systems_params)
+          evacuation_systems_record.save!
+        end
+
+        # Prerecorded Message Audio Modules
+        if params[:prerecorded_message_audio_modules].present?
+          prerecorded_message_audio_modules_record = subsystem.prerecorded_message_audio_modules.first_or_initialize
+          prerecorded_message_audio_modules_record.assign_attributes(prerecorded_message_audio_modules_params)
+          prerecorded_message_audio_modules_record.save!
+        end
+
+        # Telephone System
+        if params[:telephone_systems].present?
+          telephone_system_record = subsystem.telephone_systems.first_or_initialize
+          telephone_system_record.assign_attributes(telephone_system_params)
+          telephone_system_record.save!
+        end
+
+        # Spare Parts
+        if params[:spare_parts].present?
+          spare_parts_record = subsystem.spare_parts.first_or_initialize
+          spare_parts_record.assign_attributes(spare_parts_params)
+          spare_parts_record.save!
+        end
+
+        # Scope of Work
+        if params[:scope_of_works].present?
+          scope_of_work_record = subsystem.scope_of_works.first_or_initialize
+          scope_of_work_record.assign_attributes(scope_of_work_params)
+          scope_of_work_record.save!
+        end
+
+        # Material Delivery
+        if params[:material_and_deliveries].present?
+          material_delivery_record = subsystem.material_and_deliveries.first_or_initialize
+          material_delivery_record.assign_attributes(material_delivery_params)
+          material_delivery_record.save!
+        end
+
+        # General Commercial Data
+        if params[:general_commercial_data].present?
+          general_commercial_record = subsystem.general_commercial_data.first_or_initialize
+          general_commercial_record.assign_attributes(general_commercial_params)
+          general_commercial_record.save!
         end
       end
-    
-      report_path = generate_evaluation_report(subsystem, evaluation_results)
-      relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
-      relative_url_path = "/" + relative_path
-    
-      # Create notification for evaluation
-      Notification.create!(
-        title: "Evaluation Submitted",
-        body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
-        notifiable: subsystem,
-        notification_type: "evaluation",
-        additional_data: {
-          evaluation_report_path: relative_url_path
-        }.to_json
-      )
-    
+
       render json: { message: "Data submitted successfully." }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
     end
-    
 
     private
 
     def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:, isolation_record:)
-      fire_alarm_results       = evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels)
-      detector_results         = evaluate_data(detectors_field_device, :detectors_field_devices)
-      door_holder_results      = evaluate_data(door_holders, :door_holders)
+      fire_alarm_results = evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels)
+      detector_results = evaluate_data(detectors_field_device, :detectors_field_devices)
+      door_holder_results = evaluate_data(door_holders, :door_holders)
       notification_dev_results = evaluate_data(notification_devices, :notification_devices)
-      isolation_results        = evaluate_data(isolation_record, :isolations)
-    
+      isolation_results = evaluate_data(isolation_record, :isolations)
+
       results_hash = {
         fire_alarm_control_panels: fire_alarm_results,
         detectors_field_devices: detector_results,
         door_holders: door_holder_results,
         notification_devices: notification_dev_results,
-        isolations: isolation_results
+        isolations: isolation_results,
       }
-    
+
       all_items = fire_alarm_results + detector_results + door_holder_results + notification_dev_results + isolation_results
-    
+
       total_items = all_items.size
       total_accepted = all_items.sum { |item| item[:is_accepted] } # 1 for accepted, 0 for rejected
-    
+
       acceptance_percentage = total_items.zero? ? 0 : (total_accepted.to_f / total_items) * 100
       overall_status = acceptance_percentage >= 60 ? "Accepted" : "Rejected"
-    
+
       results_hash[:overall_status] = overall_status
       results_hash[:acceptance_percentage] = acceptance_percentage
-    
+
       results_hash
     end
-    
 
     def evaluate_data(record, table_name)
       table_config = COMPARISON_FIELDS[table_name]
@@ -218,7 +263,7 @@ module Api
       fields = table_config[:fields]
       return [] unless sheet_name && fields
 
-      standard_file_path = Rails.root.join('lib', 'standards.xlsx')
+      standard_file_path = Rails.root.join("lib", "standards.xlsx")
       standard_workbook = RubyXL::Parser.parse(standard_file_path)
       standard_sheet = standard_workbook.worksheets.find { |ws| ws.sheet_name == sheet_name }
       return [] unless standard_sheet
@@ -242,7 +287,7 @@ module Api
           field: field.to_s.humanize,
           submitted_value: submitted_value || "N/A",
           standard_value: standard_value || "N/A",
-          is_accepted: is_accepted_value
+          is_accepted: is_accepted_value,
         }
       end
 
@@ -251,7 +296,7 @@ module Api
 
     def generate_evaluation_report(subsystem, comparison_results)
       file_name = "evaluation_report_subsystem_#{subsystem.id}_#{Time.now.to_i}.pdf"
-      file_path = Rails.root.join('public', 'reports', file_name)
+      file_path = Rails.root.join("public", "reports", file_name)
 
       Prawn::Document.generate(file_path) do |pdf|
         pdf.text "Evaluation Report", size: 30, style: :bold, align: :center
@@ -271,7 +316,7 @@ module Api
               result[:field],
               result[:submitted_value],
               result[:standard_value],
-              status_text
+              status_text,
             ]
           end
 
@@ -284,8 +329,8 @@ module Api
         end
 
         # Show overall acceptance
-        overall  = comparison_results[:overall_status]
-        percent  = comparison_results[:acceptance_percentage].round(2)
+        overall = comparison_results[:overall_status]
+        percent = comparison_results[:acceptance_percentage].round(2)
 
         pdf.text "Overall Acceptance: #{percent}%"
         pdf.text "Overall Status: #{overall}"
@@ -338,7 +383,7 @@ module Api
         flow_switches_interface_module: [:value, :unit_rate, :amount, :notes],
         tamper_switches_interface_module: [:value, :unit_rate, :amount, :notes],
         gas_detectors: [:value, :unit_rate, :amount, :notes],
-        flame_detectors: [:value, :unit_rate, :amount, :notes]
+        flame_detectors: [:value, :unit_rate, :amount, :notes],
       )
     end
 
@@ -389,6 +434,110 @@ module Api
         :grouping_for_each_12_15
       )
     end
-    
+
+    def connection_betweens_params
+      params.require(:connection_betweens).permit(
+        :connection_type,
+        :network_module,
+        :cables_for_connection
+      )
+    end
+
+    def interface_with_other_params
+      params.require(:interface_with_other_systems).permit(
+        :integration_type,
+        :total_no_of_control_modules,
+        :total_no_of_monitor_modules,
+        :total_no_of_dual_monitor_modules,
+        :total_no_of_zone_module
+      )
+    end
+
+    def evacuation_systems_params
+      params.require(:evacuation_systems).permit(
+        :included_in_fire_alarm_system,
+        :evacuation_system_part_of_fa_panel,
+        :amplifier_power_output,
+        :total_no_of_amplifiers,
+        :total_no_of_evacuations_speakers_circuits,
+        :total_no_of_wattage_per_panel,
+        :fire_rated_speakers_watt,
+        :speakers_tapping_watt,
+        :total_no_of_speakers
+      )
+    end
+
+    def prerecorded_message_audio_modules_params
+      params.require(:prerecorded_message_audio_modules).permit(
+        :message_type,
+        :total_time_for_messages,
+        :total_no_of_voice_messages,
+        :message_storage_location,
+        :master_microphone
+      )
+    end
+
+    def telephone_system_params
+      params.require(:telephone_systems).permit(
+        :number_of_firefighter_telephone_circuits_per_panel,
+        :total_no_of_firefighter_telephone_cabinet,
+        :total_no_of_firefighter_phones,
+        :total_no_of_firefighter_jacks
+      )
+    end
+
+    def spare_parts_params
+      params.require(:spare_parts).permit(
+        :total_no_of_device1,
+        :total_no_of_device2,
+        :total_no_of_device3,
+        :total_no_of_device4
+      )
+    end
+
+    def scope_of_work_params
+      params.require(:scope_of_works).permit(
+        :supply,
+        :install,
+        :supervision_test_commissioning,
+        :cables_supply,
+        :cables_size_2cx1_5_mm,
+        :cables_size_2cx2_5_mm,
+        :pulling_cables,
+        :cables_terminations,
+        :supervision_test_commissioning,
+        :design_review_verification,
+        :heat_map_study,
+        :voltage_drop_study_for_initiating_devices_loop,
+        :voltage_drop_notification_circuits,
+        :battery_calculation,
+        :cause_effect_matrix,
+        :high_level_riser_diagram,
+        :shop_drawings,
+        :shop_drawings_verification,
+        :training_days
+      )
+    end
+
+    def material_delivery_params
+      params.require(:material_and_deliveries).permit(
+        :material_availability,
+        :delivery_time_period,
+        :delivery_type,
+        :delivery_to
+      )
+    end
+
+    def general_commercial_params
+      params.require(:general_commercial_data).permit(
+        :warranty_for_materials,
+        :warranty_for_configuration_programming,
+        :support_and_maintenance,
+        :spare_parts_availability,
+        :advanced_payment_minimum_acceptable,
+        :performance_bond_equivalent_warranty,
+        :total_price_excluding_vat
+      )
+    end
   end
 end

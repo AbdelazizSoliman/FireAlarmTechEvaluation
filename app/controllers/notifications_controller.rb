@@ -16,29 +16,29 @@ class NotificationsController < ApplicationController
 
   def approve_supplier
     Rails.logger.info "Params received: #{params.inspect}"
-  
+
     # Ensure supplier_id is present
     if params[:supplier_id].blank?
       redirect_to manage_membership_notification_path(@notification), alert: "Supplier ID is missing."
       return
     end
-  
+
     # Find the supplier
     @supplier = Supplier.find(params[:supplier_id])
-  
+
     if params[:membership_type].blank? || params[:receive_evaluation_report].blank?
       redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Please select all required fields."
       return
     end
-  
+
     ActiveRecord::Base.transaction do
       # Update supplier attributes
       @supplier.update!(
         membership_type: params[:membership_type],
         receive_evaluation_report: params[:receive_evaluation_report] == "true",
-        status: "approved"
+        status: "approved",
       )
-  
+
       # Assign projects or subsystems based on membership type
       if params[:membership_type] == "projects"
         selected_projects = params[:project_ids] || []
@@ -47,11 +47,11 @@ class NotificationsController < ApplicationController
         selected_subsystems = params[:subsystem_ids] || []
         @supplier.subsystems = Subsystem.where(id: selected_subsystems)
       end
-  
+
       # Resolve the notification
       @notification.update!(status: "resolved")
     end
-  
+
     redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type].capitalize} membership."
   rescue => e
     Rails.logger.error "Error in approve_supplier: #{e.message}"
@@ -63,12 +63,11 @@ class NotificationsController < ApplicationController
       @supplier.update!(status: "rejected")
       @notification.update!(read: true, status: "resolved")
     end
-  
+
     redirect_to notifications_path, notice: "#{@supplier.supplier_name} has been rejected."
   rescue => e
     redirect_to notifications_path, alert: "Error: #{e.message}"
   end
-  
 
   def show
     @notification = Notification.find(params[:id])
@@ -110,31 +109,27 @@ class NotificationsController < ApplicationController
       pdf.text "Evaluation Report", size: 18, style: :bold
       pdf.move_down 20
 
-      # Supplier Data
+      # Existing Sections
       add_pdf_section(pdf, "Supplier Data", @supplier_data)
-
-      # Product Data
       add_pdf_section(pdf, "Product Data", @product_data)
-
-      # Fire Alarm Control Panel Data
       add_pdf_section(pdf, "Fire Alarm Control Panel", @fire_alarm_control_panel)
-
-      # Graphic System Data
       add_pdf_section(pdf, "Graphic Systems", @graphic_system)
-
-      # Detectors Field Devices
       add_pdf_detectors(pdf, @detectors_field_device)
-
-      # Manual Pull Station Data
       add_pdf_section(pdf, "Manual Pull Station", @manual_pull_station)
-
-      # Door Holders
       add_pdf_door_holders(pdf, @door_holder)
+      add_pdf_notification_devices(pdf, @notification_devices)
+      add_pdf_isolation(pdf, @isolation)
 
-       # Notification Devices (NEW)
-       add_pdf_notification_devices(pdf, @notification_devices)
-
-       add_pdf_isolation(pdf, @isolation)
+      # New Sections
+      add_pdf_connection_betweens(pdf, @connection_betweens)
+      add_pdf_interface_with_other(pdf, @interface_with_other_systems)
+      add_pdf_evacuation_systems(pdf, @evacuation_systems)
+      add_pdf_prerecorded_messages(pdf, @prerecorded_messages)
+      add_pdf_telephone_systems(pdf, @telephone_systems)
+      add_pdf_spare_parts(pdf, @spare_parts)
+      add_pdf_scope_of_work(pdf, @scope_of_work)
+      add_pdf_material_delivery(pdf, @material_delivery)
+      add_pdf_general_commercial(pdf, @general_commercial_data)
 
       send_data pdf.render,
                 filename: "evaluation_report_#{@notification.id}.pdf",
@@ -165,10 +160,18 @@ class NotificationsController < ApplicationController
     @manual_pull_station = @subsystem.manual_pull_stations.first
     @door_holder = @subsystem.door_holders.first
     @notification_devices = @subsystem.notification_devices.first
-    @isolation = @subsystem.isolations.first
+    @isolations = @subsystem.isolations.first
+    @connection_betweens = @subsystem.connection_betweens.first
+    @interface_with_other_systems = @subsystem.interface_with_other_systems.first
+    @evacuation_systems = @subsystem.evacuation_systems.first
+    @prerecorded_message_audio_modules = @subsystem.prerecorded_message_audio_modules.first
+    @telephone_systems = @subsystem.telephone_systems.first
+    @spare_parts = @subsystem.spare_parts.first
+    @scope_of_works = @subsystem.scope_of_works.first
+    @material_and_deliveries = @subsystem.material_and_deliveries.first
+    @general_commercial_data = @subsystem.general_commercial_data.first
     Rails.logger.debug "Isolation Data: #{@isolation.inspect}"
   end
-  
 
   def add_pdf_section(pdf, section_title, data)
     if data
@@ -189,14 +192,14 @@ class NotificationsController < ApplicationController
       pdf.text "Detectors Field Devices", size: 16, style: :bold
       pdf.move_down 10
       detectors.attributes.each do |key, value|
-        next unless key.ends_with?('_value')
+        next unless key.ends_with?("_value")
 
-        detector_type = key.sub('_value', '').humanize
+        detector_type = key.sub("_value", "").humanize
         pdf.text "Type: #{detector_type}"
         pdf.text "Value: #{value}"
-        pdf.text "Unit Rate: #{detectors["#{key.sub('_value', '_unit_rate')}"]}"
-        pdf.text "Amount: #{detectors["#{key.sub('_value', '_amount')}"]}"
-        pdf.text "Notes: #{detectors["#{key.sub('_value', '_notes')}"]}"
+        pdf.text "Unit Rate: #{detectors["#{key.sub("_value", "_unit_rate")}"]}"
+        pdf.text "Amount: #{detectors["#{key.sub("_value", "_amount")}"]}"
+        pdf.text "Notes: #{detectors["#{key.sub("_value", "_notes")}"]}"
         pdf.move_down 10
       end
     else
@@ -211,8 +214,8 @@ class NotificationsController < ApplicationController
       pdf.move_down 10
       # Explicitly map the attributes
       [
-        { type: 'total_no_of_devices', label: 'Total Number of Devices' },
-        { type: 'total_no_of_relays', label: 'Total Number of Relays' }
+        { type: "total_no_of_devices", label: "Total Number of Devices" },
+        { type: "total_no_of_relays", label: "Total Number of Relays" },
       ].each do |attribute|
         type_key = attribute[:type]
         pdf.text "Type: #{attribute[:label]}"
@@ -227,16 +230,16 @@ class NotificationsController < ApplicationController
       pdf.move_down 10
     end
   end
-  
+
   def add_pdf_notification_devices(pdf, notification_devices)
     if notification_devices
       pdf.text "Notification Devices", size: 16, style: :bold
       pdf.move_down 10
-  
+
       # Build a 2-column table with headers
       data = []
       data << ["Attribute", "Value"]
-  
+
       data << ["Notification Addressing", notification_devices.notification_addressing]
       data << ["Fire Alarm Strobe", notification_devices.fire_alarm_strobe]
       data << ["Fire Alarm Strobe (WP)", notification_devices.fire_alarm_strobe_wp]
@@ -244,13 +247,13 @@ class NotificationsController < ApplicationController
       data << ["Fire Alarm Horn (WP)", notification_devices.fire_alarm_horn_wp]
       data << ["Fire Alarm Horn w/ Strobe", notification_devices.fire_alarm_horn_with_strobe]
       data << ["Fire Alarm Horn w/ Strobe (WP)", notification_devices.fire_alarm_horn_with_strobe_wp]
-  
+
       pdf.table(data, header: true, width: pdf.bounds.width) do
         row(0).font_style = :bold
         row(0).background_color = "cccccc"
         self.row_colors = ["f0f0f0", "ffffff"]
       end
-  
+
       pdf.move_down 20
     else
       pdf.text "No Notification Devices data available.", size: 14, style: :italic
@@ -263,32 +266,210 @@ class NotificationsController < ApplicationController
     if isolation
       pdf.text "Isolation Devices", size: 16, style: :bold
       pdf.move_down 10
-  
+
       # Build a table with headers
       data = []
       data << ["Attribute", "Value"]
-  
+
       # Add each attribute to the table
       data << ["Built-In Fault Isolator for Each Detector", isolation.built_in_fault_isolator_for_each_detector]
       data << ["Built-In Fault Isolator for Each MCP/BG", isolation.built_in_fault_isolator_for_each_mcp_bg]
       data << ["Built-In Fault Isolator for Each Sounder/Horn", isolation.built_in_fault_isolator_for_each_sounder_horn]
       data << ["Built-In Fault Isolator for Monitor/Control Modules", isolation.built_in_fault_isolator_for_monitor_control_modules]
       data << ["Grouping for Each 12-15 (No.)", isolation.grouping_for_each_12_15]
-  
+
       pdf.table(data, header: true, width: pdf.bounds.width) do
         row(0).font_style = :bold
         row(0).background_color = "cccccc"
         self.row_colors = ["f0f0f0", "ffffff"]
       end
-  
+
       pdf.move_down 20
     else
       pdf.text "No Isolation Devices data available.", size: 14, style: :italic
       pdf.move_down 10
     end
   end
-  
 
+  def add_pdf_connection_betweens(pdf, connection_betweens)
+    if connection_betweens
+      pdf.text "Connection Between FACPs", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      data << ["Connection Type", connection_betweens.connection_type]
+      data << ["Network Module", connection_betweens.network_module]
+      data << ["Cables for Connection", connection_betweens.cables_for_connection]
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Connection Between FACPs data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_interface_with_other(pdf, interface_with_other)
+    if interface_with_other
+      pdf.text "Interface with Other Systems", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      interface_with_other.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Interface with Other Systems data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_evacuation_systems(pdf, evacuation_systems)
+    if evacuation_systems
+      pdf.text "Evacuation Systems", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      evacuation_systems.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Evacuation Systems data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_prerecorded_messages(pdf, prerecorded_messages)
+    if prerecorded_messages
+      pdf.text "Prerecorded Messages/Audio Modules", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      prerecorded_messages.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Prerecorded Messages/Audio Modules data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_telephone_systems(pdf, telephone_systems)
+    if telephone_systems
+      pdf.text "Telephone System", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      telephone_systems.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Telephone System data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_spare_parts(pdf, spare_parts)
+    if spare_parts
+      pdf.text "Spare Parts", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      spare_parts.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Spare Parts data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_scope_of_work(pdf, scope_of_work)
+    if scope_of_work
+      pdf.text "Scope of Work (SOW)", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      scope_of_work.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Scope of Work data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_scope_of_work(pdf, scope_of_work)
+    if scope_of_work
+      pdf.text "Scope of Work (SOW)", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      scope_of_work.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No Scope of Work data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
+
+  def add_pdf_general_commercial(pdf, general_commercial)
+    if general_commercial
+      pdf.text "General & Commercial Data", size: 16, style: :bold
+      pdf.move_down 10
+      data = [["Attribute", "Value"]]
+      general_commercial.attributes.each do |key, value|
+        data << [key.humanize, value]
+      end
+
+      pdf.table(data, header: true, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = "cccccc"
+      end
+      pdf.move_down 20
+    else
+      pdf.text "No General & Commercial Data available.", size: 14, style: :italic
+      pdf.move_down 10
+    end
+  end
 
   def set_notification
     @notification = Notification.find(params[:id])

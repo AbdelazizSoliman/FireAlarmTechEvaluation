@@ -28,7 +28,7 @@ module Api
           status: supplier.status,
           membership_type: supplier.membership_type,
           projects: supplier.membership_type == "projects" ? supplier.projects.map { |project| { id: project.id, name: project.name } } : [],
-          subsystems: supplier.membership_type == "systems" ? supplier.subsystems.map { |subsystem| { id: subsystem.id, name: subsystem.name, system_id: subsystem.system_id } } : []
+          subsystems: supplier.membership_type == "systems" ? supplier.subsystems.map { |subsystem| { id: subsystem.id, name: subsystem.name, system_id: subsystem.system_id } } : [],
         }
       end
 
@@ -37,7 +37,7 @@ module Api
 
         @supplier.update!(
           membership_type: params[:membership_type],
-          receive_evaluation_report: params[:receive_evaluation_report]
+          receive_evaluation_report: params[:receive_evaluation_report],
         )
 
         if params[:membership_type] == "projects"
@@ -52,7 +52,7 @@ module Api
           notifiable: @supplier,
           read: false,
           status: "active",
-          notification_type: "membership"
+          notification_type: "membership",
         )
 
         render json: { message: "Membership assigned successfully" }, status: :ok
@@ -69,9 +69,9 @@ module Api
             notifiable: @supplier,
             read: false,
             status: "pending",
-            notification_type: "registration"
+            notification_type: "registration",
           )
-          render json: { message: 'Supplier registered successfully' }, status: :created
+          render json: { message: "Supplier registered successfully" }, status: :created
         else
           render json: { errors: @supplier.errors.full_messages }, status: :unprocessable_entity
         end
@@ -132,7 +132,7 @@ module Api
           supplier_name: supplier.supplier_name,
           membership_type: supplier.membership_type,
           projects: supplier.membership_type == "projects" ? supplier.projects.select(:id, :name) : [],
-          subsystems: supplier.membership_type == "systems" ? supplier.subsystems.select(:id, :name, :system_id) : []
+          subsystems: supplier.membership_type == "systems" ? supplier.subsystems.select(:id, :name, :system_id) : [],
         }
       end
 
@@ -143,7 +143,7 @@ module Api
           @supplier.update!(
             membership_type: params[:membership_type],
             receive_evaluation_report: params[:receive_evaluation_report] == "true",
-            status: "approved"
+            status: "approved",
           )
 
           # Assign projects or subsystems
@@ -162,7 +162,7 @@ module Api
           notifiable: @supplier,
           read: false,
           status: "active",
-          notification_type: "approval"
+          notification_type: "approval",
         )
 
         render json: { message: "Supplier approved and assigned evaluation scope." }, status: :ok
@@ -187,9 +187,12 @@ module Api
           :password_confirmation,
           :status,
           :membership_type,
-          :receive_evaluation_report
-        )
-      end
+          :receive_evaluation_report,
+          :registration_type,
+          :registration_type, 
+    (:evaluation_type if params[:supplier][:registration_type] == "evaluation")
+  ).compact
+end
     end
   end
 end

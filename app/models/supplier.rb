@@ -1,4 +1,7 @@
 class Supplier < ApplicationRecord
+  REGISTRATION_TYPES = %w[partnership evaluation].freeze
+  EVALUATION_TYPES = %w[TechnicalOnly TechnicalAndEvaluation].freeze
+  # MEMBERSHIP_TYPES = %w[projects systems].freeze
   STATUSES = %w[pending approved rejected]
   has_secure_password
 
@@ -13,6 +16,9 @@ class Supplier < ApplicationRecord
 
   validates :supplier_name, :supplier_category, :total_years_in_saudi_market, :phone, :supplier_email, presence: true
   validates :supplier_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'must be a valid email address' }
+
+  validates :registration_type, inclusion: { in: REGISTRATION_TYPES }
+  validates :evaluation_type, inclusion: { in: EVALUATION_TYPES }, allow_nil: true
 
   has_many :subsystem_suppliers, dependent: :destroy
   has_many :subsystems, through: :subsystem_suppliers

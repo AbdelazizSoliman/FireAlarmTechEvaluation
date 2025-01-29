@@ -1,38 +1,47 @@
 <%= form_with url: approve_supplier_notification_path(@notification), method: :post, local: true do |form| %>
-  <!-- Membership Assignment Type -->
+
+  <!-- Registration Type Display (Readonly) -->
   <div class="mb-4">
-    <h2 class="font-semibold">This Account is Assigned to Evaluate By:</h2>
-    <%= form.select :membership_type, [["Projects", "projects"], ["Systems", "systems"]],
-      { prompt: "Select Evaluation Type" },
-      { id: "membership-type-dropdown", class: "form-select" } %>
+    <h2 class="font-semibold">Registration Type:</h2>
+    <p class="text-gray-700"><%= @supplier.registration_type.capitalize %></p>
   </div>
 
-  <!-- Projects List -->
-  <div id="projects-section" class="hidden mb-4">
-    <h2 class="font-semibold">Select Projects</h2>
-    <% @projects.each do |project| %>
-      <%= form.check_box :project_ids, { multiple: true }, project.id, nil %>
-      <%= label_tag "project_#{project.id}", project.name, class: "ml-2" %><br>
-    <% end %>
-  </div>
+  <!-- Conditional Membership Assignment (Only for Evaluation Type) -->
+  <% if @supplier.registration_type == "evaluation" %>
+    <div class="mb-4">
+      <h2 class="font-semibold">This Account is Assigned to Evaluate By:</h2>
+      <%= form.select :membership_type, [["Projects", "projects"], ["Systems", "systems"]],
+                      { prompt: "Select Evaluation Type" },
+                      { id: "membership-type-dropdown", class: "form-select" } %>
+    </div>
 
-  <!-- Subsystems List -->
-  <div id="subsystems-section" class="hidden mb-4">
-    <h2 class="font-semibold">Select Subsystems</h2>
-    <% @subsystems.each do |subsystem| %>
-      <%= form.check_box :subsystem_ids, { multiple: true }, subsystem.id, nil %>
-      <%= label_tag "subsystem_#{subsystem.id}", subsystem.name, class: "ml-2" %><br>
-    <% end %>
-  </div>
+    <!-- Projects List -->
+    <div id="projects-section" class="hidden mb-4">
+      <h2 class="font-semibold">Select Projects</h2>
+      <% @projects.each do |project| %>
+        <%= form.check_box :project_ids, { multiple: true }, project.id, nil %>
+        <%= label_tag "project_#{project.id}", project.name, class: "ml-2" %><br>
+      <% end %>
+    </div>
 
-  <!-- Receive Evaluation Report -->
-  <div class="mb-4">
-    <h2 class="font-semibold">Receive Evaluation Report?</h2>
-    <%= form.radio_button :receive_evaluation_report, "true", id: "receive_true" %>
-    <%= form.label :receive_evaluation_report_true, "Yes", class: "ml-2" %>
-    <%= form.radio_button :receive_evaluation_report, "false", id: "receive_false" %>
-    <%= form.label :receive_evaluation_report_false, "No", class: "ml-2" %>
-  </div>
+    <!-- Subsystems List -->
+    <div id="subsystems-section" class="hidden mb-4">
+      <h2 class="font-semibold">Select Subsystems</h2>
+      <% @subsystems.each do |subsystem| %>
+        <%= form.check_box :subsystem_ids, { multiple: true }, subsystem.id, nil %>
+        <%= label_tag "subsystem_#{subsystem.id}", subsystem.name, class: "ml-2" %><br>
+      <% end %>
+    </div>
+
+    <!-- Receive Evaluation Report (Only for Evaluation Type) -->
+    <div class="mb-4">
+      <h2 class="font-semibold">Receive Evaluation Report?</h2>
+      <%= form.radio_button :receive_evaluation_report, "true", id: "receive_true" %>
+      <%= form.label :receive_evaluation_report_true, "Yes", class: "ml-2" %>
+      <%= form.radio_button :receive_evaluation_report, "false", id: "receive_false" %>
+      <%= form.label :receive_evaluation_report_false, "No", class: "ml-2" %>
+    </div>
+  <% end %>
 
   <!-- Hidden field for supplier_id -->
   <%= form.hidden_field :supplier_id, value: @supplier.id %>
@@ -53,10 +62,10 @@
     const subsystemsSection = document.getElementById("subsystems-section");
 
     function toggleSections() {
-      if (membershipDropdown.value === "projects") {
+      if (membershipDropdown && membershipDropdown.value === "projects") {
         projectsSection.classList.remove("hidden");
         subsystemsSection.classList.add("hidden");
-      } else if (membershipDropdown.value === "systems") {
+      } else if (membershipDropdown && membershipDropdown.value === "systems") {
         subsystemsSection.classList.remove("hidden");
         projectsSection.classList.add("hidden");
       } else {
@@ -65,8 +74,10 @@
       }
     }
 
-    // Add event listener to the dropdown
-    membershipDropdown.addEventListener("change", toggleSections);
+    // Add event listener to the dropdown if it exists
+    if (membershipDropdown) {
+      membershipDropdown.addEventListener("change", toggleSections);
+    }
 
     // Trigger on page load to set the initial state
     toggleSections();

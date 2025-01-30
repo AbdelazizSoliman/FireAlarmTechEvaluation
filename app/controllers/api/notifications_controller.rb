@@ -11,11 +11,11 @@ module Api
           body: notification.body,
           read: notification.read,
           status: notification.status,
-          notification_type: notification.notification_type, # Include notification_type
-          link: generate_link(notification) # Generate appropriate link
+          notification_type: notification.notification_type,
+          link: generate_link(notification)
         }
       end
-  
+
       render json: notifications
     end
 
@@ -33,7 +33,6 @@ module Api
         "/notifications/#{notification.id}" # Default link
       end
     end
- 
 
     def manage_membership
       @projects = Project.all
@@ -43,42 +42,63 @@ module Api
     end
 
     def approve_supplier
-      Rails.logger.info "Params: #{params.inspect}"
-    
+      Rails.logger.info "Params received: #{params.inspect}"
+
       @supplier = Supplier.find(params[:supplier_id])
       @notification = Notification.find(params[:id])
-    
+
+      # Ensure required fields are provided
       if params[:membership_type].blank? || params[:receive_evaluation_report].nil?
-        redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Please select all required fields."
+        redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                    alert: "Please select all required fields."
         return
       end
-    
+
       ActiveRecord::Base.transaction do
+        # Update supplier details
         @supplier.update!(
           membership_type: params[:membership_type],
           receive_evaluation_report: params[:receive_evaluation_report] == "true",
           status: "approved"
         )
-    
-        if params[:membership_type] == "projects"
+
+        # Handle membership type
+        case params[:membership_type]
+        when "projects"
           selected_projects = params[:project_ids] || []
           @supplier.projects = Project.where(id: selected_projects)
-          Rails.logger.info "Projects saved: #{@supplier.projects.pluck(:id)}"
-        elsif params[:membership_type] == "systems"
+          Rails.logger.info "Projects assigned: #{@supplier.projects.pluck(:id)}"
+        when "systems"
           selected_subsystems = params[:subsystem_ids] || []
           @supplier.subsystems = Subsystem.where(id: selected_subsystems)
-          Rails.logger.info "Subsystems saved: #{@supplier.subsystems.pluck(:id)}"
+          Rails.logger.info "Subsystems assigned: #{@supplier.subsystems.pluck(:id)}"
         end
-    
+
+        # Handle Manufacturer/Vendor specific requirements
+        if @supplier.registration_type == "Manufacturer / Vendor"
+          if @supplier.subsystems.blank?
+            redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                        alert: "Please select at least one subsystem."
+            return
+          end
+
+          if @supplier.purpose == "Already Quoted & Need Evaluation" && @supplier.evaluation_type.blank?
+            redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                        alert: "Please select an evaluation type."
+            return
+          end
+        end
+
+        # Resolve notification
         @notification.update!(status: "resolved")
       end
-    
-      redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved with #{params[:membership_type]} evaluation type."
+
+      redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved."
     rescue => e
-      Rails.logger.error "Error in approve_supplier: #{e.message}"
-      redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
+      Rails.logger.error "Error approving supplier: #{e.message}"
+      redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                  alert: "Error: #{e.message}"
     end
-    
 
     def reject_supplier
       ActiveRecord::Base.transaction do

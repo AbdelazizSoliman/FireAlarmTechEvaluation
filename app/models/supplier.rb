@@ -15,10 +15,11 @@ class Supplier < ApplicationRecord
   after_initialize :set_default_status, if: :new_record?
 
   validates :supplier_name, :supplier_category, :total_years_in_saudi_market, :phone, :supplier_email, presence: true
-  validates :supplier_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'must be a valid email address' }
+  validates :supplier_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
 
-  validates :registration_type, inclusion: { in: REGISTRATION_TYPES }
-  validates :evaluation_type, inclusion: { in: EVALUATION_TYPES }, allow_nil: true
+  validates :registration_type, inclusion: { in: ["Manufacturer / Vendor", "System Integrator", "Sub Contractor", "Supplier"] }
+  validates :purpose, inclusion: { in: ["Participant", "Already Quoted & Need Evaluation"], allow_blank: true }
+  validates :evaluation_type, inclusion: { in: ["TechnicalOnly", "Technical&Evaluation"], allow_blank: true }
 
   has_many :subsystem_suppliers, dependent: :destroy
   has_many :subsystems, through: :subsystem_suppliers
@@ -36,8 +37,8 @@ class Supplier < ApplicationRecord
     subsystems
   end
 
- # Callbacks
- before_update :clear_old_associations, if: :membership_type_changed?
+  # Callbacks
+  before_update :clear_old_associations, if: :membership_type_changed?
 
   private
 
@@ -55,8 +56,9 @@ class Supplier < ApplicationRecord
   end
 
   def set_default_status
-    self.status ||= 'pending'
+    self.status ||= "pending"
   end
+
   def status_approved?
     status == "approved"
   end

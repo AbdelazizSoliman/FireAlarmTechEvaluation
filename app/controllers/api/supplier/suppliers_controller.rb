@@ -61,21 +61,28 @@ module Api
       end
 
       def register
-        @supplier = ::Supplier.new(supplier_params)
-        if @supplier.save
-          Notification.create!(
-            title: "New Supplier Registration",
-            body: "Supplier #{@supplier.supplier_name} has registered.",
-            notifiable: @supplier,
-            read: false,
-            status: "pending",
-            notification_type: "registration",
-          )
+        supplier_params_with_subsystems = supplier_params.dup
+      
+        # Map subsystem names to Subsystem objects
+        if supplier_params[:subsystems].present?
+          subsystem_objects = Subsystem.where(name: supplier_params[:subsystems])
+          supplier_params_with_subsystems[:subsystems] = subsystem_objects
+        end
+      
+        # Create the supplier
+        supplier = ::Supplier.new(supplier_params_with_subsystems)
+      
+        if supplier.save
           render json: { message: "Supplier registered successfully" }, status: :created
         else
-          render json: { errors: @supplier.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: supplier.errors.full_messages }, status: :unprocessable_entity
         end
+      rescue => e
+        Rails.logger.error "Error in supplier registration: #{e.message}"
+        render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
       end
+      
+      
 
       # GET /suppliers
       def index
@@ -137,37 +144,53 @@ module Api
       end
 
       def approve_supplier
+        Rails.logger.info "Params received: #{params.inspect}"
+
+        if params[:supplier_id].blank?
+          redirect_to manage_membership_notification_path(@notification), alert: "Supplier ID is missing."
+          return
+        end
+
         @supplier = Supplier.find(params[:supplier_id])
 
-        ActiveRecord::Base.transaction do
-          @supplier.update!(
-            membership_type: params[:membership_type],
-            receive_evaluation_report: params[:receive_evaluation_report] == "true",
-            status: "approved",
-          )
-
-          # Assign projects or subsystems
-          if params[:membership_type] == "projects"
-            selected_projects = params[:project_ids] || []
-            @supplier.projects = Project.where(id: selected_projects) # Saves data to `projects_suppliers`
-          elsif params[:membership_type] == "systems"
-            selected_subsystems = params[:subsystem_ids] || []
-            @supplier.subsystems = Subsystem.where(id: selected_subsystems) # Saves data to `subsystems_suppliers`
+        # Only enforce evaluation-related fields if the supplier registered for evaluation
+        if @supplier.registration_type == "evaluation"
+          if params[:membership_type].blank? || params[:receive_evaluation_report].blank?
+            redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                        alert: "Please select all required fields."
+            return
           end
         end
 
-        Notification.create!(
-          title: "Supplier Approved",
-          body: "Supplier #{@supplier.supplier_name} has been approved with #{params[:membership_type]} evaluation type.",
-          notifiable: @supplier,
-          read: false,
-          status: "active",
-          notification_type: "approval",
-        )
+        ActiveRecord::Base.transaction do
+          # Assign membership type and evaluation report status only for evaluation type
+          if @supplier.registration_type == "evaluation"
+            @supplier.update!(
+              membership_type: params[:membership_type],
+              receive_evaluation_report: params[:receive_evaluation_report] == "true",
+              status: "approved",
+            )
 
-        render json: { message: "Supplier approved and assigned evaluation scope." }, status: :ok
+            if params[:membership_type] == "projects"
+              selected_projects = params[:project_ids] || []
+              @supplier.projects = Project.where(id: selected_projects)
+            elsif params[:membership_type] == "systems"
+              selected_subsystems = params[:subsystem_ids] || []
+              @supplier.subsystems = Subsystem.where(id: selected_subsystems)
+            end
+          else
+            # If Partnership, just update status
+            @supplier.update!(status: "approved")
+          end
+
+          # Resolve the notification
+          @notification.update!(status: "resolved")
+        end
+
+        redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved successfully."
       rescue => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        Rails.logger.error "Error in approve_supplier: #{e.message}"
+        redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
       end
 
       private
@@ -185,14 +208,12 @@ module Api
           :supplier_email,
           :password,
           :password_confirmation,
-          :status,
-          :membership_type,
-          :receive_evaluation_report,
           :registration_type,
-          :registration_type, 
-    (:evaluation_type if params[:supplier][:registration_type] == "evaluation")
-  ).compact
-end
+          :purpose,
+          :evaluation_type,
+          subsystems: [], # Allow an array of subsystem selections
+        )
+      end
     end
   end
 end

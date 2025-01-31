@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_30_112634) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_31_164601) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -340,6 +340,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_30_112634) do
   create_table "projects_suppliers", id: false, force: :cascade do |t|
     t.bigint "project_id", null: false
     t.bigint "supplier_id", null: false
+    t.boolean "approved", default: false, null: false
     t.index ["project_id", "supplier_id"], name: "index_projects_suppliers_on_project_id_and_supplier_id", unique: true
     t.index ["supplier_id", "project_id"], name: "index_projects_suppliers_on_supplier_id_and_project_id"
   end
@@ -394,12 +395,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_30_112634) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "category"
     t.index ["system_id"], name: "index_subsystems_on_system_id"
   end
 
   create_table "subsystems_suppliers", id: false, force: :cascade do |t|
     t.bigint "subsystem_id", null: false
     t.bigint "supplier_id", null: false
+    t.boolean "approved", default: false, null: false
     t.index ["subsystem_id", "supplier_id"], name: "index_subsystems_suppliers_on_subsystem_id_and_supplier_id", unique: true
     t.index ["supplier_id", "subsystem_id"], name: "index_subsystems_suppliers_on_supplier_id_and_subsystem_id"
   end

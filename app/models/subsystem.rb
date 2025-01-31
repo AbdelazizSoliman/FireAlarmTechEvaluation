@@ -22,4 +22,5 @@ class Subsystem < ApplicationRecord
   has_many :general_commercial_data, dependent: :destroy
 
   has_and_belongs_to_many :suppliers
+  validates :category, inclusion: { in: ["Low Current", "Power"] }
 end

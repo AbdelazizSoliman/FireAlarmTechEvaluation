@@ -24,17 +24,41 @@ class Supplier < ApplicationRecord
   has_many :subsystem_suppliers, dependent: :destroy
   has_many :subsystems, through: :subsystem_suppliers
 
-  has_and_belongs_to_many :projects
-  has_and_belongs_to_many :subsystems
-
-  def allowable_projects
-    return [] unless membership_type == "projects"
-    projects
-  end
+  has_and_belongs_to_many :projects, join_table: :projects_suppliers
+  has_and_belongs_to_many :subsystems, join_table: :subsystems_suppliers
 
   def allowable_subsystems
-    return [] unless membership_type == "systems"
-    subsystems
+    subsystems.where(approved: true)
+  end
+
+  def allowable_projects
+    projects.where(approved: true)
+  end
+
+  # Update approval status
+  def approve_subsystems(subsystem_ids)
+    subsystems_suppliers.where(subsystem_id: subsystem_ids).update_all(approved: true)
+  end
+
+  def disapprove_subsystems(subsystem_ids)
+    subsystems_suppliers.where(subsystem_id: subsystem_ids).update_all(approved: false)
+  end
+
+  def approve_projects(project_ids)
+    projects_suppliers.where(project_id: project_ids).update_all(approved: true)
+  end
+
+  def disapprove_projects(project_ids)
+    projects_suppliers.where(project_id: project_ids).update_all(approved: false)
+  end
+
+  # Fetch approved subsystems and projects
+  def approved_subsystems
+    subsystems_suppliers.where(approved: true).map(&:subsystem)
+  end
+
+  def approved_projects
+    projects_suppliers.where(approved: true).map(&:project)
   end
 
   # Callbacks

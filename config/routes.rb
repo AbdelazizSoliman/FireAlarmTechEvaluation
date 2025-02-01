@@ -30,6 +30,17 @@ Rails.application.routes.draw do
     end
   end
 
+  # Non-API routes
+  resources :suppliers do
+    collection do
+      get :search
+      get 'dashboard', to: 'suppliers#dashboard'
+    end
+    member do
+      post :set_membership_and_approve  # Handle membership and permissions, then approve
+    end
+  end
+
   # ✅ Notifications
   resources :notifications, only: [:index, :show] do
     member do

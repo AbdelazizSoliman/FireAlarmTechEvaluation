@@ -1,13 +1,16 @@
 module Api
-    module Supplier
-      class SubsystemsController < ApplicationController
-        skip_before_action :verify_authenticity_token
-  
-        def index
-          subsystems = Subsystem.where(system_id: params[:system_id])
-          render json: subsystems
+  module Supplier
+    class SubsystemsController < ApplicationController
+      def index
+        if params[:system_ids].present?
+          system_ids = params[:system_ids].map(&:to_i)
+          subsystems = Subsystem.where(system_id: system_ids)
+        else
+          subsystems = Subsystem.all
         end
+
+        render json: subsystems
       end
     end
   end
-  
+end

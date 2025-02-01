@@ -5,7 +5,7 @@ class Supplier < ApplicationRecord
   STATUSES = %w[pending approved rejected]
   has_secure_password
 
-  validates :membership_type, presence: true, if: :status_approved?
+  validates :membership_type, presence: true, if: -> { status == "approved" && persisted? }
   validates :receive_evaluation_report, inclusion: { in: [true, false] }, if: :status_approved?
 
   validates :password, presence: true, length: { minimum: 6 }, confirmation: true, if: :password_required?

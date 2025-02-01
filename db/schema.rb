@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_01_005735) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_01_102400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -331,6 +331,13 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_01_005735) do
     t.index ["project_id"], name: "index_project_scopes_on_project_id"
   end
 
+  create_table "project_scopes_suppliers", id: false, force: :cascade do |t|
+    t.bigint "project_scope_id", null: false
+    t.bigint "supplier_id", null: false
+    t.index ["project_scope_id", "supplier_id"], name: "idx_on_project_scope_id_supplier_id_16938ca3e1"
+    t.index ["supplier_id", "project_scope_id"], name: "idx_on_supplier_id_project_scope_id_95e8d35df4"
+  end
+
   create_table "projects", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -395,7 +402,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_01_005735) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "category"
     t.index ["system_id"], name: "index_subsystems_on_system_id"
   end
 

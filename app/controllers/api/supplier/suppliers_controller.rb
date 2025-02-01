@@ -46,28 +46,39 @@ module Api
       
       
       def approve_supplier
-        notification = Notification.find(params[:id])
-        supplier = notification.notifiable
-        
-        selected_projects = Project.where(id: params[:project_ids])
-        selected_scopes = ProjectScope.where(id: params[:project_scope_ids])
-        selected_systems = System.where(id: params[:system_ids])
-        selected_subsystems = Subsystem.where(id: params[:subsystem_ids])
+        @notification = Notification.find(params[:id])
+        @supplier = @notification.notifiable
       
         ActiveRecord::Base.transaction do
-          supplier.projects = selected_projects
-          supplier.project_scopes = selected_scopes
-          supplier.systems = selected_systems
-          supplier.subsystems = selected_subsystems
-          supplier.update!(status: "approved")
+          # Update supplier details
+          @supplier.update!(
+            receive_evaluation_report: params[:receive_evaluation_report] == "true",
+            status: "approved"
+          )
       
-          notification.update!(status: "resolved")
+          # Approve selected projects
+          @supplier.projects.where(id: params[:project_ids]).update_all(approved: true)
+      
+          # Approve selected project scopes
+          @supplier.project_scopes.where(id: params[:project_scope_ids]).update_all(approved: true)
+      
+          # Approve selected systems
+          @supplier.systems.where(id: params[:system_ids]).update_all(approved: true)
+      
+          # Approve selected subsystems
+          @supplier.subsystems.where(id: params[:subsystem_ids]).update_all(approved: true)
+      
+          # Resolve notification
+          @notification.update!(status: "resolved")
         end
       
-        render json: { message: "Supplier approved successfully" }
-      rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        redirect_to notifications_path, notice: "Supplier approved successfully."
+      rescue => e
+        redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                    alert: "Error: #{e.message}"
       end
+      
+      
       
       def reject_supplier
         notification = Notification.find(params[:id])

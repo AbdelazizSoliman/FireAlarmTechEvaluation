@@ -69,6 +69,14 @@ class Supplier < ApplicationRecord
 
   private
 
+  def approve_associations(params)
+    self.projects.where(id: params[:project_ids]).update_all(approved: true)
+    self.project_scopes.where(id: params[:project_scope_ids]).update_all(approved: true)
+    self.systems.where(id: params[:system_ids]).update_all(approved: true)
+    self.subsystems.where(id: params[:subsystem_ids]).update_all(approved: true)
+  end
+  
+
   def clear_old_associations
     if membership_type_was == "gold"
       projects.clear

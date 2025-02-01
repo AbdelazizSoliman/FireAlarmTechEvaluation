@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_01_151157) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_01_173120) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -334,6 +334,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_01_151157) do
   create_table "project_scopes_suppliers", id: false, force: :cascade do |t|
     t.bigint "project_scope_id", null: false
     t.bigint "supplier_id", null: false
+    t.boolean "approved", default: false, null: false
     t.index ["project_scope_id", "supplier_id"], name: "idx_on_project_scope_id_supplier_id_16938ca3e1"
     t.index ["supplier_id", "project_scope_id"], name: "idx_on_supplier_id_project_scope_id_95e8d35df4"
   end
@@ -454,6 +455,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_01_151157) do
   create_table "systems_suppliers", id: false, force: :cascade do |t|
     t.bigint "system_id", null: false
     t.bigint "supplier_id", null: false
+    t.boolean "approved", default: false, null: false
     t.index ["supplier_id", "system_id"], name: "index_systems_suppliers_on_supplier_id_and_system_id"
     t.index ["system_id", "supplier_id"], name: "index_systems_suppliers_on_system_id_and_supplier_id", unique: true
   end

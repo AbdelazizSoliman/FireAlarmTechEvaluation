@@ -68,44 +68,54 @@ class SuppliersController < ApplicationController
 
   
   def approve_supplier
-    Rails.logger.info "Params: #{params.inspect}"
-    
-    @supplier = Supplier.find(params[:supplier_id])
     @notification = Notification.find(params[:id])
+    @supplier = @notification.notifiable
   
     ActiveRecord::Base.transaction do
+      # Update supplier details
       @supplier.update!(
-        membership_type: params[:membership_type],
         receive_evaluation_report: params[:receive_evaluation_report] == "true",
         status: "approved"
       )
   
-      if params[:membership_type] == "projects"
-        selected_projects = params[:project_ids] || []
-        @supplier.projects = Project.where(id: selected_projects)
-        Rails.logger.info "Projects saved: #{@supplier.projects.pluck(:id)}"
-      elsif params[:membership_type] == "systems"
-        selected_subsystems = params[:subsystem_ids] || []
-        @supplier.subsystems = Subsystem.where(id: selected_subsystems)
-        Rails.logger.info "Subsystems saved: #{@supplier.subsystems.pluck(:id)}"
-      end
+      # Approve selected projects
+      @supplier.projects.where(id: params[:project_ids]).update_all(approved: true)
   
+      # Approve selected project scopes
+      @supplier.project_scopes.where(id: params[:project_scope_ids]).update_all(approved: true)
+  
+      # Approve selected systems
+      @supplier.systems.where(id: params[:system_ids]).update_all(approved: true)
+  
+      # Approve selected subsystems
+      @supplier.subsystems.where(id: params[:subsystem_ids]).update_all(approved: true)
+  
+      # Resolve notification
       @notification.update!(status: "resolved")
     end
   
-    redirect_to suppliers_path, notice: "#{@supplier.supplier_name} has been approved."
+    redirect_to notifications_path, notice: "Supplier approved successfully."
   rescue => e
-    Rails.logger.error "Error in approve_supplier: #{e.message}"
-    redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id), alert: "Error: #{e.message}"
+    redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                alert: "Error: #{e.message}"
   end
+  
+  
   
   
 
   def reject_supplier
-    supplier = Supplier.find(params[:id])
-    supplier.update_column(:status, 'rejected') # Bypass validations
-    redirect_to suppliers_path, notice: "Supplier was successfully rejected."
+    notification = Notification.find(params[:id])
+    supplier = notification.notifiable
+  
+    supplier.update!(status: "rejected")
+    notification.update!(status: "resolved")
+  
+    render json: { message: "Supplier rejected successfully" }
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
+  
   
   # Approve a supplier
   def approve
@@ -206,9 +216,16 @@ class SuppliersController < ApplicationController
   end
 
   def manage_membership
-    @projects = Project.all
-    @subsystems = Subsystem.all
+    @notification = Notification.find(params[:id])
+    @supplier = @notification.notifiable
+  
+    # Ensure selected items are loaded
+    @projects = @supplier.projects
+    @project_scopes = @supplier.project_scopes
+    @systems = @supplier.systems
+    @subsystems = @supplier.subsystems
   end
+  
 
   def dashboard
     supplier = Supplier.find_by(id: params[:supplier_id])

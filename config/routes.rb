@@ -1,21 +1,26 @@
 Rails.application.routes.draw do
-  # API namespace
+  # ✅ API namespace for suppliers
   namespace :api do
     namespace :supplier do
-      resources :subsystems, only: [:index]
       resources :suppliers, only: [:create, :index, :show]
-      resources :projects, only: [:index] # ✅ Fixed route for projects
-      resources :project_scopes, only: [:index] # ✅ Fixed route for project scopes
-      resources :systems, only: [:index] # ✅ Fixed route for systems
-      resources :subsystems, only: [:index] # ✅ Fixed route for subsystems
+      resources :projects, only: [:index] 
+      resources :project_scopes, only: [:index] 
+      resources :systems, only: [:index] 
+      resources :subsystems, only: [:index] # ✅ Removed duplicate
+
       post 'register', to: 'suppliers#register'
       post 'login', to: 'sessions#create'
-      get '/profile', to: 'sessions#profile'
-      get '/dashboard', to: 'suppliers#dashboard'
-      get '/supplier_data', to: 'supplier_data#index'
+      get 'profile', to: 'sessions#profile'
+      get 'dashboard', to: 'suppliers#dashboard'
+      get 'supplier_data', to: 'supplier_data#index'
     end
 
-    resources :notifications, only: [:index, :update]
+    resources :notifications, only: [:index, :update] do
+      member do
+        post :approve_supplier
+        post :reject_supplier
+      end
+    end
   end
 
   # ✅ RESTORE EVALUATION SYSTEM & STANDALONE ROUTES
@@ -30,19 +35,19 @@ Rails.application.routes.draw do
     end
   end
 
-  # Non-API routes
+  # ✅ Supplier Routes (Non-API)
   resources :suppliers do
     collection do
       get :search
       get 'dashboard', to: 'suppliers#dashboard'
     end
     member do
-      post :set_membership_and_approve  # Handle membership and permissions, then approve
+      post :set_membership_and_approve  # ✅ Handle membership and approval process
     end
   end
 
-  # ✅ Notifications
-  resources :notifications, only: [:index, :show] do
+  # ✅ Notifications (Non-API)
+  resources :notifications do
     member do
       get :manage_membership
       post :approve_supplier

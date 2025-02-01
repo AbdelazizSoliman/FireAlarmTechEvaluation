@@ -4,7 +4,8 @@ module Api
     before_action :set_supplier, only: [:manage_membership, :approve_supplier, :reject_supplier]
 
     def index
-      notifications = Notification.order(created_at: :desc).map do |notification|
+      notifications = Notification.order(created_at: :desc)
+      render json: notifications.map { |notification| 
         {
           id: notification.id,
           title: notification.title,
@@ -12,12 +13,11 @@ module Api
           read: notification.read,
           status: notification.status,
           notification_type: notification.notification_type,
-          link: generate_link(notification)
+          created_at: notification.created_at.strftime("%Y-%m-%d %H:%M:%S")
         }
-      end
-
-      render json: notifications
+      }
     end
+    
 
     def generate_link(notification)
       case notification.notification_type

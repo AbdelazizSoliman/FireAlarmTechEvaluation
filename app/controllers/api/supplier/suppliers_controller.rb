@@ -61,25 +61,34 @@ module Api
       end
 
       def register
-        supplier_params_with_subsystems = supplier_params.dup
+        supplier = Supplier.new(supplier_params)
       
-        # Map subsystem names to Subsystem objects
-        if supplier_params[:subsystems].present?
-          subsystem_objects = Subsystem.where(name: supplier_params[:subsystems])
-          supplier_params_with_subsystems[:subsystems] = subsystem_objects
+        ActiveRecord::Base.transaction do
+          if supplier.save
+            selected_projects = Project.where(id: params[:project_ids])
+            selected_scopes = ProjectScope.where(id: params[:scope_ids])
+            selected_systems = System.where(id: params[:system_ids])
+            selected_subsystems = Subsystem.where(id: params[:subsystem_ids])
+      
+            supplier.projects = selected_projects
+            supplier.project_scopes = selected_scopes
+            supplier.systems = selected_systems
+            supplier.subsystems = selected_subsystems
+      
+            # Create a notification
+            Notification.create!(
+              title: "New Supplier Registration",
+              body: "#{supplier.supplier_name} registered with subsystems: #{selected_subsystems.map(&:name).join(', ')}",
+              notifiable: supplier,
+              status: "active",
+              notification_type: "registration"
+            )
+      
+            render json: { message: "Supplier registered successfully" }, status: :created
+          else
+            render json: { errors: supplier.errors.full_messages }, status: :unprocessable_entity
+          end
         end
-      
-        # Create the supplier
-        supplier = ::Supplier.new(supplier_params_with_subsystems)
-      
-        if supplier.save
-          render json: { message: "Supplier registered successfully" }, status: :created
-        else
-          render json: { errors: supplier.errors.full_messages }, status: :unprocessable_entity
-        end
-      rescue => e
-        Rails.logger.error "Error in supplier registration: #{e.message}"
-        render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
       end
       
       

@@ -4,10 +4,12 @@ class NotificationsController < ApplicationController
 
   def index
     @notifications = Notification.all
-    # @notifications = Notification.where(read: false).order(created_at: :desc)
-    # render json: @notifications
-  end
 
+    respond_to do |format|
+      format.html { render :index } # Default HTML view
+      format.json { render json: @notifications.order(created_at: :desc) }
+    end
+  end
   def manage_membership
     @supplier = Supplier.find(params[:supplier_id])
     @projects = Project.all
@@ -72,18 +74,19 @@ class NotificationsController < ApplicationController
   def show
     @notification = Notification.find(params[:id])
 
-    case request.format.symbol
-    when :html
-      handle_html_request
-    when :pdf
-      handle_pdf_request
-    when :xlsx
-      handle_xlsx_request
-    else
-      redirect_to notifications_path, alert: "Unsupported format."
+    respond_to do |format|
+      format.html { handle_html_request } # Default HTML view
+      format.json do
+        render json: {
+          notification: @notification,
+          data: @notification.notifiable
+        }
+      end
+      format.pdf { handle_pdf_request }
+      format.xlsx { handle_xlsx_request }
+      format.any { redirect_to notifications_path, alert: "Unsupported format." }
     end
   end
-
   private
 
   def handle_html_request

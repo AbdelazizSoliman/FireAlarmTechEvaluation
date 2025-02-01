@@ -2,72 +2,57 @@ Rails.application.routes.draw do
   # API namespace
   namespace :api do
     namespace :supplier do
+      resources :subsystems, only: [:index]
+      resources :suppliers, only: [:create, :index, :show]
+      resources :projects, only: [:index] # ✅ Fixed route for projects
+      resources :project_scopes, only: [:index] # ✅ Fixed route for project scopes
+      resources :systems, only: [:index] # ✅ Fixed route for systems
+      resources :subsystems, only: [:index] # ✅ Fixed route for subsystems
       post 'register', to: 'suppliers#register'
       post 'login', to: 'sessions#create'
-      get  '/profile', to: 'sessions#profile'
+      get '/profile', to: 'sessions#profile'
       get '/dashboard', to: 'suppliers#dashboard'
       get '/supplier_data', to: 'supplier_data#index'
-    end
-
-    # Nested Routes for Projects, Systems, and Subsystems within API namespace
-    resources :projects do
-      resources :project_scopes do
-        resources :systems do
-          resources :subsystems, only: [] do
-            post :submit_all, on: :member
-          end
-        end
-      end
     end
 
     resources :notifications, only: [:index, :update]
   end
 
+  # ✅ RESTORE EVALUATION SYSTEM & STANDALONE ROUTES
   resources :projects do
     resources :project_scopes do
       resources :systems do
         resources :subsystems do
-          resources :fire_alarm_control_panels, only: [:create, :index] # Add :index for GET
+          post :submit_all, on: :member
+          resources :fire_alarm_control_panels, only: [:create, :index]
         end
       end
     end
   end
-  # Non-API routes
-  resources :suppliers do
-    collection do
-      get :search
-      get 'dashboard', to: 'suppliers#dashboard'
-    end
+
+  # ✅ Notifications
+  resources :notifications, only: [:index, :show] do
     member do
-      post :set_membership_and_approve  # Handle membership and permissions, then approve
+      get :manage_membership
+      post :approve_supplier
+      post :reject_supplier
     end
   end
 
-  # Notifications routes
-  resources :notifications, only: [:index, :show, :show] do
-    member do
-      get :manage_membership # For membership form
-      post :approve_supplier  # To handle approval
-      post :reject_supplier   # To handle rejection
-    end
-  end
-
-  # Standalone Routes for Systems and Subsystems
+  # ✅ Standalone Routes for Systems and Subsystems
   resources :project_scopes, only: [:index, :show, :new, :create]
-
   resources :systems, only: [:index, :show, :new, :create]
-
   resources :subsystems, only: [:index, :show, :new, :create]
- 
-  # Devise routes for user authentication
+
+  # ✅ Devise routes for user authentication
   devise_for :users
 
-  # Health check route
+  # ✅ Health check route
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Excel download route
+  # ✅ Excel download route
   get 'projects/download_excel', to: 'projects#download_excel', as: 'download_excel'
 
-  # Root route
+  # ✅ Root route
   root "pages#index"
 end

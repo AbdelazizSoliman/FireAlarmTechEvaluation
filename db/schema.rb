@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_01_141356) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_01_151157) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -451,6 +451,13 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_01_141356) do
     t.index ["project_scope_id"], name: "index_systems_on_project_scope_id"
   end
 
+  create_table "systems_suppliers", id: false, force: :cascade do |t|
+    t.bigint "system_id", null: false
+    t.bigint "supplier_id", null: false
+    t.index ["supplier_id", "system_id"], name: "index_systems_suppliers_on_supplier_id_and_system_id"
+    t.index ["system_id", "supplier_id"], name: "index_systems_suppliers_on_system_id_and_supplier_id", unique: true
+  end
+
   create_table "telephone_systems", force: :cascade do |t|
     t.integer "number_of_firefighter_telephone_circuits_per_panel"
     t.integer "total_no_of_firefighter_telephone_cabinet"
@@ -506,5 +513,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_01_141356) do
   add_foreign_key "subsystems", "systems"
   add_foreign_key "supplier_data", "subsystems"
   add_foreign_key "systems", "project_scopes"
+  add_foreign_key "systems_suppliers", "suppliers"
+  add_foreign_key "systems_suppliers", "systems"
   add_foreign_key "telephone_systems", "subsystems"
 end

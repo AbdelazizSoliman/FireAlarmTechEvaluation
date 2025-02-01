@@ -4,20 +4,19 @@ module Api
       skip_before_action :verify_authenticity_token
       
       def register
-        supplier_params[:project_scopes] ||= supplier_params.delete(:projectScopes)
-        supplier = ::Supplier.new(supplier_params)
+        Rails.logger.info "Received registration params: #{params.inspect}" # ✅ Debugging log
+      
+        supplier = ::Supplier.new(supplier_params.except(:projects, :project_scopes, :systems, :subsystems)) # Exclude IDs from initial save
       
         ActiveRecord::Base.transaction do
           if supplier.save
-            selected_projects = Project.where(id: params[:supplier][:projects]) rescue []
-            selected_scopes = ProjectScope.where(id: params[:supplier][:project_scopes] || [])
-            selected_systems = System.where(id: params[:supplier][:systems]) rescue []
-            selected_subsystems = Subsystem.where(id: params[:supplier][:subsystems]) rescue []
+            # ✅ Convert IDs into ActiveRecord objects
+            supplier.projects = Project.where(id: params[:supplier][:projects]) if params[:supplier][:projects].present?
+            supplier.project_scopes = ProjectScope.where(id: params[:supplier][:project_scopes]) if params[:supplier][:project_scopes].present?
+            supplier.systems = System.where(id: params[:supplier][:systems]) if params[:supplier][:systems].present?
+            supplier.subsystems = Subsystem.where(id: params[:supplier][:subsystems]) if params[:supplier][:subsystems].present?
       
-            supplier.projects << selected_projects
-            supplier.project_scopes << selected_scopes
-            supplier.systems << selected_systems
-            supplier.subsystems << selected_subsystems
+            supplier.save! # Save the updated associations
       
             notification = Notification.create!(
               title: "New Supplier Registration",
@@ -26,39 +25,25 @@ module Api
               status: "pending",
               notification_type: "registration",
               additional_data: {
-                projects: selected_projects.map(&:id),
-                project_scopes: selected_scopes.map(&:id),
-                systems: selected_systems.map(&:id),
-                subsystems: selected_subsystems.map(&:id)
+                projects: supplier.projects.map(&:id),
+                project_scopes: supplier.project_scopes.map(&:id),
+                systems: supplier.systems.map(&:id),
+                subsystems: supplier.subsystems.map(&:id)
               }
             )
       
             render json: { message: "Supplier registered successfully", notification_id: notification.id }, status: :created
           else
+            Rails.logger.error "Registration failed: #{supplier.errors.full_messages}" # ✅ Debugging log
             render json: { errors: supplier.errors.full_messages }, status: :unprocessable_entity
           end
         end
       rescue StandardError => e
+        Rails.logger.error "Error in supplier registration: #{e.message}" # ✅ Debugging log
         render json: { error: e.message }, status: :unprocessable_entity
       end
       
-      def show_registration_details
-        notification = Notification.find(params[:id])
-        supplier = notification.notifiable
-        
-        selected_projects = Project.where(id: notification.additional_data["projects"])
-        selected_scopes = ProjectScope.where(id: notification.additional_data["project_scopes"])
-        selected_systems = System.where(id: notification.additional_data["systems"])
-        selected_subsystems = Subsystem.where(id: notification.additional_data["subsystems"])
-        
-        render json: {
-          supplier: supplier,
-          projects: selected_projects,
-          project_scopes: selected_scopes,
-          systems: selected_systems,
-          subsystems: selected_subsystems
-        }
-      end
+      
       
       def approve_supplier
         notification = Notification.find(params[:id])
@@ -100,12 +85,23 @@ module Api
       
       def supplier_params
         params.require(:supplier).permit(
-          :supplier_name, :supplier_category, :total_years_in_saudi_market,
-          :phone, :supplier_email, :password, :password_confirmation,
-          :registration_type, :purpose, :evaluation_type,
-          {  projects: [], project_scopes: [], systems: [], subsystems: [] } # Ensure arrays are permitted
+          :supplier_name,
+          :supplier_category,
+          :total_years_in_saudi_market,
+          :phone,
+          :supplier_email,
+          :password,
+          :password_confirmation,
+          :registration_type,
+          :purpose,
+          :evaluation_type,
+          projects: [],           # Allow an array of project IDs
+          project_scopes: [],     # Allow an array of project scope IDs
+          systems: [],            # Allow an array of system IDs
+          subsystems: []          # Allow an array of subsystem IDs
         )
       end
+      
       
       
     end

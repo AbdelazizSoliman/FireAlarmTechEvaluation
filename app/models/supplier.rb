@@ -25,8 +25,9 @@ class Supplier < ApplicationRecord
   has_many :subsystems, through: :subsystem_suppliers
 
   has_and_belongs_to_many :projects, join_table: :projects_suppliers
+  has_and_belongs_to_many :project_scopes, join_table: :project_scopes_suppliers
+  has_and_belongs_to_many :systems, join_table: :systems_suppliers
   has_and_belongs_to_many :subsystems, join_table: :subsystems_suppliers
-  has_and_belongs_to_many :project_scopes, join_table: :project_scopes_suppliers 
   has_many :notifications, as: :notifiable, dependent: :destroy
 
   def allowable_subsystems

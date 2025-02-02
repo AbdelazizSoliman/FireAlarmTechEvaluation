@@ -120,39 +120,7 @@ class SuppliersController < ApplicationController
     @project_scopes = @supplier.project_scopes
     @systems = @supplier.systems
     @subsystems = @supplier.subsystems
-  end
-  
-  def dashboard
-    supplier = ::Supplier.find(params[:supplier_id])  # 🔥 Explicitly reference the Supplier model
-  
-    projects = supplier.projects.where(approved: true).map do |project|
-      {
-        id: project.id,
-        name: project.name,
-        project_scopes: project.project_scopes.where(approved: true).map do |scope|
-          {
-            id: scope.id,
-            name: scope.name,
-            systems: scope.systems.where(approved: true).map do |system|
-              {
-                id: system.id,
-                name: system.name,
-                subsystems: system.subsystems.where(approved: true).map do |subsystem|
-                  { id: subsystem.id, name: subsystem.name }
-                }
-              }
-            end
-          }
-        end
-      }
-    end
-  
-    render json: { projects: projects }
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Supplier not found" }, status: :not_found
-  end
-  
-  
+  end  
 
   def profile
     supplier = Supplier.find(params[:supplier_id])
@@ -201,4 +169,5 @@ class SuppliersController < ApplicationController
      
     )
   end
+
 end

@@ -83,22 +83,21 @@ module Api
 
     def submit_all
       subsystem = Subsystem.find(params[:id])
-      # supplier = subsystem.supplier_data.first&.supplier
-    
+
       ActiveRecord::Base.transaction do
-        # Supplier Data
+        # Keep your existing code
         if params[:supplier_data].present?
           supplier_data_record = subsystem.supplier_data.first_or_initialize
           supplier_data_record.assign_attributes(supplier_data_params)
           supplier_data_record.save!
         end
-        # Fire Alarm Control Panel
+
         if params[:fire_alarm_control_panel].present?
           fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first_or_initialize
           fire_alarm_control_panel.assign_attributes(fire_alarm_control_panel_params)
           fire_alarm_control_panel.save!
         end
-        # Detectors Field Devices
+
         if params[:detectors_field_devices].present?
           detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
           params[:detectors_field_devices].each do |key, attributes|
@@ -111,104 +110,50 @@ module Api
           end
           detectors_field_device.save!
         end
-        # Manual Pull Station
-        if params[:manual_pull_station].present?
-          manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
-          manual_pull_station.assign_attributes(manual_pull_station_params)
-          manual_pull_station.save!
-        end
-        # Door Holders
-        if params[:door_holders].present?
-          door_holders = subsystem.door_holders.first_or_initialize
-          door_holders.assign_attributes(door_holders_params)
-          door_holders.save!
-        end
-        # Product Data
-        if params[:product_data].present?
-          product_data_record = subsystem.product_data.first_or_initialize
-          product_data_record.assign_attributes(product_data_params)
-          product_data_record.save!
-        end
-        # Graphic Systems
-        if params[:graphic_systems].present?
-          graphic_systems_record = subsystem.graphic_systems.first_or_initialize
-          graphic_systems_record.assign_attributes(graphic_systems_params)
-          graphic_systems_record.save!
-        end
-        # Notification Devices
+
         if params[:notification_devices].present?
           notification_devices_record = subsystem.notification_devices.first_or_initialize
           notification_devices_record.assign_attributes(notification_devices_params)
           notification_devices_record.save!
         end
-        # Isolations
-        if params[:isolations].present?
-          isolation_record = subsystem.isolations.first_or_initialize
-          isolation_record.assign_attributes(isolation_params)
-          isolation_record.save!
-        end
-        # Connection Betweens
-        if params[:connection_betweens].present?
-          connection_betweens_record = subsystem.connection_betweens.first_or_initialize
-          connection_betweens_record.assign_attributes(connection_betweens_params)
-          connection_betweens_record.save!
-        end
-        # Interface With Other Systems
-        if params[:interface_with_other_systems].present?
-          interface_with_other_record = subsystem.interface_with_other_systems.first_or_initialize
-          interface_with_other_record.assign_attributes(interface_with_other_params)
-          interface_with_other_record.save!
-        end
-        # Evacuation Systems
-        if params[:evacuation_systems].present?
-          evacuation_systems_record = subsystem.evacuation_systems.first_or_initialize
-          evacuation_systems_record.assign_attributes(evacuation_systems_params)
-          evacuation_systems_record.save!
-        end
-        # Prerecorded Message Audio Modules
-        if params[:prerecorded_message_audio_modules].present?
-          prerecorded_message_audio_modules_record = subsystem.prerecorded_message_audio_modules.first_or_initialize
-          prerecorded_message_audio_modules_record.assign_attributes(prerecorded_message_audio_modules_params)
-          prerecorded_message_audio_modules_record.save!
-        end
-        # Telephone System
-        if params[:telephone_systems].present?
-          telephone_system_record = subsystem.telephone_systems.first_or_initialize
-          telephone_system_record.assign_attributes(telephone_system_params)
-          telephone_system_record.save!
-        end
-        # Spare Parts
-        if params[:spare_parts].present?
-          spare_parts_record = subsystem.spare_parts.first_or_initialize
-          spare_parts_record.assign_attributes(spare_parts_params)
-          spare_parts_record.save!
-        end
-        # Scope of Work
-        if params[:scope_of_works].present?
-          scope_of_work_record = subsystem.scope_of_works.first_or_initialize
-          scope_of_work_record.assign_attributes(scope_of_work_params)
-          scope_of_work_record.save!
-        end
-        # Material Delivery
-        if params[:material_and_deliveries].present?
-          material_delivery_record = subsystem.material_and_deliveries.first_or_initialize
-          material_delivery_record.assign_attributes(material_delivery_params)
-          material_delivery_record.save!
-        end
-        # General Commercial Data
-        if params[:general_commercial_data].present?
-          general_commercial_record = subsystem.general_commercial_data.first_or_initialize
-          general_commercial_record.assign_attributes(general_commercial_params)
-          general_commercial_record.save!
-        end
+
+        # ✅ Generate Evaluation Report and Save Notification
+        evaluation_results = perform_evaluation(
+          subsystem: subsystem,
+          fire_alarm_control_panel: subsystem.fire_alarm_control_panels.first,
+          detectors_field_device: subsystem.detectors_field_devices.first,
+          door_holders: subsystem.door_holders.first,
+          notification_devices: subsystem.notification_devices.first,
+          isolation_record: subsystem.isolations.first
+        )
+
+        # ✅ Generate Evaluation Report
+        report_path = generate_evaluation_report(subsystem, evaluation_results)
+        relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join("public")).to_s
+        relative_url_path = "/" + relative_path
+
+        # ✅ Create Notification After Submission
+        Notification.create!(
+          title: "Evaluation Submitted",
+          body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
+          notifiable: subsystem,
+          notification_type: "evaluation",
+          additional_data: { evaluation_report_path: relative_url_path }.to_json
+        )
       end
+
       render json: { message: "Data submitted successfully." }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
+    rescue StandardError => e
+      Rails.logger.error "🚨 Error submitting data: #{e.message}"
+      render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
     end
+
+
     private
 
-    def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:, isolation_record:)
+     def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:, isolation_record:)
       fire_alarm_results = evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels)
       detector_results = evaluate_data(detectors_field_device, :detectors_field_devices)
       door_holder_results = evaluate_data(door_holders, :door_holders)
@@ -224,7 +169,6 @@ module Api
       }
 
       all_items = fire_alarm_results + detector_results + door_holder_results + notification_dev_results + isolation_results
-
       total_items = all_items.size
       total_accepted = all_items.sum { |item| item[:is_accepted] } # 1 for accepted, 0 for rejected
 
@@ -285,7 +229,6 @@ module Api
         pdf.move_down 20
 
         comparison_results.each do |table_name, results|
-          # skip non-array keys (like :overall_status, :acceptance_percentage)
           next unless results.is_a?(Array)
 
           pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
@@ -310,7 +253,6 @@ module Api
           pdf.move_down 20
         end
 
-        # Show overall acceptance
         overall = comparison_results[:overall_status]
         percent = comparison_results[:acceptance_percentage].round(2)
 

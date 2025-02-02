@@ -15,6 +15,17 @@ Rails.application.routes.draw do
       get 'supplier_data', to: 'supplier_data#index'
     end
 
+    # Nested Routes for Projects, Systems, and Subsystems within API namespace
+    resources :projects do
+      resources :project_scopes do
+        resources :systems do
+          resources :subsystems, only: [] do
+            post :submit_all, on: :member
+          end
+        end
+      end
+    end
+
     resources :notifications, only: [:index, :update] do
       member do
         post :approve_supplier

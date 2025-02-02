@@ -122,33 +122,35 @@ class SuppliersController < ApplicationController
     @subsystems = @supplier.subsystems
   end
   
-
   def dashboard
-    supplier = Supplier.find_by(id: params[:supplier_id])
+    supplier = ::Supplier.find(params[:supplier_id])  # 🔥 Explicitly reference the Supplier model
   
-    if supplier.nil?
-      render json: { error: "Supplier not found" }, status: :not_found
-      return
-    end
-  
-    # Fetch subsystems associated with the supplier
-    subsystems = supplier.subsystems.map do |subsystem|
+    projects = supplier.projects.where(approved: true).map do |project|
       {
-        id: subsystem.id,
-        name: subsystem.name,
-        system_id: subsystem.system_id,
-        project_id: subsystem.system.project_scope.project_id, # Assuming associations are correctly set up
-        project_scope_id: subsystem.system.project_scope.id   # Assuming associations are correctly set up
+        id: project.id,
+        name: project.name,
+        project_scopes: project.project_scopes.where(approved: true).map do |scope|
+          {
+            id: scope.id,
+            name: scope.name,
+            systems: scope.systems.where(approved: true).map do |system|
+              {
+                id: system.id,
+                name: system.name,
+                subsystems: system.subsystems.where(approved: true).map do |subsystem|
+                  { id: subsystem.id, name: subsystem.name }
+                }
+              }
+            end
+          }
+        end
       }
     end
   
-    render json: {
-      id: supplier.id,
-      supplier_name: supplier.supplier_name
-    }
+    render json: { projects: projects }
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Supplier not found" }, status: :not_found
   end
-  
-  
   
   
 

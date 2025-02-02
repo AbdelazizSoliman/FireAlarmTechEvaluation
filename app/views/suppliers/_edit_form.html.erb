@@ -56,12 +56,6 @@
         <%= form.label :status, "Status", class: label_class %>
       </div>
 
-      <!-- Membership Type Field -->
-      <div class="relative">
-        <%= form.select :membership_type, ["projects", "systems"], { selected: supplier.membership_type }, class: input_class, id: "membership-type" %>
-        <%= form.label :membership_type, "Membership Type", class: label_class %>
-      </div>
-
       <!-- Receive Evaluation Report Field -->
       <div class="relative">
         <%= form.label :receive_evaluation_report, "Receive Evaluation Report?", class: label_class %>
@@ -99,29 +93,3 @@
   </div>
 <% end %>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const membershipTypeSelect = document.getElementById("membership-type");
-    const projectsSection = document.getElementById("projects-membership");
-    const systemsSection = document.getElementById("systems-membership");
-
-    function toggleMembershipSections() {
-      if (membershipTypeSelect.value === "projects") {
-        projectsSection.classList.remove("hidden");
-        systemsSection.classList.add("hidden");
-      } else if (membershipTypeSelect.value === "systems") {
-        systemsSection.classList.remove("hidden");
-        projectsSection.classList.add("hidden");
-      } else {
-        projectsSection.classList.add("hidden");
-        systemsSection.classList.add("hidden");
-      }
-    }
-
-    // Add event listener to membership type select
-    membershipTypeSelect.addEventListener("change", toggleMembershipSections);
-
-    // Trigger the function on page load to set the initial state
-    toggleMembershipSections();
-  });
-</script>

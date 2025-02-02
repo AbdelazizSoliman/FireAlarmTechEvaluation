@@ -10,6 +10,7 @@ class NotificationsController < ApplicationController
       format.json { render json: @notifications.order(created_at: :desc) }
     end
   end
+
   def manage_membership
     @supplier = Supplier.find(params[:supplier_id])
     @projects = Project.all
@@ -28,24 +29,40 @@ class NotificationsController < ApplicationController
           status: "approved"
         )
   
-        # ✅ Update project approvals (if any are selected)
+        # ✅ Update project approvals (Updating join table directly)
         if params[:project_ids].present?
-          @supplier.projects.where(id: params[:project_ids]).update_all(approved: true)
+          ActiveRecord::Base.connection.execute("
+            UPDATE projects_suppliers 
+            SET approved = true 
+            WHERE supplier_id = #{@supplier.id} AND project_id IN (#{params[:project_ids].join(",")})
+          ")
         end
   
         # ✅ Update project scope approvals
         if params[:project_scope_ids].present?
-          @supplier.project_scopes.where(id: params[:project_scope_ids]).update_all(approved: true)
+          ActiveRecord::Base.connection.execute("
+            UPDATE project_scopes_suppliers 
+            SET approved = true 
+            WHERE supplier_id = #{@supplier.id} AND project_scope_id IN (#{params[:project_scope_ids].join(",")})
+          ")
         end
   
         # ✅ Update systems approvals
         if params[:system_ids].present?
-          @supplier.systems.where(id: params[:system_ids]).update_all(approved: true)
+          ActiveRecord::Base.connection.execute("
+            UPDATE systems_suppliers 
+            SET approved = true 
+            WHERE supplier_id = #{@supplier.id} AND system_id IN (#{params[:system_ids].join(",")})
+          ")
         end
   
         # ✅ Update subsystems approvals
         if params[:subsystem_ids].present?
-          @supplier.subsystems.where(id: params[:subsystem_ids]).update_all(approved: true)
+          ActiveRecord::Base.connection.execute("
+            UPDATE subsystems_suppliers 
+            SET approved = true 
+            WHERE supplier_id = #{@supplier.id} AND subsystem_id IN (#{params[:subsystem_ids].join(",")})
+          ")
         end
   
         # ✅ Mark notification as resolved
@@ -59,8 +76,6 @@ class NotificationsController < ApplicationController
   
     redirect_to notifications_path
   end
-  
-  
   
   
 
@@ -483,6 +498,12 @@ class NotificationsController < ApplicationController
   end
 
   def set_supplier
-    @supplier = Supplier.find(params[:supplier_id])
+    @supplier = @notification.notifiable
+  
+    unless @supplier.is_a?(Supplier)
+      Rails.logger.error "Error: Expected Supplier but got #{@supplier.inspect}"
+      redirect_to notifications_path, alert: "Error: Supplier not found."
+    end
   end
+  
 end

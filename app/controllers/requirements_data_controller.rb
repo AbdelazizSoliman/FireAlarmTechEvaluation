@@ -1,28 +1,28 @@
 class RequirementsDataController < ApplicationController
-
     require 'roo'
     require 'axlsx'
-
-
-    FILE_PATH = Rails.root.join('lib', 'standards.xlsx')  # ✅ Define path to Excel file
-
+  
+    FILE_PATH = Rails.root.join('lib', 'standards.xlsx')  # ✅ Path to Excel file
+  
     # ✅ Display Data in Table
     def index
-      @requirements_data = read_requirements_data
+      @sheets_data = read_all_sheets_data
     end
   
     # ✅ Update Data & Save Back to Excel
     def update
-      updated_data = params[:requirements_data]  # Retrieve updated data from form
-  
-      if write_to_excel(updated_data)
+      updated_data = params.require(:sheets_data).permit! # ✅ Permit all parameters
+    
+      if write_to_excel(updated_data.to_h) # ✅ Convert safely to Hash
         flash[:notice] = "Excel file updated successfully!"
       else
         flash[:alert] = "Failed to update Excel file."
       end
-  
+    
       redirect_to requirements_data_path
     end
+    
+    
   
     # ✅ Download the Updated Excel File
     def download
@@ -31,40 +31,61 @@ class RequirementsDataController < ApplicationController
   
     private
   
-    # ✅ Read Data from Excel
-    def read_requirements_data
+    # ✅ Read Data from All Sheets in Excel
+    def read_all_sheets_data
       spreadsheet = Roo::Excelx.new(FILE_PATH)
-      sheet = spreadsheet.sheet(0)  # First sheet
+      sheets_data = {}
   
-      data = []
-      (2..sheet.last_row).each do |row_num|  # Start from row 2 (skip headers)
-        data << {
-          id: row_num,
-          column1: sheet.cell(row_num, 1),
-          column2: sheet.cell(row_num, 2),
-          column3: sheet.cell(row_num, 3)
-        }
+      spreadsheet.sheets.each do |sheet_name|
+        sheet = spreadsheet.sheet(sheet_name)
+        data = []
+        (2..sheet.last_row).each do |row_num|  # Start from row 2 (skip headers)
+          row_data = {}
+          (1..sheet.last_column).each do |col_num|
+            row_data[col_num] = sheet.cell(row_num, col_num)
+          end
+          data << row_data
+        end
+        sheets_data[sheet_name] = data
       end
   
-      data
+      sheets_data
     end
   
     # ✅ Write Updated Data to Excel
-    def write_to_excel(data)
-      Axlsx::Package.new do |p|
-        p.workbook.add_worksheet(name: "Updated Data") do |sheet|
-          sheet.add_row ["Column1", "Column2", "Column3"]  # Headers
-  
-          data.each do |_, row|
-            sheet.add_row [row[:column1], row[:column2], row[:column3]]
+    def write_to_excel(sheets_data)
+      begin
+        Axlsx::Package.new do |p|
+          p.workbook do |wb|
+            sheets_data.each do |sheet_name, rows|
+              rows = rows.to_h if rows.is_a?(ActionController::Parameters) # ✅ Convert to Hash
+              
+              wb.add_worksheet(name: sheet_name) do |sheet|
+                unless rows.empty?
+                  first_row = rows.values.first
+                  headers = first_row.keys.map(&:to_s) # ✅ Extract headers properly
+                  sheet.add_row headers
+                end
+    
+                rows.values.each do |row|
+                  sheet.add_row row.values
+                end
+              end
+            end
           end
+    
+          p.serialize(FILE_PATH)  # ✅ Save Excel file
         end
-        p.serialize(FILE_PATH)  # Save the file
+        Rails.logger.info "✅ Excel file saved successfully!"
+        return true
+      rescue StandardError => e
+        Rails.logger.error "❌ Excel Write Error: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        return false
       end
-      true
-    rescue StandardError => e
-      Rails.logger.error "❌ Excel Write Error: #{e.message}"
-      false
     end
+    
+    
 
-end
+  end
+  

@@ -117,6 +117,106 @@ module Api
           notification_devices_record.save!
         end
 
+          # Manual Pull Station
+        if params[:manual_pull_station].present?
+          manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
+          manual_pull_station.assign_attributes(manual_pull_station_params)
+          manual_pull_station.save!
+        end
+        
+      # Door Holders
+      if params[:door_holders].present?
+        Rails.logger.info "🚨 Door Holders Data: #{params[:door_holders]}"
+        door_holders = subsystem.door_holders.first_or_initialize
+        door_holders.assign_attributes(door_holders_params)
+        if door_holders.save
+          Rails.logger.info "✅ Door Holders Saved Successfully!"
+        else
+          Rails.logger.error "❌ Error saving Door Holders: #{door_holders.errors.full_messages}"
+        end
+      end
+      
+
+
+        # Product Data
+        if params[:product_data].present?
+          product_data_record = subsystem.product_data.first_or_initialize
+          product_data_record.assign_attributes(product_data_params)
+          product_data_record.save!
+        end
+        # Graphic Systems
+        if params[:graphic_systems].present?
+          graphic_systems_record = subsystem.graphic_systems.first_or_initialize
+          graphic_systems_record.assign_attributes(graphic_systems_params)
+          graphic_systems_record.save!
+        end
+        # Notification Devices
+        if params[:notification_devices].present?
+          notification_devices_record = subsystem.notification_devices.first_or_initialize
+          notification_devices_record.assign_attributes(notification_devices_params)
+          notification_devices_record.save!
+        end
+        # Isolations
+        if params[:isolations].present?
+          isolation_record = subsystem.isolations.first_or_initialize
+          isolation_record.assign_attributes(isolation_params)
+          isolation_record.save!
+        end
+        # Connection Betweens
+        if params[:connection_betweens].present?
+          connection_betweens_record = subsystem.connection_betweens.first_or_initialize
+          connection_betweens_record.assign_attributes(connection_betweens_params)
+          connection_betweens_record.save!
+        end
+        # Interface With Other Systems
+        if params[:interface_with_other_systems].present?
+          interface_with_other_record = subsystem.interface_with_other_systems.first_or_initialize
+          interface_with_other_record.assign_attributes(interface_with_other_params)
+          interface_with_other_record.save!
+        end
+        # Evacuation Systems
+        if params[:evacuation_systems].present?
+          evacuation_systems_record = subsystem.evacuation_systems.first_or_initialize
+          evacuation_systems_record.assign_attributes(evacuation_systems_params)
+          evacuation_systems_record.save!
+        end
+        # Prerecorded Message Audio Modules
+        if params[:prerecorded_message_audio_modules].present?
+          prerecorded_message_audio_modules_record = subsystem.prerecorded_message_audio_modules.first_or_initialize
+          prerecorded_message_audio_modules_record.assign_attributes(prerecorded_message_audio_modules_params)
+          prerecorded_message_audio_modules_record.save!
+        end
+        # Telephone System
+        if params[:telephone_systems].present?
+          telephone_system_record = subsystem.telephone_systems.first_or_initialize
+          telephone_system_record.assign_attributes(telephone_system_params)
+          telephone_system_record.save!
+        end
+        # Spare Parts
+        if params[:spare_parts].present?
+          spare_parts_record = subsystem.spare_parts.first_or_initialize
+          spare_parts_record.assign_attributes(spare_parts_params)
+          spare_parts_record.save!
+        end
+        # Scope of Work
+        if params[:scope_of_works].present?
+          scope_of_work_record = subsystem.scope_of_works.first_or_initialize
+          scope_of_work_record.assign_attributes(scope_of_work_params)
+          scope_of_work_record.save!
+        end
+        # Material Delivery
+        if params[:material_and_deliveries].present?
+          material_delivery_record = subsystem.material_and_deliveries.first_or_initialize
+          material_delivery_record.assign_attributes(material_delivery_params)
+          material_delivery_record.save!
+        end
+        # General Commercial Data
+        if params[:general_commercial_data].present?
+          general_commercial_record = subsystem.general_commercial_data.first_or_initialize
+          general_commercial_record.assign_attributes(general_commercial_params)
+          general_commercial_record.save!
+        end
+
         # ✅ Generate Evaluation Report and Save Notification
         evaluation_results = perform_evaluation(
           subsystem: subsystem,
@@ -324,6 +424,7 @@ module Api
       )
     end
 
+
     def product_data_params
       params.require(:product_data).permit(
         :manufacturer, :submitted_product, :product_certifications,
@@ -425,8 +526,8 @@ module Api
         :install,
         :supervision_test_commissioning,
         :cables_supply,
-        :cables_size_2cx1_5_mm,
-        :cables_size_2cx2_5_mm,
+        :cables_size_2cx1_5mm,
+        :cables_size_2cx2_5mm,
         :pulling_cables,
         :cables_terminations,
         :supervision_test_commissioning,
@@ -435,7 +536,7 @@ module Api
         :voltage_drop_study_for_initiating_devices_loop,
         :voltage_drop_notification_circuits,
         :battery_calculation,
-        :cause_effect_matrix,
+        :cause_and_effect_matrix,
         :high_level_riser_diagram,
         :shop_drawings,
         :shop_drawings_verification,
@@ -458,8 +559,8 @@ module Api
         :warranty_for_configuration_programming,
         :support_and_maintenance,
         :spare_parts_availability,
-        :advanced_payment_minimum_acceptable,
-        :performance_bond_equivalent_warranty,
+        :advanced_payment_minimum,
+        :performance_bond,
         :total_price_excluding_vat
       )
     end

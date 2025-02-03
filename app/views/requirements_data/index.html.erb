@@ -1,21 +1,25 @@
 <h2>Excel Data Management</h2>
 
 <%= form_with url: requirements_data_path, method: :post do %>
-  <table border="1">
+  <% @sheets_data.each do |sheet_name, rows| %>
+    <h3><%= sheet_name %></h3>
+    <table border="1">
     <tr>
-      <th>Column 1</th>
-      <th>Column 2</th>
-      <th>Column 3</th>
-    </tr>
+    <th>Column 1</th>
+    <th>Column 2</th>
+    <th>Column 3</th>
+  </tr>
 
-    <% @requirements_data.each do |row| %>
-      <tr>
-        <td><%= text_field_tag "requirements_data[#{row[:id]}][column1]", row[:column1] %></td>
-        <td><%= text_field_tag "requirements_data[#{row[:id]}][column2]", row[:column2] %></td>
-        <td><%= text_field_tag "requirements_data[#{row[:id]}][column3]", row[:column3] %></td>
-      </tr>
-    <% end %>
-  </table>
+      <% rows.each_with_index do |row, row_index| %>
+        <tr>
+          <% row.each do |col_num, value| %>
+            <td><%= text_field_tag "sheets_data[#{sheet_name}][#{row_index}][#{col_num}]", value %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </table>
+    <br>
+  <% end %>
 
   <%= submit_tag "Update Excel", class: "btn btn-primary" %>
 <% end %>

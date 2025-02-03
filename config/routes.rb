@@ -66,6 +66,13 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :requirements_data, only: [:index] do
+    collection do
+      post :update
+      get :download
+    end
+  end
+
   # ✅ Standalone Routes for Systems and Subsystems
   resources :project_scopes, only: [:index, :show, :new, :create]
   resources :systems, only: [:index, :show, :new, :create]

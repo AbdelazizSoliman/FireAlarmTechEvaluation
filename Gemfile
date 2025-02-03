@@ -80,6 +80,8 @@ gem 'phonelib'
 
 gem 'axlsx_rails'
 
+gem 'roo' 
+
 gem 'prawn'
 gem 'prawn-table'
 

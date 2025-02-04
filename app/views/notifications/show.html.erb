@@ -60,7 +60,6 @@
     }
 
     .btn-link {
-      # color: #007BFF;
       text-decoration: none;
       margin-right: 1rem;
       border: 1px solid #e0e0e0;
@@ -72,15 +71,13 @@
     .footer-links {
       margin-top: 2rem;
       font-size: 0.95rem;
-      
     }
 
     .footer-links a.btn-link {
-     background-color: #009688;
-     color: #fff;
-     padding: 0.5rem 1rem;
-     border-radius: 4px;
-
+      background-color: #009688;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -101,7 +98,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @supplier_data.attributes.each do |key, value| %>
+          <% @supplier_data.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
@@ -125,14 +122,14 @@
             <th>Value</th>
           </tr>
         </thead>
-          <tbody>
-          <% @product_data.attributes.each do |key, value| %>
+        <tbody>
+          <% @product_data.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
             </tr>
           <% end %>
-          </tbody>
+        </tbody>
       </table>
     <% else %>
       <p>No Product Data available.</p>
@@ -151,7 +148,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @fire_alarm_control_panel.attributes.each do |key, value| %>
+          <% @fire_alarm_control_panel.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
@@ -176,7 +173,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @graphic_system.attributes.each do |key, value| %>
+          <% @graphic_system.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
@@ -234,7 +231,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @manual_pull_station.attributes.each do |key, value| %>
+          <% @manual_pull_station.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
@@ -259,7 +256,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @door_holder.attributes.each do |key, value| %>
+          <% @door_holder.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
@@ -284,7 +281,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @notification_devices.attributes.each do |key, value| %>
+          <% @notification_devices.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
@@ -299,9 +296,9 @@
 
   <!-- Isolation Data -->
   <div class="section">
-  <h2>Isolation Data</h2>
+    <h2>Isolation Data</h2>
     <% if @isolations.present? %>
-    <table>
+      <table>
         <thead>
           <tr>
             <th>Attribute</th>
@@ -309,7 +306,7 @@
           </tr>
         </thead>
         <tbody>
-          <% @isolations.attributes.each do |key, value| %>
+          <% @isolations.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
             <tr>
               <td><strong><%= key.humanize %></strong></td>
               <td><%= value %></td>
@@ -317,12 +314,12 @@
           <% end %>
         </tbody>
       </table>
-      
-      <% else %>
-        <p>No Isolation Data available.</p>
+    <% else %>
+      <p>No Isolation Data available.</p>
     <% end %>
   </div>
 
+   <!-- Additional Sections -->
   <% [{ title: "Connection Between FACPs", data: @connection_betweens },
       { title: "Interface with Other Systems", data: @interface_with_other_systems },
       { title: "Evacuation Systems", data: @evacuation_systems },
@@ -332,33 +329,47 @@
       { title: "Scope of Work (SOW)", data: @scope_of_works },
       { title: "Material & Delivery", data: @material_and_deliveries },
       { title: "General & Commercial Data", data: @general_commercial_data }].each do |section| %>
-    <h2><%= section[:title] %></h2>
-    <% if section[:data] %>
-      <ul>
-        <% section[:data].attributes.each do |key, value| %>
-          <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p>No <%= section[:title] %> data available.</p>
-    <% end %>
+    <div class="section">
+      <h2><%= section[:title] %></h2>
+      <% if section[:data] %>
+        <table>
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% section[:data].attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
+              <tr>
+                <td><strong><%= key.humanize %></strong></td>
+                <td><%= value %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p>No <%= section[:title] %> data available.</p>
+      <% end %>
+    </div>
   <% end %>
+
 
   <div class="footer-links">
-  <%= link_to "Download as PDF", notification_path(@notification, format: :pdf), class: "btn-link" %>
-  <%= link_to "Download as Excel", notification_path(@notification, format: :xlsx), class: "btn-link" %>
+    <%= link_to "Download as PDF", notification_path(@notification, format: :pdf), class: "btn-link" %>
+    <%= link_to "Download as Excel", notification_path(@notification, format: :xlsx), class: "btn-link" %>
 
-  <% if @notification.additional_data.present? %>
-    <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
-    <% if additional_data["evaluation_report_path"].present? %>
-      <%= link_to "Download Evaluation Report",
-                  additional_data["evaluation_report_path"],
-                  target: "_blank",
-                  rel: "noopener",
-                  class: "btn-link" %>
+    <% if @notification.additional_data.present? %>
+      <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
+      <% if additional_data["evaluation_report_path"].present? %>
+        <%= link_to "Download Evaluation Report",
+                    additional_data["evaluation_report_path"],
+                    target: "_blank",
+                    rel: "noopener",
+                    class: "btn-link" %>
+      <% end %>
     <% end %>
-  <% end %>
-</div>
+  </div>
 
 </body>
 </html>

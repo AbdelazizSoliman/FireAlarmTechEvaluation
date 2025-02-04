@@ -124,20 +124,31 @@ module Api
           manual_pull_station.save!
         end
         
-      # Door Holders
-      if params[:door_holders].present?
-        Rails.logger.info "🚨 Door Holders Data: #{params[:door_holders]}"
-        door_holders = subsystem.door_holders.first_or_initialize
-        door_holders.assign_attributes(door_holders_params)
-        if door_holders.save
-          Rails.logger.info "✅ Door Holders Saved Successfully!"
-        else
-          Rails.logger.error "❌ Error saving Door Holders: #{door_holders.errors.full_messages}"
-        end
-      end
+       # Door Holders
+if params[:door_holders].present?
+  door_holder = subsystem.door_holders.first_or_initialize
+
+  # Assign attributes correctly based on the structure of `params[:door_holders]`
+  door_holder.assign_attributes(
+    total_no_of_devices: params[:door_holders][:total_no_of_devices],
+    total_no_of_devices_unit_rate: params[:door_holders][:total_no_of_devices_unit_rate],
+    total_no_of_devices_amount: params[:door_holders][:total_no_of_devices_amount],
+    total_no_of_devices_notes: params[:door_holders][:total_no_of_devices_notes],
+    total_no_of_relays: params[:door_holders][:total_no_of_relays],
+    total_no_of_relays_unit_rate: params[:door_holders][:total_no_of_relays_unit_rate],
+    total_no_of_relays_amount: params[:door_holders][:total_no_of_relays_amount],
+    total_no_of_relays_notes: params[:door_holders][:total_no_of_relays_notes]
+  )
+
+  if door_holder.save
+    Rails.logger.info "Door Holders saved successfully: #{door_holder.inspect}"
+  else
+    Rails.logger.error "Failed to save Door Holders: #{door_holder.errors.full_messages}"
+  end
+end
+
+
       
-
-
         # Product Data
         if params[:product_data].present?
           product_data_record = subsystem.product_data.first_or_initialize
@@ -470,7 +481,16 @@ module Api
 
     def interface_with_other_params
       params.require(:interface_with_other_systems).permit(
-        :integration_type,
+        :integration_type1,
+        :integration_type2,
+        :integration_type3,
+        :integration_type4,
+        :integration_type5,
+        :integration_type6,
+        :integration_type7,
+        :integration_type8,
+        :integration_type9,
+        :integration_type10,
         :total_no_of_control_modules,
         :total_no_of_monitor_modules,
         :total_no_of_dual_monitor_modules,
@@ -484,7 +504,7 @@ module Api
         :evacuation_system_part_of_fa_panel,
         :amplifier_power_output,
         :total_no_of_amplifiers,
-        :total_no_of_evacuations_speakers_circuits,
+        :total_no_of_evacuation_speakers_circuits,
         :total_no_of_wattage_per_panel,
         :fire_rated_speakers_watt,
         :speakers_tapping_watt,

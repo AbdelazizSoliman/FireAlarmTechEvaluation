@@ -58,13 +58,13 @@ module Api
         sheet_name: "Notification Devices",  # Make sure your standards.xlsx has this sheet name
         fields: {
           # Adjust row/column to match your actual standards.xlsx
-          notification_addressing: { sheet_row: 1, sheet_column: 1 },
-          fire_alarm_strobe: { sheet_row: 2, sheet_column: 1 },
-          fire_alarm_strobe_wp: { sheet_row: 3, sheet_column: 1 },
-          fire_alarm_horn: { sheet_row: 4, sheet_column: 1 },
-          fire_alarm_horn_wp: { sheet_row: 5, sheet_column: 1 },
-          fire_alarm_horn_with_strobe: { sheet_row: 6, sheet_column: 1 },
-          fire_alarm_horn_with_strobe_wp: { sheet_row: 7, sheet_column: 1 },
+          notification_addressing: { sheet_row: 2, sheet_column: 1 },
+          fire_alarm_strobe: { sheet_row: 3, sheet_column: 1 },
+          fire_alarm_strobe_wp: { sheet_row: 4, sheet_column: 1 },
+          fire_alarm_horn: { sheet_row: 5, sheet_column: 1 },
+          fire_alarm_horn_wp: { sheet_row: 6, sheet_column: 1 },
+          fire_alarm_horn_with_strobe: { sheet_row: 7, sheet_column: 1 },
+          fire_alarm_horn_with_strobe_wp: { sheet_row: 8, sheet_column: 1 },
         },
       },
       isolations: {
@@ -117,38 +117,36 @@ module Api
           notification_devices_record.save!
         end
 
-          # Manual Pull Station
+        # Manual Pull Station
         if params[:manual_pull_station].present?
           manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
           manual_pull_station.assign_attributes(manual_pull_station_params)
           manual_pull_station.save!
         end
-        
-       # Door Holders
-if params[:door_holders].present?
-  door_holder = subsystem.door_holders.first_or_initialize
 
-  # Assign attributes correctly based on the structure of `params[:door_holders]`
-  door_holder.assign_attributes(
-    total_no_of_devices: params[:door_holders][:total_no_of_devices],
-    total_no_of_devices_unit_rate: params[:door_holders][:total_no_of_devices_unit_rate],
-    total_no_of_devices_amount: params[:door_holders][:total_no_of_devices_amount],
-    total_no_of_devices_notes: params[:door_holders][:total_no_of_devices_notes],
-    total_no_of_relays: params[:door_holders][:total_no_of_relays],
-    total_no_of_relays_unit_rate: params[:door_holders][:total_no_of_relays_unit_rate],
-    total_no_of_relays_amount: params[:door_holders][:total_no_of_relays_amount],
-    total_no_of_relays_notes: params[:door_holders][:total_no_of_relays_notes]
-  )
+        # Door Holders
+        if params[:door_holders].present?
+          door_holder = subsystem.door_holders.first_or_initialize
 
-  if door_holder.save
-    Rails.logger.info "Door Holders saved successfully: #{door_holder.inspect}"
-  else
-    Rails.logger.error "Failed to save Door Holders: #{door_holder.errors.full_messages}"
-  end
-end
+          # Assign attributes correctly based on the structure of `params[:door_holders]`
+          door_holder.assign_attributes(
+            total_no_of_devices: params[:door_holders][:total_no_of_devices],
+            total_no_of_devices_unit_rate: params[:door_holders][:total_no_of_devices_unit_rate],
+            total_no_of_devices_amount: params[:door_holders][:total_no_of_devices_amount],
+            total_no_of_devices_notes: params[:door_holders][:total_no_of_devices_notes],
+            total_no_of_relays: params[:door_holders][:total_no_of_relays],
+            total_no_of_relays_unit_rate: params[:door_holders][:total_no_of_relays_unit_rate],
+            total_no_of_relays_amount: params[:door_holders][:total_no_of_relays_amount],
+            total_no_of_relays_notes: params[:door_holders][:total_no_of_relays_notes],
+          )
 
+          if door_holder.save
+            Rails.logger.info "Door Holders saved successfully: #{door_holder.inspect}"
+          else
+            Rails.logger.error "Failed to save Door Holders: #{door_holder.errors.full_messages}"
+          end
+        end
 
-      
         # Product Data
         if params[:product_data].present?
           product_data_record = subsystem.product_data.first_or_initialize
@@ -235,7 +233,7 @@ end
           detectors_field_device: subsystem.detectors_field_devices.first,
           door_holders: subsystem.door_holders.first,
           notification_devices: subsystem.notification_devices.first,
-          isolation_record: subsystem.isolations.first
+          isolation_record: subsystem.isolations.first,
         )
 
         # ✅ Generate Evaluation Report
@@ -249,7 +247,7 @@ end
           body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
           notifiable: subsystem,
           notification_type: "evaluation",
-          additional_data: { evaluation_report_path: relative_url_path }.to_json
+          additional_data: { evaluation_report_path: relative_url_path }.to_json,
         )
       end
 
@@ -261,10 +259,9 @@ end
       render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
     end
 
-
     private
 
-     def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:, isolation_record:)
+    def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:, notification_devices:, isolation_record:)
       fire_alarm_results = evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels)
       detector_results = evaluate_data(detectors_field_device, :detectors_field_devices)
       door_holder_results = evaluate_data(door_holders, :door_holders)
@@ -434,7 +431,6 @@ end
         :total_no_of_relays, :total_no_of_relays_unit_rate, :total_no_of_relays_amount, :total_no_of_relays_notes
       )
     end
-
 
     def product_data_params
       params.require(:product_data).permit(

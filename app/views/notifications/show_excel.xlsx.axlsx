@@ -46,7 +46,7 @@ if @detectors_field_device
     sheet.add_row ["Type", "Value", "Unit Rate", "Amount", "Notes"]
     @detectors_field_device.attributes.each do |key, value|
       next unless key.ends_with?('_value')
-
+      
       detector_type = key.sub('_value', '').humanize
       sheet.add_row [
         detector_type,
@@ -78,9 +78,9 @@ if @door_holder
       { type: 'total_no_of_relays', label: 'Total Number of Relays' }
     ].each do |attribute|
       type_key = attribute[:type]
-      holder_type = attribute[:label]
+      holder_label = attribute[:label]
       sheet.add_row [
-        holder_type,
+        holder_label,
         @door_holder[type_key],
         @door_holder["#{type_key}_unit_rate"],
         @door_holder["#{type_key}_amount"],
@@ -104,11 +104,38 @@ else
   Rails.logger.debug "No Notification Devices data available for Excel"
 end
 
-if @isolation_data
+# Isolation Data Sheet
+if @isolations
   wb.add_worksheet(name: "Isolation Data") do |sheet|
     sheet.add_row ["Key", "Value"]
-    @isolation_data.attributes.each do |key, value|
+    @isolations.attributes.each do |key, value|
       sheet.add_row [key.humanize, value]
+    end
+  end
+end
+
+# Additional Sections
+# These correspond to the extra sections in your HTML view.
+additional_sections = [
+  { title: "Connection Between FACPs", data: @connection_betweens },
+  { title: "Interface with Other Systems", data: @interface_with_other_systems },
+  { title: "Evacuation Systems", data: @evacuation_systems },
+  { title: "Prerecorded Messages Audio Module", data: @prerecorded_message_audio_modules },
+  { title: "Telephone System", data: @telephone_systems },
+  { title: "Spare Parts", data: @spare_parts },
+  { title: "Scope of Work (SOW)", data: @scope_of_works },
+  { title: "Material & Delivery", data: @material_and_deliveries },
+  { title: "General & Commercial Data", data: @general_commercial_data }
+]
+
+additional_sections.each do |section|
+  if section[:data].present?
+    wb.add_worksheet(name: section[:title][0..30]) do |sheet|
+      # Using [0..30] to limit the worksheet name length if needed
+      sheet.add_row ["Key", "Value"]
+      section[:data].attributes.each do |key, value|
+        sheet.add_row [key.humanize, value]
+      end
     end
   end
 end

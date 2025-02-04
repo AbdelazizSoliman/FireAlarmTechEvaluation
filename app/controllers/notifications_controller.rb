@@ -20,15 +20,15 @@ class NotificationsController < ApplicationController
   def approve_supplier
     @notification = Notification.find(params[:id])
     @supplier = @notification.notifiable
-  
+
     begin
       ActiveRecord::Base.transaction do
         # ✅ Update supplier's status and receive_evaluation_report
         @supplier.update!(
           receive_evaluation_report: params[:receive_evaluation_report] == "true",
-          status: "approved"
+          status: "approved",
         )
-  
+
         # ✅ Update project approvals (Updating join table directly)
         if params[:project_ids].present?
           ActiveRecord::Base.connection.execute("
@@ -37,7 +37,7 @@ class NotificationsController < ApplicationController
             WHERE supplier_id = #{@supplier.id} AND project_id IN (#{params[:project_ids].join(",")})
           ")
         end
-  
+
         # ✅ Update project scope approvals
         if params[:project_scope_ids].present?
           ActiveRecord::Base.connection.execute("
@@ -46,7 +46,7 @@ class NotificationsController < ApplicationController
             WHERE supplier_id = #{@supplier.id} AND project_scope_id IN (#{params[:project_scope_ids].join(",")})
           ")
         end
-  
+
         # ✅ Update systems approvals
         if params[:system_ids].present?
           ActiveRecord::Base.connection.execute("
@@ -55,7 +55,7 @@ class NotificationsController < ApplicationController
             WHERE supplier_id = #{@supplier.id} AND system_id IN (#{params[:system_ids].join(",")})
           ")
         end
-  
+
         # ✅ Update subsystems approvals
         if params[:subsystem_ids].present?
           ActiveRecord::Base.connection.execute("
@@ -64,20 +64,18 @@ class NotificationsController < ApplicationController
             WHERE supplier_id = #{@supplier.id} AND subsystem_id IN (#{params[:subsystem_ids].join(",")})
           ")
         end
-  
+
         # ✅ Mark notification as resolved
         @notification.update!(status: "resolved")
       end
-  
+
       flash[:notice] = "Supplier approved successfully."
     rescue => e
       flash[:alert] = "Error approving supplier: #{e.message}"
     end
-  
+
     redirect_to notifications_path
   end
-  
-  
 
   def reject_supplier
     ActiveRecord::Base.transaction do
@@ -98,7 +96,7 @@ class NotificationsController < ApplicationController
       format.json do
         render json: {
           notification: @notification,
-          data: @notification.notifiable
+          data: @notification.notifiable,
         }
       end
       format.pdf { handle_pdf_request }
@@ -106,6 +104,7 @@ class NotificationsController < ApplicationController
       format.any { redirect_to notifications_path, alert: "Unsupported format." }
     end
   end
+
   private
 
   def handle_html_request
@@ -333,23 +332,25 @@ class NotificationsController < ApplicationController
     end
   end
 
-  def add_pdf_interface_with_other(pdf, interface_with_other)
-    if interface_with_other
-      pdf.text "Interface with Other Systems", size: 16, style: :bold
-      pdf.move_down 10
-      data = [["Attribute", "Value"]]
-      interface_with_other.attributes.each do |key, value|
-        data << [key.humanize, value]
-      end
+  def add_pdf_interface_with_other(pdf)
+    # Construct a proper table data structure
+    data = []
+    # Add header row
+    data << ["Field", "Value"]
 
-      pdf.table(data, header: true, width: pdf.bounds.width) do
-        row(0).font_style = :bold
-        row(0).background_color = "cccccc"
-      end
-      pdf.move_down 20
-    else
-      pdf.text "No Interface with Other Systems data available.", size: 14, style: :italic
-      pdf.move_down 10
+    # Assume @notification is the object you’re rendering
+    data << ["Title", @notification.title.to_s]
+    data << ["Date", @notification.created_at.strftime("%Y-%m-%d")]
+    # Add more rows as needed
+
+    # Validate that data is an array of arrays
+    unless data.all? { |row| row.is_a?(Array) }
+      raise "Table data is not formatted correctly: #{data.inspect}"
+    end
+
+    pdf.table(data, header: true, width: pdf.bounds.width) do
+      row(0).font_style = :bold
+      row(0).background_color = "cccccc"
     end
   end
 
@@ -499,11 +500,10 @@ class NotificationsController < ApplicationController
 
   def set_supplier
     @supplier = @notification.notifiable
-  
+
     unless @supplier.is_a?(Supplier)
       Rails.logger.error "Error: Expected Supplier but got #{@supplier.inspect}"
       redirect_to notifications_path, alert: "Error: Supplier not found."
     end
   end
-  
 end

@@ -46,7 +46,7 @@ module Api
           flame_detectors_amount: { sheet_row: 20, sheet_column: 3 }
         }
       },
-      # Manual Pull Station
+      # NEW: Manual Pull Station fields (ensure key naming matches your association)
       manual_pull_stations: {
         sheet_name: 'Manual Pull Station',
         fields: {
@@ -55,7 +55,6 @@ module Api
           break_glass_weather_proof: { sheet_row: 5, sheet_column: 1 }
         }
       },
-
       door_holders: {
         sheet_name: 'Door Holders',
         fields: {
@@ -67,7 +66,6 @@ module Api
       notification_devices: {
         sheet_name: 'Notification Devices', # Make sure your standards.xlsx has this sheet name
         fields: {
-          # Adjust row/column to match your actual standards.xlsx
           notification_addressing: { sheet_row: 2, sheet_column: 1 },
           fire_alarm_strobe: { sheet_row: 3, sheet_column: 1 },
           fire_alarm_strobe_wp: { sheet_row: 4, sheet_column: 1 },
@@ -80,17 +78,16 @@ module Api
       isolations: {
         sheet_name: 'Isolation Data',
         fields: {
-
           built_in_fault_isolator_for_each_detector: { sheet_row: 2, sheet_column: 1 },
           built_in_fault_isolator_for_each_mcp_bg: { sheet_row: 3, sheet_column: 1 },
           built_in_fault_isolator_for_each_sounder_horn: { sheet_row: 4, sheet_column: 1 },
           built_in_fault_isolator_for_monitor_control_modules: { sheet_row: 5, sheet_column: 1 },
           grouping_for_each_12_15: { sheet_row: 6, sheet_column: 1 }
-
         }
       },
+      # NEW: Evacuation Systems fields
       evacuation_systems: {
-        sheet_name: ' Evacuation Systems',
+        sheet_name: 'Evacuation Systems',
         fields: {
           amplifier_power_output: { sheet_row: 4, sheet_column: 1 },
           total_no_of_amplifiers: { sheet_row: 5, sheet_column: 1 },
@@ -101,6 +98,7 @@ module Api
           total_no_of_speakers: { sheet_row: 10, sheet_column: 1 }
         }
       },
+      # NEW: Telephone Systems fields
       telephone_systems: {
         sheet_name: 'Telephone System',
         fields: {
@@ -110,6 +108,7 @@ module Api
           total_no_of_firefighter_jacks: { sheet_row: 5, sheet_column: 1 }
         }
       },
+      # NEW: General & Commercial Data fields
       general_commercial_data: {
         sheet_name: 'General & Commercial Data',
         fields: {
@@ -122,8 +121,6 @@ module Api
           total_price_excluding_vat: { sheet_row: 8, sheet_column: 1 }
         }
       }
-
-
     }
 
     def submit_all
@@ -271,6 +268,7 @@ module Api
           general_commercial_record.save!
         end
 
+
         # ✅ Generate Evaluation Report and Save Notification
         evaluation_results = perform_evaluation(
           subsystem: subsystem,
@@ -278,15 +276,18 @@ module Api
           detectors_field_device: subsystem.detectors_field_devices.first,
           door_holders: subsystem.door_holders.first,
           notification_devices: subsystem.notification_devices.first,
-          isolation_record: subsystem.isolations.first
+          isolation_record: subsystem.isolations.first,
+          # NEW: Pass the additional records for evaluation:
+          manual_pull_station: subsystem.manual_pull_stations.first,
+          evacuation_systems: subsystem.evacuation_systems.first,
+          telephone_systems: subsystem.telephone_systems.first,
+          general_commercial_data: subsystem.general_commercial_data.first
         )
 
-        # ✅ Generate Evaluation Report
         report_path = generate_evaluation_report(subsystem, evaluation_results)
         relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
         relative_url_path = '/' + relative_path
 
-        # ✅ Create Notification After Submission
         Notification.create!(
           title: 'Evaluation Submitted',
           body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
@@ -306,23 +307,40 @@ module Api
 
     private
 
+    # UPDATED: Include the new parameters in evaluation
     def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:,
-                           notification_devices:, isolation_record:)
+                           notification_devices:, isolation_record:, manual_pull_station:,
+                           evacuation_systems:, telephone_systems:, general_commercial_data:)
       fire_alarm_results = evaluate_data(fire_alarm_control_panel, :fire_alarm_control_panels)
       detector_results = evaluate_data(detectors_field_device, :detectors_field_devices)
       door_holder_results = evaluate_data(door_holders, :door_holders)
       notification_dev_results = evaluate_data(notification_devices, :notification_devices)
       isolation_results = evaluate_data(isolation_record, :isolations)
 
+      # NEW: Evaluate additional fields
+      manual_pull_station_results = evaluate_data(manual_pull_station, :manual_pull_stations)
+      evacuation_systems_results = evaluate_data(evacuation_systems, :evacuation_systems)
+      telephone_systems_results = evaluate_data(telephone_systems, :telephone_systems)
+      general_commercial_results = evaluate_data(general_commercial_data, :general_commercial_data)
+
       results_hash = {
         fire_alarm_control_panels: fire_alarm_results,
         detectors_field_devices: detector_results,
         door_holders: door_holder_results,
         notification_devices: notification_dev_results,
-        isolations: isolation_results
+        isolations: isolation_results,
+        manual_pull_stations: manual_pull_station_results,
+        evacuation_systems: evacuation_systems_results,
+        telephone_systems: telephone_systems_results,
+        general_commercial_data: general_commercial_results
       }
 
-      all_items = fire_alarm_results + detector_results + door_holder_results + notification_dev_results + isolation_results
+      # Merge all items for overall acceptance calculation
+      all_items = fire_alarm_results + detector_results + door_holder_results +
+                  notification_dev_results + isolation_results +
+                  manual_pull_station_results + evacuation_systems_results +
+                  telephone_systems_results + general_commercial_results
+
       total_items = all_items.size
       total_accepted = all_items.sum { |item| item[:is_accepted] } # 1 for accepted, 0 for rejected
 
@@ -363,12 +381,9 @@ module Api
         end
         standard_value = cell&.value
 
-        # Compare to see if accepted
         is_accepted_boolean = submitted_value.present? &&
                               standard_value.present? &&
                               submitted_value.to_i >= standard_value.to_i
-
-        # Convert boolean => 0 or 1
         is_accepted_value = is_accepted_boolean ? 1 : 0
 
         results << {
@@ -425,9 +440,10 @@ module Api
       file_path.to_s
     end
 
-    #--------------------------------------------------
-    # STRONG PARAMS
-    #--------------------------------------------------
+    # ---------------------------------------------------------------------
+    # STRONG PARAMS (unchanged)
+    # ---------------------------------------------------------------------
+
     def supplier_data_params
       params.require(:supplier_data).permit(
         :supplier_name, :supplier_category,

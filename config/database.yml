@@ -68,8 +68,5 @@ test:
 #
 production:
   <<: *default
-  database: supplier_api_production
-  username: supplier_api
-  password: <%= ENV["SUPPLIER_API_DATABASE_PASSWORD"] %>
    url: <%= ENV['DATABASE_URL'] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>

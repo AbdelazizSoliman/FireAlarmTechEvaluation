@@ -63,6 +63,13 @@
     <%= form.label :receive_evaluation_report_false, "No", class: "ml-2" %>
   </div>
 
+  <!-- Receive RFQ Mail -->
+  <div class="mb-4">
+    <h2 class="font-semibold">Receive RFQ Mail</h2>
+    <%= form.check_box :receive_rfq_mail, { checked: @supplier.receive_rfq_mail } %>
+    <%= form.label :receive_rfq_mail, "Yes" %>
+  </div>
+
   <!-- Approve Supplier Button -->
   <div class="flex items-center space-x-4">
     <%= form.submit "Approve Supplier", class: "bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded" %>

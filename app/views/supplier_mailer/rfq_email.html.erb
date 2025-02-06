@@ -1,0 +1,18 @@
+<p>Dear <%= @supplier.supplier_name %>,</p>
+
+<p>
+  After greeting you, we kindly request you to send us the technical and commercial quotation for the following subject:
+</p>
+
+<ul>
+  <% @subsystems.each do |subsystem| %>
+    <li>
+      <strong><%= subsystem.name %></strong> - 
+      <a href="<%= link_for_subsystem(subsystem) %>">Docs Link</a>
+    </li>
+  <% end %>
+</ul>
+
+<p>
+  Note: This is an automatic email sent to you as per your request.
+</p>

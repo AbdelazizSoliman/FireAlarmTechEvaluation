@@ -22,6 +22,9 @@ Rails.application.routes.draw do
           resources :subsystems, only: [] do
             post :submit_all, on: :member
             get :submitted_data, on: :member
+            member do
+              put :update_submission
+            end
           end
         end
       end

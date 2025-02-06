@@ -268,7 +268,6 @@ module Api
           general_commercial_record.save!
         end
 
-
         # ✅ Generate Evaluation Report and Save Notification
         evaluation_results = perform_evaluation(
           subsystem: subsystem,
@@ -305,7 +304,66 @@ module Api
       render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
     end
 
+    def submitted_data
+      subsystem = Subsystem.find(params[:id])
+
+      # Include all associated data
+      render json: {
+        submission: subsystem.as_json(
+          include: {
+            supplier_data: {},
+            product_data: {},
+            fire_alarm_control_panels: {},
+            detectors_field_devices: {},
+            manual_pull_stations: {},
+            door_holders: {},
+            graphic_systems: {},
+            notification_devices: {},
+            isolations: {},
+            connection_betweens: {},
+            interface_with_other_systems: {},
+            evacuation_systems: {},
+            prerecorded_message_audio_modules: {},
+            telephone_systems: {},
+            spare_parts: {},
+            scope_of_works: {},
+            material_and_deliveries: {},
+            general_commercial_data: {}
+          }
+        )
+      }, status: :ok
+    end
+
+    def update_submission
+      subsystem = Subsystem.find(params[:id])
+
+      if subsystem.update(submission_params)
+        render json: { message: 'Submission updated successfully.', submission: subsystem }, status: :ok
+      else
+        render json: { error: subsystem.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+
     private
+
+    def submission_params
+      params.require(:submission).permit(
+        :name, :system_id,
+        general_commercial_data_attributes: %i[
+          id warranty_for_materials warranty_for_configuration_programming
+          support_and_maintenance spare_parts_availability advanced_payment_minimum
+          performance_bond total_price_excluding_vat subsystem_id
+        ],
+        supplier_data_attributes: %i[
+          id supplier_name supplier_category total_years_in_saudi_market similar_projects subsystem_id
+        ],
+        product_data_attributes: %i[
+          id manufacturer submitted_product product_certifications total_years_in_saudi_market coo
+          com_for_mfacp com_for_detectors subsystem_id
+        ]
+        # Add other nested attributes for all associations here
+      )
+    end
 
     # UPDATED: Include the new parameters in evaluation
     def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:,

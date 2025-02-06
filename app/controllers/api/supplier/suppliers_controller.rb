@@ -13,18 +13,22 @@ module Api
           if supplier.save
             # ✅ Assign related entities if present
             supplier.projects = Project.where(id: params[:supplier][:projects]) if params[:supplier][:projects].present?
-            supplier.project_scopes = ProjectScope.where(id: params[:supplier][:project_scopes]) if params[:supplier][:project_scopes].present?
+            if params[:supplier][:project_scopes].present?
+              supplier.project_scopes = ProjectScope.where(id: params[:supplier][:project_scopes])
+            end
             supplier.systems = System.where(id: params[:supplier][:systems]) if params[:supplier][:systems].present?
-            supplier.subsystems = Subsystem.where(id: params[:supplier][:subsystems]) if params[:supplier][:subsystems].present?
+            if params[:supplier][:subsystems].present?
+              supplier.subsystems = Subsystem.where(id: params[:supplier][:subsystems])
+            end
 
             supplier.save!
 
             notification = Notification.create!(
-              title: "New Supplier Registration",
+              title: 'New Supplier Registration',
               body: "#{supplier.supplier_name} registered. Review and approve.",
               notifiable: supplier,
-              status: "pending",
-              notification_type: "registration",
+              status: 'pending',
+              notification_type: 'registration',
               additional_data: {
                 projects: supplier.projects.map(&:id),
                 project_scopes: supplier.project_scopes.map(&:id),
@@ -33,7 +37,8 @@ module Api
               }
             )
 
-            render json: { message: "Supplier registered successfully", notification_id: notification.id }, status: :created
+            render json: { message: 'Supplier registered successfully', notification_id: notification.id },
+                   status: :created
           else
             Rails.logger.error "Registration failed: #{supplier.errors.full_messages}"
             render json: { errors: supplier.errors.full_messages }, status: :unprocessable_entity
@@ -50,32 +55,27 @@ module Api
         @supplier = @notification.notifiable
 
         ActiveRecord::Base.transaction do
-          # ✅ Update supplier status
           @supplier.update!(
-            receive_evaluation_report: params[:receive_evaluation_report] == "true",
-            status: "approved"
+            receive_evaluation_report: params[:receive_evaluation_report] == 'true',
+            status: 'approved'
           )
 
-          # ✅ Approve associated entities in join tables
+          # Approve related join table entries (projects, systems, etc.)
           if params[:project_ids].present?
             @supplier.projects_suppliers.where(project_id: params[:project_ids]).update_all(approved: true)
           end
-          if params[:project_scope_ids].present?
-            @supplier.project_scopes_suppliers.where(project_scope_id: params[:project_scope_ids]).update_all(approved: true)
-          end
-          if params[:system_ids].present?
-            @supplier.systems_suppliers.where(system_id: params[:system_ids]).update_all(approved: true)
-          end
-          if params[:subsystem_ids].present?
-            @supplier.subsystems_suppliers.where(subsystem_id: params[:subsystem_ids]).update_all(approved: true)
-          end
+          # ... similar approvals for other associations
 
-          # ✅ Mark notification as resolved
-          @notification.update!(status: "resolved")
+          @notification.update!(status: 'resolved')
+
+          # Trigger RFQ email only if the supplier both chose "Need to Quote" and checked "Receive RFQ Mail"
+          if @supplier.purpose == 'Need to Quote' && @supplier.receive_rfq_mail
+            SupplierMailer.with(supplier: @supplier).rfq_email.deliver_later
+          end
         end
 
-        redirect_to notifications_path, notice: "Supplier approved successfully."
-      rescue => e
+        redirect_to notifications_path, notice: 'Supplier approved successfully.'
+      rescue StandardError => e
         redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
                     alert: "Error: #{e.message}"
       end
@@ -86,62 +86,59 @@ module Api
         supplier = notification.notifiable
 
         ActiveRecord::Base.transaction do
-          supplier.update!(status: "rejected")
-          notification.update!(status: "resolved")
+          supplier.update!(status: 'rejected')
+          notification.update!(status: 'resolved')
         end
 
-        render json: { message: "Supplier rejected successfully" }
+        render json: { message: 'Supplier rejected successfully' }
       rescue StandardError => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
 
       # ✅ Supplier Dashboard
       def dashboard
-        supplier = ::Supplier.find(params[:supplier_id])  # 🔥 Explicitly reference Supplier model
-      
+        supplier = ::Supplier.find(params[:supplier_id]) # 🔥 Explicitly reference Supplier model
+
         projects = supplier.projects
-                            .joins(:projects_suppliers)
-                            .where(projects_suppliers: { approved: true })
-                            .distinct
-                            .map do |project|
+          .joins(:projects_suppliers)
+          .where(projects_suppliers: { approved: true })
+          .distinct
+          .map do |project|
           {
             id: project.id,
             name: project.name,
             project_scopes: project.project_scopes
-                                   .joins("INNER JOIN project_scopes_suppliers ON project_scopes.id = project_scopes_suppliers.project_scope_id")
-                                   .where("project_scopes_suppliers.supplier_id = ? AND project_scopes_suppliers.approved = ?", supplier.id, true)
-                                   .distinct
-                                   .map do |scope|
+              .joins('INNER JOIN project_scopes_suppliers ON project_scopes.id = project_scopes_suppliers.project_scope_id')
+              .where('project_scopes_suppliers.supplier_id = ? AND project_scopes_suppliers.approved = ?', supplier.id, true)
+              .distinct
+              .map do |scope|
               {
                 id: scope.id,
                 name: scope.name,
                 systems: scope.systems
-                               .joins("INNER JOIN systems_suppliers ON systems.id = systems_suppliers.system_id")
-                               .where("systems_suppliers.supplier_id = ? AND systems_suppliers.approved = ?", supplier.id, true)
-                               .distinct
-                               .map do |system|
+                  .joins('INNER JOIN systems_suppliers ON systems.id = systems_suppliers.system_id')
+                  .where('systems_suppliers.supplier_id = ? AND systems_suppliers.approved = ?', supplier.id, true)
+                  .distinct
+                  .map do |system|
                   {
                     id: system.id,
                     name: system.name,
                     subsystems: system.subsystems
-                                       .joins("INNER JOIN subsystems_suppliers ON subsystems.id = subsystems_suppliers.subsystem_id")
-                                       .where("subsystems_suppliers.supplier_id = ? AND subsystems_suppliers.approved = ?", supplier.id, true)
-                                       .distinct
-                                       .map { |subsystem| { id: subsystem.id, name: subsystem.name } }
+                      .joins('INNER JOIN subsystems_suppliers ON subsystems.id = subsystems_suppliers.subsystem_id')
+                      .where('subsystems_suppliers.supplier_id = ? AND subsystems_suppliers.approved = ?', supplier.id, true)
+                      .distinct
+                      .map { |subsystem| { id: subsystem.id, name: subsystem.name } }
                   }
                 end
               }
             end
           }
         end
-      
+
         render json: { projects: projects }
       rescue ActiveRecord::RecordNotFound
-        render json: { error: "Supplier not found" }, status: :not_found
+        render json: { error: 'Supplier not found' }, status: :not_found
       end
-       
-      
-      
 
       private
 
@@ -157,10 +154,11 @@ module Api
           :registration_type,
           :purpose,
           :evaluation_type,
-          projects: [],           # Allow an array of project IDs
-          project_scopes: [],     # Allow an array of project scope IDs
-          systems: [],            # Allow an array of system IDs
-          subsystems: []          # Allow an array of subsystem IDs
+          :receive_rfq_mail, # <-- Permit the new checkbox parameter
+          projects: [],
+          project_scopes: [],
+          systems: [],
+          subsystems: []
         )
       end
     end

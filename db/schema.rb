@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_07_144020) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_07_203055) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -21,7 +21,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_07_144020) do
     t.bigint "subsystem_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "supplier_id", null: false
     t.index ["subsystem_id"], name: "index_connection_betweens_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_connection_betweens_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_connection_betweens_on_supplier_id"
   end
 
   create_table "detectors_field_devices", force: :cascade do |t|
@@ -546,6 +549,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_07_144020) do
   end
 
   add_foreign_key "connection_betweens", "subsystems"
+  add_foreign_key "connection_betweens", "suppliers"
   add_foreign_key "detectors_field_devices", "subsystems"
   add_foreign_key "detectors_field_devices", "suppliers"
   add_foreign_key "door_holders", "subsystems"

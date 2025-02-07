@@ -17,11 +17,12 @@ class Supplier < ApplicationRecord
   has_many :material_and_deliveries
   has_many :notification_devices
   has_many :prerecorded_message_audio_modules
-  has_many :product_data
+  has_many :product_data, class_name: 'ProductData'
   has_many :scope_of_works
   has_many :spare_parts
   has_many :telephone_systems
   has_many :detectors_field_devices
+  has_many :connection_betweens
 
   validates :receive_evaluation_report, inclusion: { in: [true, false] }, if: :status_approved?
 

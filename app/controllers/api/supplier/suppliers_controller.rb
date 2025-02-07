@@ -51,27 +51,33 @@ module Api
 
       # ✅ Approve Supplier
       def approve_supplier
+        Rails.logger.info 'Starting approve_supplier action'
         @notification = Notification.find(params[:id])
         @supplier = @notification.notifiable
 
         ActiveRecord::Base.transaction do
           @supplier.update!(
             receive_evaluation_report: params[:receive_evaluation_report] == 'true',
-            status: 'approved'
+            status: 'approvedd'
           )
+          @supplier.reload # Ensure fresh data from the database
 
-          # Approve related join table entries (projects, systems, etc.)
+          Rails.logger.info "After update, supplier purpose: #{@supplier.purpose.inspect}, receive_rfq_mail: #{@supplier.receive_rfq_mail.inspect}"
+
+          if @supplier.purpose == 'Need to Quote' && @supplier.receive_rfq_mail == true
+            Rails.logger.info "Triggering RFQ email for supplier #{@supplier.id}"
+            SupplierMailer.with(supplier: @supplier).rfq_email.deliver_now
+          else
+            Rails.logger.info 'Conditions not met for sending RFQ email'
+          end
+
+          # Approve join table entries...
           if params[:project_ids].present?
             @supplier.projects_suppliers.where(project_id: params[:project_ids]).update_all(approved: true)
           end
           # ... similar approvals for other associations
 
           @notification.update!(status: 'resolved')
-
-          # Trigger RFQ email only if the supplier both chose "Need to Quote" and checked "Receive RFQ Mail"
-          if @supplier.purpose == 'Need to Quote' && @supplier.receive_rfq_mail
-            SupplierMailer.with(supplier: @supplier).rfq_email.deliver_later
-          end
         end
 
         redirect_to notifications_path, notice: 'Supplier approved successfully.'

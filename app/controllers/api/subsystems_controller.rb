@@ -333,31 +333,35 @@ module Api
 
     def submitted_data
       subsystem = Subsystem.find(params[:id])
+      supplier = current_supplier
 
-      # Include all associated data
+      if supplier.nil?
+        render json: { error: 'Supplier not found. Please log in again.' }, status: :unauthorized
+        return
+      end
+
       render json: {
-        submission: subsystem.as_json(
-          include: {
-            supplier_data: {},
-            product_data: {},
-            fire_alarm_control_panels: {},
-            detectors_field_devices: {},
-            manual_pull_stations: {},
-            door_holders: {},
-            graphic_systems: {},
-            notification_devices: {},
-            isolations: {},
-            connection_betweens: {},
-            interface_with_other_systems: {},
-            evacuation_systems: {},
-            prerecorded_message_audio_modules: {},
-            telephone_systems: {},
-            spare_parts: {},
-            scope_of_works: {},
-            material_and_deliveries: {},
-            general_commercial_data: {}
-          }
-        )
+        submission: {
+          id: subsystem.id,
+          supplier_data: subsystem.supplier_data.where(supplier_id: supplier.id),
+          product_data: subsystem.product_data.where(supplier_id: supplier.id),
+          fire_alarm_control_panels: subsystem.fire_alarm_control_panels.where(supplier_id: supplier.id),
+          graphic_systems: subsystem.graphic_systems.where(supplier_id: supplier.id),
+          detectors_field_devices: subsystem.detectors_field_devices.where(supplier_id: supplier.id),
+          manual_pull_stations: subsystem.manual_pull_stations.where(supplier_id: supplier.id),
+          door_holders: subsystem.door_holders.where(supplier_id: supplier.id),
+          notification_devices: subsystem.notification_devices.where(supplier_id: supplier.id),
+          isolations: subsystem.isolations.where(supplier_id: supplier.id),
+          connection_betweens: subsystem.connection_betweens.where(supplier_id: supplier.id),
+          interface_with_other_systems: subsystem.interface_with_other_systems.where(supplier_id: supplier.id),
+          evacuation_systems: subsystem.evacuation_systems.where(supplier_id: supplier.id),
+          prerecorded_message_audio_modules: subsystem.prerecorded_message_audio_modules.where(supplier_id: supplier.id),
+          telephone_systems: subsystem.telephone_systems.where(supplier_id: supplier.id),
+          spare_parts: subsystem.spare_parts.where(supplier_id: supplier.id),
+          scope_of_works: subsystem.scope_of_works.where(supplier_id: supplier.id),
+          material_and_deliveries: subsystem.material_and_deliveries.where(supplier_id: supplier.id),
+          general_commercial_data: subsystem.general_commercial_data.where(supplier_id: supplier.id)
+        }
       }, status: :ok
     end
 

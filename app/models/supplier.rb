@@ -5,6 +5,24 @@ class Supplier < ApplicationRecord
   STATUSES = %w[pending approved rejected]
   has_secure_password
 
+  has_many :supplier_data, class_name: 'SupplierData'
+  has_many :isolations
+  has_many :door_holders
+  has_many :evacuation_systems
+  has_many :fire_alarm_control_panels
+  has_many :general_commercial_data
+  has_many :graphic_systems
+  has_many :interface_with_other_systems
+  has_many :manual_pull_stations
+  has_many :material_and_deliveries
+  has_many :notification_devices
+  has_many :prerecorded_message_audio_modules
+  has_many :product_data
+  has_many :scope_of_works
+  has_many :spare_parts
+  has_many :telephone_systems
+  has_many :detectors_field_devices
+
   validates :receive_evaluation_report, inclusion: { in: [true, false] }, if: :status_approved?
 
   validates :password, presence: true, length: { minimum: 6 }, confirmation: true, if: :password_required?

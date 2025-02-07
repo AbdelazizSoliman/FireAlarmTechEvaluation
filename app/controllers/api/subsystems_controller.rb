@@ -125,175 +125,28 @@ module Api
 
     def submit_all
       subsystem = Subsystem.find(params[:id])
+      supplier = current_supplier || Supplier.find_by(id: params[:supplier_id]) # Ensure supplier exists
+
+      if supplier.nil?
+        Rails.logger.error "🚨 Supplier not found! Params: #{params.inspect}"
+        render json: { error: 'Supplier not found. Please log in again.' }, status: :unauthorized
+        return
+      end
 
       ActiveRecord::Base.transaction do
-        # Keep your existing code
         if params[:supplier_data].present?
-          supplier_data_record = subsystem.supplier_data.first_or_initialize
+          supplier_data_record = subsystem.supplier_data.find_or_initialize_by(supplier_id: supplier.id)
           supplier_data_record.assign_attributes(supplier_data_params)
+          supplier_data_record.supplier_id = supplier.id
           supplier_data_record.save!
         end
 
         if params[:fire_alarm_control_panel].present?
-          fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first_or_initialize
+          fire_alarm_control_panel = subsystem.fire_alarm_control_panels.find_or_initialize_by(supplier_id: supplier.id)
           fire_alarm_control_panel.assign_attributes(fire_alarm_control_panel_params)
+          fire_alarm_control_panel.supplier_id = supplier.id
           fire_alarm_control_panel.save!
         end
-
-        if params[:detectors_field_devices].present?
-          detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
-          params[:detectors_field_devices].each do |key, attributes|
-            detectors_field_device.assign_attributes(
-              "#{key}_value": attributes[:value],
-              "#{key}_unit_rate": attributes[:unit_rate],
-              "#{key}_amount": attributes[:amount],
-              "#{key}_notes": attributes[:notes]
-            )
-          end
-          detectors_field_device.save!
-        end
-
-        if params[:notification_devices].present?
-          notification_devices_record = subsystem.notification_devices.first_or_initialize
-          notification_devices_record.assign_attributes(notification_devices_params)
-          notification_devices_record.save!
-        end
-
-        # Manual Pull Station
-        if params[:manual_pull_station].present?
-          manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
-          manual_pull_station.assign_attributes(manual_pull_station_params)
-          manual_pull_station.save!
-        end
-
-        # Door Holders
-        if params[:door_holders].present?
-          door_holder = subsystem.door_holders.first_or_initialize
-
-          # Assign attributes correctly based on the structure of `params[:door_holders]`
-          door_holder.assign_attributes(
-            total_no_of_devices: params[:door_holders][:total_no_of_devices],
-            total_no_of_devices_unit_rate: params[:door_holders][:total_no_of_devices_unit_rate],
-            total_no_of_devices_amount: params[:door_holders][:total_no_of_devices_amount],
-            total_no_of_devices_notes: params[:door_holders][:total_no_of_devices_notes],
-            total_no_of_relays: params[:door_holders][:total_no_of_relays],
-            total_no_of_relays_unit_rate: params[:door_holders][:total_no_of_relays_unit_rate],
-            total_no_of_relays_amount: params[:door_holders][:total_no_of_relays_amount],
-            total_no_of_relays_notes: params[:door_holders][:total_no_of_relays_notes]
-          )
-
-          if door_holder.save
-            Rails.logger.info "Door Holders saved successfully: #{door_holder.inspect}"
-          else
-            Rails.logger.error "Failed to save Door Holders: #{door_holder.errors.full_messages}"
-          end
-        end
-
-        # Product Data
-        if params[:product_data].present?
-          product_data_record = subsystem.product_data.first_or_initialize
-          product_data_record.assign_attributes(product_data_params)
-          product_data_record.save!
-        end
-        # Graphic Systems
-        if params[:graphic_systems].present?
-          graphic_systems_record = subsystem.graphic_systems.first_or_initialize
-          graphic_systems_record.assign_attributes(graphic_systems_params)
-          graphic_systems_record.save!
-        end
-        # Notification Devices
-        if params[:notification_devices].present?
-          notification_devices_record = subsystem.notification_devices.first_or_initialize
-          notification_devices_record.assign_attributes(notification_devices_params)
-          notification_devices_record.save!
-        end
-        # Isolations
-        if params[:isolations].present?
-          isolation_record = subsystem.isolations.first_or_initialize
-          isolation_record.assign_attributes(isolation_params)
-          isolation_record.save!
-        end
-        # Connection Betweens
-        if params[:connection_betweens].present?
-          connection_betweens_record = subsystem.connection_betweens.first_or_initialize
-          connection_betweens_record.assign_attributes(connection_betweens_params)
-          connection_betweens_record.save!
-        end
-        # Interface With Other Systems
-        if params[:interface_with_other_systems].present?
-          interface_with_other_record = subsystem.interface_with_other_systems.first_or_initialize
-          interface_with_other_record.assign_attributes(interface_with_other_params)
-          interface_with_other_record.save!
-        end
-        # Evacuation Systems
-        if params[:evacuation_systems].present?
-          evacuation_systems_record = subsystem.evacuation_systems.first_or_initialize
-          evacuation_systems_record.assign_attributes(evacuation_systems_params)
-          evacuation_systems_record.save!
-        end
-        # Prerecorded Message Audio Modules
-        if params[:prerecorded_message_audio_modules].present?
-          prerecorded_message_audio_modules_record = subsystem.prerecorded_message_audio_modules.first_or_initialize
-          prerecorded_message_audio_modules_record.assign_attributes(prerecorded_message_audio_modules_params)
-          prerecorded_message_audio_modules_record.save!
-        end
-        # Telephone System
-        if params[:telephone_systems].present?
-          telephone_system_record = subsystem.telephone_systems.first_or_initialize
-          telephone_system_record.assign_attributes(telephone_system_params)
-          telephone_system_record.save!
-        end
-        # Spare Parts
-        if params[:spare_parts].present?
-          spare_parts_record = subsystem.spare_parts.first_or_initialize
-          spare_parts_record.assign_attributes(spare_parts_params)
-          spare_parts_record.save!
-        end
-        # Scope of Work
-        if params[:scope_of_works].present?
-          scope_of_work_record = subsystem.scope_of_works.first_or_initialize
-          scope_of_work_record.assign_attributes(scope_of_work_params)
-          scope_of_work_record.save!
-        end
-        # Material Delivery
-        if params[:material_and_deliveries].present?
-          material_delivery_record = subsystem.material_and_deliveries.first_or_initialize
-          material_delivery_record.assign_attributes(material_delivery_params)
-          material_delivery_record.save!
-        end
-        # General Commercial Data
-        if params[:general_commercial_data].present?
-          general_commercial_record = subsystem.general_commercial_data.first_or_initialize
-          general_commercial_record.assign_attributes(general_commercial_params)
-          general_commercial_record.save!
-        end
-
-        # ✅ Generate Evaluation Report and Save Notification
-        evaluation_results = perform_evaluation(
-          subsystem: subsystem,
-          fire_alarm_control_panel: subsystem.fire_alarm_control_panels.first,
-          detectors_field_device: subsystem.detectors_field_devices.first,
-          door_holders: subsystem.door_holders.first,
-          notification_devices: subsystem.notification_devices.first,
-          isolation_record: subsystem.isolations.first,
-          # NEW: Pass the additional records for evaluation:
-          manual_pull_station: subsystem.manual_pull_stations.first,
-          evacuation_systems: subsystem.evacuation_systems.first,
-          telephone_systems: subsystem.telephone_systems.first,
-          general_commercial_data: subsystem.general_commercial_data.first
-        )
-
-        report_path = generate_evaluation_report(subsystem, evaluation_results)
-        relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
-        relative_url_path = '/' + relative_path
-
-        Notification.create!(
-          title: 'Evaluation Submitted',
-          body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
-          notifiable: subsystem,
-          notification_type: 'evaluation',
-          additional_data: { evaluation_report_path: relative_url_path }.to_json
-        )
       end
 
       render json: { message: 'Data submitted successfully.' }, status: :created

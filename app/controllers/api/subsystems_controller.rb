@@ -314,9 +314,10 @@ module Api
         relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
         relative_url_path = '/' + relative_path
 
+        # UPDATED: Update the notification message with supplier and subsystem names
         Notification.create!(
           title: 'Evaluation Submitted',
-          body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
+          body: "#{supplier.supplier_name} has submitted evaluation for subsystem ##{subsystem.name}.",
           notifiable: subsystem,
           notification_type: 'evaluation',
           additional_data: { evaluation_report_path: relative_url_path }.to_json

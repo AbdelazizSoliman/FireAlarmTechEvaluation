@@ -1,4 +1,4 @@
 class DoorHolder < ApplicationRecord
-    belongs_to :subsystem
-  end
-  
+  belongs_to :subsystem
+  belongs_to :supplier
+end

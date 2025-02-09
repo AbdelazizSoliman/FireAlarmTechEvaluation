@@ -1,4 +1,4 @@
 class GraphicSystem < ApplicationRecord
   belongs_to :subsystem
-  end
-  
+  belongs_to :supplier
+end

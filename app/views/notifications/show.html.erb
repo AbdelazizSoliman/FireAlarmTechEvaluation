@@ -359,16 +359,17 @@
     <%= link_to "Download as PDF", notification_path(@notification, format: :pdf), class: "btn-link" %>
     <%= link_to "Download as Excel", notification_path(@notification, format: :xlsx), class: "btn-link" %>
 
-    <% if @notification.additional_data.present? %>
-      <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
-      <% if additional_data["evaluation_report_path"].present? %>
-        <%= link_to "Download Evaluation Report",
-                    additional_data["evaluation_report_path"],
-                    target: "_blank",
-                    rel: "noopener",
-                    class: "btn-link" %>
-      <% end %>
-    <% end %>
+    <% if @notification.additional_data.present? %> 
+  <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
+  <% if additional_data["evaluation_report_path"].present? && additional_data["supplier_id"] == @current_supplier.id %>
+    <%= link_to "Download Evaluation Report",
+                additional_data["evaluation_report_path"],
+                target: "_blank",
+                rel: "noopener",
+                class: "btn-link" %>
+  <% end %>
+<% end %>
+
   </div>
 
 </body>

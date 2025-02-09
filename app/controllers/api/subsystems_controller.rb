@@ -125,23 +125,31 @@ module Api
 
     def submit_all
       subsystem = Subsystem.find(params[:id])
+      supplier = current_supplier || Supplier.find_by(id: params[:supplier_id]) # Ensure supplier exists
+
+      if supplier.nil?
+        Rails.logger.error "🚨 Supplier not found! Params: #{params.inspect}"
+        render json: { error: 'Supplier not found. Please log in again.' }, status: :unauthorized
+        return
+      end
 
       ActiveRecord::Base.transaction do
-        # Keep your existing code
         if params[:supplier_data].present?
-          supplier_data_record = subsystem.supplier_data.first_or_initialize
+          supplier_data_record = subsystem.supplier_data.find_or_initialize_by(supplier_id: supplier.id)
           supplier_data_record.assign_attributes(supplier_data_params)
+          supplier_data_record.supplier_id = supplier.id
           supplier_data_record.save!
         end
 
         if params[:fire_alarm_control_panel].present?
-          fire_alarm_control_panel = subsystem.fire_alarm_control_panels.first_or_initialize
+          fire_alarm_control_panel = subsystem.fire_alarm_control_panels.find_or_initialize_by(supplier_id: supplier.id)
           fire_alarm_control_panel.assign_attributes(fire_alarm_control_panel_params)
+          fire_alarm_control_panel.supplier_id = supplier.id
           fire_alarm_control_panel.save!
         end
 
         if params[:detectors_field_devices].present?
-          detectors_field_device = subsystem.detectors_field_devices.first_or_initialize
+          detectors_field_device = subsystem.detectors_field_devices.find_or_initialize_by(supplier_id: supplier.id)
           params[:detectors_field_devices].each do |key, attributes|
             detectors_field_device.assign_attributes(
               "#{key}_value": attributes[:value],
@@ -150,25 +158,28 @@ module Api
               "#{key}_notes": attributes[:notes]
             )
           end
+          detectors_field_device.supplier_id = supplier.id
           detectors_field_device.save!
         end
 
         if params[:notification_devices].present?
-          notification_devices_record = subsystem.notification_devices.first_or_initialize
+          notification_devices_record = subsystem.notification_devices.find_or_initialize_by(supplier_id: supplier.id)
           notification_devices_record.assign_attributes(notification_devices_params)
+          notification_devices_record.supplier_id = supplier.id
           notification_devices_record.save!
         end
 
         # Manual Pull Station
         if params[:manual_pull_station].present?
-          manual_pull_station = subsystem.manual_pull_stations.first_or_initialize
+          manual_pull_station = subsystem.manual_pull_stations.find_or_initialize_by(supplier_id: supplier.id)
           manual_pull_station.assign_attributes(manual_pull_station_params)
+          manual_pull_station.supplier_id = supplier.id
           manual_pull_station.save!
         end
 
         # Door Holders
         if params[:door_holders].present?
-          door_holder = subsystem.door_holders.first_or_initialize
+          door_holder = subsystem.door_holders.find_or_initialize_by(supplier_id: supplier.id)
 
           # Assign attributes correctly based on the structure of `params[:door_holders]`
           door_holder.assign_attributes(
@@ -181,7 +192,7 @@ module Api
             total_no_of_relays_amount: params[:door_holders][:total_no_of_relays_amount],
             total_no_of_relays_notes: params[:door_holders][:total_no_of_relays_notes]
           )
-
+          door_holder.supplier_id = supplier.id
           if door_holder.save
             Rails.logger.info "Door Holders saved successfully: #{door_holder.inspect}"
           else
@@ -191,108 +202,126 @@ module Api
 
         # Product Data
         if params[:product_data].present?
-          product_data_record = subsystem.product_data.first_or_initialize
+          product_data_record = subsystem.product_data.find_or_initialize_by(supplier_id: supplier.id)
           product_data_record.assign_attributes(product_data_params)
+          product_data_record.supplier_id = supplier.id
           product_data_record.save!
         end
+
         # Graphic Systems
         if params[:graphic_systems].present?
-          graphic_systems_record = subsystem.graphic_systems.first_or_initialize
+          graphic_systems_record = subsystem.graphic_systems.find_or_initialize_by(supplier_id: supplier.id)
           graphic_systems_record.assign_attributes(graphic_systems_params)
+          graphic_systems_record.supplier_id = supplier.id
           graphic_systems_record.save!
         end
-        # Notification Devices
-        if params[:notification_devices].present?
-          notification_devices_record = subsystem.notification_devices.first_or_initialize
-          notification_devices_record.assign_attributes(notification_devices_params)
-          notification_devices_record.save!
-        end
+
         # Isolations
         if params[:isolations].present?
-          isolation_record = subsystem.isolations.first_or_initialize
+          isolation_record = subsystem.isolations.find_or_initialize_by(supplier_id: supplier.id)
           isolation_record.assign_attributes(isolation_params)
+          isolation_record.supplier_id = supplier.id
           isolation_record.save!
         end
+
         # Connection Betweens
         if params[:connection_betweens].present?
-          connection_betweens_record = subsystem.connection_betweens.first_or_initialize
+          connection_betweens_record = subsystem.connection_betweens.find_or_initialize_by(supplier_id: supplier.id)
           connection_betweens_record.assign_attributes(connection_betweens_params)
+          connection_betweens_record.supplier_id = supplier.id
           connection_betweens_record.save!
         end
+
         # Interface With Other Systems
         if params[:interface_with_other_systems].present?
-          interface_with_other_record = subsystem.interface_with_other_systems.first_or_initialize
+          interface_with_other_record = subsystem.interface_with_other_systems.find_or_initialize_by(supplier_id: supplier.id)
           interface_with_other_record.assign_attributes(interface_with_other_params)
+          interface_with_other_record.supplier_id = supplier.id
           interface_with_other_record.save!
         end
+
         # Evacuation Systems
         if params[:evacuation_systems].present?
-          evacuation_systems_record = subsystem.evacuation_systems.first_or_initialize
+          evacuation_systems_record = subsystem.evacuation_systems.find_or_initialize_by(supplier_id: supplier.id)
           evacuation_systems_record.assign_attributes(evacuation_systems_params)
+          evacuation_systems_record.supplier_id = supplier.id
           evacuation_systems_record.save!
         end
+
         # Prerecorded Message Audio Modules
         if params[:prerecorded_message_audio_modules].present?
-          prerecorded_message_audio_modules_record = subsystem.prerecorded_message_audio_modules.first_or_initialize
+          prerecorded_message_audio_modules_record = subsystem.prerecorded_message_audio_modules.find_or_initialize_by(supplier_id: supplier.id)
           prerecorded_message_audio_modules_record.assign_attributes(prerecorded_message_audio_modules_params)
+          prerecorded_message_audio_modules_record.supplier_id = supplier.id
           prerecorded_message_audio_modules_record.save!
         end
+
         # Telephone System
         if params[:telephone_systems].present?
-          telephone_system_record = subsystem.telephone_systems.first_or_initialize
+          telephone_system_record = subsystem.telephone_systems.find_or_initialize_by(supplier_id: supplier.id)
           telephone_system_record.assign_attributes(telephone_system_params)
+          telephone_system_record.supplier_id = supplier.id
           telephone_system_record.save!
         end
+
         # Spare Parts
         if params[:spare_parts].present?
-          spare_parts_record = subsystem.spare_parts.first_or_initialize
+          spare_parts_record = subsystem.spare_parts.find_or_initialize_by(supplier_id: supplier.id)
           spare_parts_record.assign_attributes(spare_parts_params)
+          spare_parts_record.supplier_id = supplier.id
           spare_parts_record.save!
         end
+
         # Scope of Work
         if params[:scope_of_works].present?
-          scope_of_work_record = subsystem.scope_of_works.first_or_initialize
+          scope_of_work_record = subsystem.scope_of_works.find_or_initialize_by(supplier_id: supplier.id)
           scope_of_work_record.assign_attributes(scope_of_work_params)
+          scope_of_work_record.supplier_id = supplier.id
           scope_of_work_record.save!
         end
+
         # Material Delivery
         if params[:material_and_deliveries].present?
-          material_delivery_record = subsystem.material_and_deliveries.first_or_initialize
+          material_delivery_record = subsystem.material_and_deliveries.find_or_initialize_by(supplier_id: supplier.id)
           material_delivery_record.assign_attributes(material_delivery_params)
+          material_delivery_record.supplier_id = supplier.id
           material_delivery_record.save!
         end
+
         # General Commercial Data
         if params[:general_commercial_data].present?
-          general_commercial_record = subsystem.general_commercial_data.first_or_initialize
+          general_commercial_record = subsystem.general_commercial_data.find_or_initialize_by(supplier_id: supplier.id)
           general_commercial_record.assign_attributes(general_commercial_params)
+          general_commercial_record.supplier_id = supplier.id
           general_commercial_record.save!
         end
-
         # ✅ Generate Evaluation Report and Save Notification
         evaluation_results = perform_evaluation(
           subsystem: subsystem,
-          fire_alarm_control_panel: subsystem.fire_alarm_control_panels.first,
-          detectors_field_device: subsystem.detectors_field_devices.first,
-          door_holders: subsystem.door_holders.first,
-          notification_devices: subsystem.notification_devices.first,
-          isolation_record: subsystem.isolations.first,
-          # NEW: Pass the additional records for evaluation:
-          manual_pull_station: subsystem.manual_pull_stations.first,
-          evacuation_systems: subsystem.evacuation_systems.first,
-          telephone_systems: subsystem.telephone_systems.first,
-          general_commercial_data: subsystem.general_commercial_data.first
+          fire_alarm_control_panel: subsystem.fire_alarm_control_panels.find_by(supplier_id: supplier.id),
+          detectors_field_device: subsystem.detectors_field_devices.find_by(supplier_id: supplier.id),
+          door_holders: subsystem.door_holders.find_by(supplier_id: supplier.id),
+          notification_devices: subsystem.notification_devices.find_by(supplier_id: supplier.id),
+          isolation_record: subsystem.isolations.find_by(supplier_id: supplier.id),
+          # NEW: Additional fields
+          manual_pull_station: subsystem.manual_pull_stations.find_by(supplier_id: supplier.id),
+          evacuation_systems: subsystem.evacuation_systems.find_by(supplier_id: supplier.id),
+          telephone_systems: subsystem.telephone_systems.find_by(supplier_id: supplier.id),
+          general_commercial_data: subsystem.general_commercial_data.find_by(supplier_id: supplier.id)
         )
 
-        report_path = generate_evaluation_report(subsystem, evaluation_results)
+        # 🔹 Generate a report with a unique file name for the supplier and subsystem
+        report_path = generate_evaluation_report(subsystem, supplier, evaluation_results)
         relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
         relative_url_path = '/' + relative_path
 
+        # UPDATED: Update the notification message with supplier and subsystem names
         Notification.create!(
           title: 'Evaluation Submitted',
-          body: "Evaluation for subsystem ##{subsystem.id} has been submitted.",
+          body: "#{supplier.supplier_name} has submitted evaluation for subsystem ##{subsystem.name}.",
           notifiable: subsystem,
           notification_type: 'evaluation',
-          additional_data: { evaluation_report_path: relative_url_path }.to_json
+          additional_data: { evaluation_report_path: relative_url_path, supplier_id: supplier.id }.to_json
         )
       end
 
@@ -306,31 +335,35 @@ module Api
 
     def submitted_data
       subsystem = Subsystem.find(params[:id])
+      supplier = current_supplier
 
-      # Include all associated data
+      if supplier.nil?
+        render json: { error: 'Supplier not found. Please log in again.' }, status: :unauthorized
+        return
+      end
+
       render json: {
-        submission: subsystem.as_json(
-          include: {
-            supplier_data: {},
-            product_data: {},
-            fire_alarm_control_panels: {},
-            detectors_field_devices: {},
-            manual_pull_stations: {},
-            door_holders: {},
-            graphic_systems: {},
-            notification_devices: {},
-            isolations: {},
-            connection_betweens: {},
-            interface_with_other_systems: {},
-            evacuation_systems: {},
-            prerecorded_message_audio_modules: {},
-            telephone_systems: {},
-            spare_parts: {},
-            scope_of_works: {},
-            material_and_deliveries: {},
-            general_commercial_data: {}
-          }
-        )
+        submission: {
+          id: subsystem.id,
+          supplier_data: subsystem.supplier_data.where(supplier_id: supplier.id),
+          product_data: subsystem.product_data.where(supplier_id: supplier.id),
+          fire_alarm_control_panels: subsystem.fire_alarm_control_panels.where(supplier_id: supplier.id),
+          graphic_systems: subsystem.graphic_systems.where(supplier_id: supplier.id),
+          detectors_field_devices: subsystem.detectors_field_devices.where(supplier_id: supplier.id),
+          manual_pull_stations: subsystem.manual_pull_stations.where(supplier_id: supplier.id),
+          door_holders: subsystem.door_holders.where(supplier_id: supplier.id),
+          notification_devices: subsystem.notification_devices.where(supplier_id: supplier.id),
+          isolations: subsystem.isolations.where(supplier_id: supplier.id),
+          connection_betweens: subsystem.connection_betweens.where(supplier_id: supplier.id),
+          interface_with_other_systems: subsystem.interface_with_other_systems.where(supplier_id: supplier.id),
+          evacuation_systems: subsystem.evacuation_systems.where(supplier_id: supplier.id),
+          prerecorded_message_audio_modules: subsystem.prerecorded_message_audio_modules.where(supplier_id: supplier.id),
+          telephone_systems: subsystem.telephone_systems.where(supplier_id: supplier.id),
+          spare_parts: subsystem.spare_parts.where(supplier_id: supplier.id),
+          scope_of_works: subsystem.scope_of_works.where(supplier_id: supplier.id),
+          material_and_deliveries: subsystem.material_and_deliveries.where(supplier_id: supplier.id),
+          general_commercial_data: subsystem.general_commercial_data.where(supplier_id: supplier.id)
+        }
       }, status: :ok
     end
 
@@ -455,12 +488,15 @@ module Api
       results
     end
 
-    def generate_evaluation_report(subsystem, comparison_results)
-      file_name = "evaluation_report_subsystem_#{subsystem.id}_#{Time.now.to_i}.pdf"
+    def generate_evaluation_report(subsystem, supplier, comparison_results)
+      file_name = "evaluation_report_#{subsystem.id}_supplier_#{supplier.id}_#{Time.now.to_i}.pdf"
       file_path = Rails.root.join('public', 'reports', file_name)
 
       Prawn::Document.generate(file_path) do |pdf|
+        # 🔹 Add supplier name below the title
         pdf.text 'Evaluation Report', size: 30, style: :bold, align: :center
+        pdf.move_down 10
+        pdf.text "Supplier: #{supplier.supplier_name}", size: 14, style: :italic, align: :center
         pdf.move_down 20
 
         comparison_results.each do |table_name, results|
@@ -471,7 +507,7 @@ module Api
 
           table_data = [['Attribute', 'Submitted Value', 'Standard Value', 'Status']]
           results.each do |result|
-            status_text = result[:is_accepted] == 1 ? '1' : '0'
+            status_text = result[:is_accepted] == 1 ? 'Accepted' : 'Rejected'
             table_data << [
               result[:field],
               result[:submitted_value],

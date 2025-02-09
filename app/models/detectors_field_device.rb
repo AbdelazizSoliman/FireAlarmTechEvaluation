@@ -1,4 +1,4 @@
 class DetectorsFieldDevice < ApplicationRecord
-    belongs_to :subsystem # Define the relationship to the subsystem
-  end
-  
+  belongs_to :subsystem
+  belongs_to :supplier
+end

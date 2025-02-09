@@ -234,45 +234,80 @@ class NotificationsController < ApplicationController
   end
 
   def add_pdf_detectors(pdf, detectors)
-    if detectors
+    if detectors.present?
       pdf.text 'Detectors Field Devices', size: 16, style: :bold
       pdf.move_down 10
+
+      table_data = [['Type', 'Value', 'Unit Rate', 'Amount', 'Notes']]
+
       detectors.attributes.each do |key, value|
         next unless key.ends_with?('_value')
 
         detector_type = key.sub('_value', '').humanize
-        pdf.text "Type: #{detector_type}"
-        pdf.text "Value: #{value}"
-        pdf.text "Unit Rate: #{detectors["#{key.sub('_value', '_unit_rate')}"]}"
-        pdf.text "Amount: #{detectors["#{key.sub('_value', '_amount')}"]}"
-        pdf.text "Notes: #{detectors["#{key.sub('_value', '_notes')}"]}"
-        pdf.move_down 10
+        row = [
+          detector_type,
+          value.to_s,
+          detectors["#{key.sub('_value', '_unit_rate')}"].to_s,
+          detectors["#{key.sub('_value', '_amount')}"].to_s,
+          detectors["#{key.sub('_value', '_notes')}"].to_s
+        ]
+        table_data << row
       end
+
+      if table_data.length > 1
+        pdf.table(table_data, header: true, width: pdf.bounds.width) do
+          row(0).font_style = :bold
+          row(0).background_color = 'cccccc'
+          self.row_colors = %w[f0f0f0 ffffff]
+        end
+      else
+        pdf.text 'No detectors data available.', size: 12, style: :italic
+      end
+
+      pdf.move_down 20
     else
-      pdf.text 'No Detectors Field Devices data available.', size: 14, style: :italic
+      pdf.text 'No Detectors Field Devices data available.', size: 12, style: :italic
       pdf.move_down 10
     end
   end
 
   def add_pdf_door_holders(pdf, door_holders)
-    if door_holders
+    if door_holders.present?
       pdf.text 'Door Holders', size: 16, style: :bold
       pdf.move_down 10
-      # Explicitly map the attributes
+
+      table_data = [['Type', 'Value', 'Unit Rate', 'Amount', 'Notes']]
+
       [
         { type: 'total_no_of_devices', label: 'Total Number of Devices' },
         { type: 'total_no_of_relays', label: 'Total Number of Relays' }
       ].each do |attribute|
         type_key = attribute[:type]
-        pdf.text "Type: #{attribute[:label]}"
-        pdf.text "Value: #{door_holders[type_key]}"
-        pdf.text "Unit Rate: #{door_holders["#{type_key}_unit_rate"]}"
-        pdf.text "Amount: #{door_holders["#{type_key}_amount"]}"
-        pdf.text "Notes: #{door_holders["#{type_key}_notes"]}"
-        pdf.move_down 10
+        holder_label = attribute[:label]
+
+        row = [
+          holder_label,
+          door_holders[type_key].to_s,
+          door_holders["#{type_key}_unit_rate"].to_s,
+          door_holders["#{type_key}_amount"].to_s,
+          door_holders["#{type_key}_notes"].to_s
+        ]
+        table_data << row
       end
+
+      if table_data.length > 1
+        pdf.table(table_data, header: true, width: pdf.bounds.width) do
+          row(0).font_style = :bold
+          row(0).background_color = 'cccccc'
+          self.row_colors = %w[f0f0f0 ffffff]
+        end
+      else
+        pdf.text 'No door holders data available.', size: 12, style: :italic
+      end
+
+      pdf.move_down 20
     else
-      pdf.text 'No Door Holders data available.', size: 14, style: :italic
+      pdf.text 'No Door Holders data available.', size: 12, style: :italic
       pdf.move_down 10
     end
   end

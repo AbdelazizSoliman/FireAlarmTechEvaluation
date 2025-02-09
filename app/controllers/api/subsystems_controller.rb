@@ -298,19 +298,20 @@ module Api
         # ✅ Generate Evaluation Report and Save Notification
         evaluation_results = perform_evaluation(
           subsystem: subsystem,
-          fire_alarm_control_panel: subsystem.fire_alarm_control_panels.first,
-          detectors_field_device: subsystem.detectors_field_devices.first,
-          door_holders: subsystem.door_holders.first,
-          notification_devices: subsystem.notification_devices.first,
-          isolation_record: subsystem.isolations.first,
-          # NEW: Pass the additional records for evaluation:
-          manual_pull_station: subsystem.manual_pull_stations.first,
-          evacuation_systems: subsystem.evacuation_systems.first,
-          telephone_systems: subsystem.telephone_systems.first,
-          general_commercial_data: subsystem.general_commercial_data.first
+          fire_alarm_control_panel: subsystem.fire_alarm_control_panels.find_by(supplier_id: supplier.id),
+          detectors_field_device: subsystem.detectors_field_devices.find_by(supplier_id: supplier.id),
+          door_holders: subsystem.door_holders.find_by(supplier_id: supplier.id),
+          notification_devices: subsystem.notification_devices.find_by(supplier_id: supplier.id),
+          isolation_record: subsystem.isolations.find_by(supplier_id: supplier.id),
+          # NEW: Additional fields
+          manual_pull_station: subsystem.manual_pull_stations.find_by(supplier_id: supplier.id),
+          evacuation_systems: subsystem.evacuation_systems.find_by(supplier_id: supplier.id),
+          telephone_systems: subsystem.telephone_systems.find_by(supplier_id: supplier.id),
+          general_commercial_data: subsystem.general_commercial_data.find_by(supplier_id: supplier.id)
         )
 
-        report_path = generate_evaluation_report(subsystem, evaluation_results)
+        # 🔹 Generate a report with a unique file name for the supplier and subsystem
+        report_path = generate_evaluation_report(subsystem, supplier, evaluation_results)
         relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
         relative_url_path = '/' + relative_path
 
@@ -487,12 +488,15 @@ module Api
       results
     end
 
-    def generate_evaluation_report(subsystem, comparison_results)
-      file_name = "evaluation_report_subsystem_#{subsystem.id}_#{Time.now.to_i}.pdf"
+    def generate_evaluation_report(subsystem, supplier, comparison_results)
+      file_name = "evaluation_report_#{subsystem.id}_supplier_#{supplier.id}_#{Time.now.to_i}.pdf"
       file_path = Rails.root.join('public', 'reports', file_name)
 
       Prawn::Document.generate(file_path) do |pdf|
+        # 🔹 Add supplier name below the title
         pdf.text 'Evaluation Report', size: 30, style: :bold, align: :center
+        pdf.move_down 10
+        pdf.text "Supplier: #{supplier.supplier_name}", size: 14, style: :italic, align: :center
         pdf.move_down 20
 
         comparison_results.each do |table_name, results|
@@ -503,7 +507,7 @@ module Api
 
           table_data = [['Attribute', 'Submitted Value', 'Standard Value', 'Status']]
           results.each do |result|
-            status_text = result[:is_accepted] == 1 ? '1' : '0'
+            status_text = result[:is_accepted] == 1 ? 'Accepted' : 'Rejected'
             table_data << [
               result[:field],
               result[:submitted_value],

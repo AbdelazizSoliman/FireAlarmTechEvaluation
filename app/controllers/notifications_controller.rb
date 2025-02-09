@@ -137,7 +137,7 @@ class NotificationsController < ApplicationController
       pdf.text 'Evaluation Report', size: 18, style: :bold
       pdf.move_down 20
 
-      # Existing Sections
+      # ✅ Existing Sections
       add_pdf_section(pdf, 'Supplier Data', @supplier_data)
       add_pdf_section(pdf, 'Product Data', @product_data)
       add_pdf_section(pdf, 'Fire Alarm Control Panel', @fire_alarm_control_panel)
@@ -146,18 +146,18 @@ class NotificationsController < ApplicationController
       add_pdf_section(pdf, 'Manual Pull Station', @manual_pull_station)
       add_pdf_door_holders(pdf, @door_holder)
       add_pdf_notification_devices(pdf, @notification_devices)
-      add_pdf_isolation(pdf, @isolation)
+      add_pdf_isolation(pdf, @isolations) # Ensure `@isolations` is used instead of `@isolation`
 
-      # New Sections
-      add_pdf_connection_betweens(pdf, @connection_betweens)
-      add_pdf_interface_with_other(pdf, @interface_with_other_systems)
-      add_pdf_evacuation_systems(pdf, @evacuation_systems)
-      add_pdf_prerecorded_messages(pdf, @prerecorded_messages)
-      add_pdf_telephone_systems(pdf, @telephone_systems)
-      add_pdf_spare_parts(pdf, @spare_parts)
-      add_pdf_scope_of_work(pdf, @scope_of_work)
-      add_pdf_material_delivery(pdf, @material_delivery)
-      add_pdf_general_commercial(pdf, @general_commercial_data)
+      # ✅ New Sections (Ensuring Proper Argument Handling)
+      add_pdf_section(pdf, 'Connection Between FACPs', @connection_betweens)
+      add_pdf_section(pdf, 'Interface with Other Systems', @interface_with_other_systems)
+      add_pdf_section(pdf, 'Evacuation Systems', @evacuation_systems)
+      add_pdf_section(pdf, 'Prerecorded Messages Audio Module', @prerecorded_message_audio_modules)
+      add_pdf_section(pdf, 'Telephone System', @telephone_systems)
+      add_pdf_section(pdf, 'Spare Parts', @spare_parts)
+      add_pdf_section(pdf, 'Scope of Work (SOW)', @scope_of_works)
+      add_pdf_section(pdf, 'Material & Delivery', @material_and_deliveries)
+      add_pdf_section(pdf, 'General & Commercial Data', @general_commercial_data)
 
       send_data pdf.render,
                 filename: "evaluation_report_#{@notification.id}.pdf",
@@ -204,15 +204,31 @@ class NotificationsController < ApplicationController
   end
 
   def add_pdf_section(pdf, section_title, data)
-    if data
+    if data.present?
       pdf.text section_title, size: 16, style: :bold
       pdf.move_down 10
+
+      table_data = [%w[Attribute Value]] # Ensure this is always an array of arrays
+
       data.attributes.each do |key, value|
-        pdf.text "#{key.humanize}: #{value}"
+        # Convert non-string values to strings to avoid errors
+        table_data << [key.humanize.to_s, value.to_s]
       end
+
+      # Ensure table_data has at least two rows before creating a table
+      if table_data.length > 1
+        pdf.table(table_data, header: true, width: pdf.bounds.width) do
+          row(0).font_style = :bold
+          row(0).background_color = 'cccccc'
+          self.row_colors = %w[f0f0f0 ffffff]
+        end
+      else
+        pdf.text "No data available for #{section_title}.", size: 12, style: :italic
+      end
+
       pdf.move_down 20
     else
-      pdf.text "#{section_title} data not available.", size: 14, style: :italic
+      pdf.text "#{section_title} data not available.", size: 12, style: :italic
       pdf.move_down 10
     end
   end

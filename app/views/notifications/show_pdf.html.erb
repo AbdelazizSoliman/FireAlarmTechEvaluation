@@ -23,86 +23,70 @@
   </style>
 </head>
 <body>
+
   <h1>Subsystem Evaluation Report</h1>
   <p><strong>Notification:</strong> <%= @notification.title %></p>
   <p><strong>Submitted By:</strong> <%= @notification.body %></p>
 
-  <h2>Supplier Data</h2>
-  <ul>
-    <% @supplier_data.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-    <% end %>
-  </ul>
-
-  <h2>Product Data</h2>
-  <ul>
-    <% @product_data.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-    <% end %>
-  </ul>
-
-  <h2>Fire Alarm Control Panel</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Attribute</th>
-        <th>Value</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @fire_alarm_control_panel.attributes.each do |key, value| %>
-        <tr>
-          <td><%= key.humanize %></td>
-          <td><%= value %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-
-  <h2>Graphic Systems</h2>
-  <ul>
-    <% @graphic_system.attributes.each do |key, value| %>
-      <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-    <% end %>
-  </ul>
-
-  <h2>Detectors Field Devices</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Value</th>
-        <th>Unit Rate</th>
-        <th>Amount</th>
-        <th>Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @detectors_field_device.attributes.each do |key, value| %>
-        <% if key.ends_with?('_value') %>
-          <tr>
-            <td><%= key.sub('_value', '').humanize %></td>
-            <td><%= value %></td>
-            <td><%= @detectors_field_device["#{key.sub('_value', '_unit_rate')}"] %></td>
-            <td><%= @detectors_field_device["#{key.sub('_value', '_amount')}"] %></td>
-            <td><%= @detectors_field_device["#{key.sub('_value', '_notes')}"] %></td>
-          </tr>
+  <!-- Helper method to render sections dynamically -->
+  <% def render_section(data) %>
+    <% if data.present? %>
+      <h2><%= data.model_name.human %></h2>
+      <ul>
+        <% data.attributes.each do |key, value| %>
+          <li><strong><%= key.humanize %>:</strong> <%= value %></li>
         <% end %>
-      <% end %>
-    </tbody>
-  </table>
+      </ul>
+    <% else %>
+      <p><strong><%= data.model_name.human %>:</strong> No data available.</p>
+    <% end %>
+  <% end %>
+
+  <!-- Supplier Data -->
+  <%= render_section(@supplier_data) %>
+
+  <!-- Product Data -->
+  <%= render_section(@product_data) %>
+
+  <!-- Fire Alarm Control Panel -->
+  <%= render_section(@fire_alarm_control_panel) %>
+
+  <!-- Graphic Systems -->
+  <%= render_section(@graphic_system) %>
+
+  <!-- Detectors Field Devices -->
+  <% if @detectors_field_device.present? %>
+    <h2>Detectors Field Devices</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Value</th>
+          <th>Unit Rate</th>
+          <th>Amount</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @detectors_field_device.attributes.each do |key, value| %>
+          <% if key.ends_with?('_value') %>
+            <tr>
+              <td><%= key.sub('_value', '').humanize %></td>
+              <td><%= value %></td>
+              <td><%= @detectors_field_device["#{key.sub('_value', '_unit_rate')}"] %></td>
+              <td><%= @detectors_field_device["#{key.sub('_value', '_amount')}"] %></td>
+              <td><%= @detectors_field_device["#{key.sub('_value', '_notes')}"] %></td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p><strong>Detectors Field Devices:</strong> No data available.</p>
+  <% end %>
 
   <!-- Manual Pull Station -->
-  <% if @manual_pull_station.present? %>
-    <h2>Manual Pull Station</h2>
-    <ul>
-      <% @manual_pull_station.attributes.each do |key, value| %>
-        <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-      <% end %>
-    </ul>
-  <% else %>
-    <p>No Manual Pull Station data available.</p>
-  <% end %>
+  <%= render_section(@manual_pull_station) %>
 
   <!-- Door Holders -->
   <% if @door_holder.present? %>
@@ -118,7 +102,6 @@
         </tr>
       </thead>
       <tbody>
-        <% # Just like your existing logic in the Excel template %>
         <%[
           { type: 'total_no_of_devices', label: 'Total Number of Devices' },
           { type: 'total_no_of_relays', label: 'Total Number of Relays' }
@@ -135,33 +118,31 @@
       </tbody>
     </table>
   <% else %>
-    <p>No Door Holders data available.</p>
+    <p><strong>Door Holders:</strong> No data available.</p>
   <% end %>
 
   <!-- Notification Devices -->
-  <% if @notification_devices.present? %>
-    
-    <ul>
-      <% @notification_devices.attributes.each do |key, value| %>
-        <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-      <% end %>
-    </ul>
-  <% else %>
-    <p>No Notification Devices data available.</p>
-  <% end %>
+  <%= render_section(@notification_devices) %>
 
   <!-- Isolations -->
-<% if @isolation_data.present? %>
-<h2>Isolations </h2>
-      <% @isolation_data.attributes.each do |key, value| %>
-        <ul>
-          <li><strong><%= key.humanize %>:</strong> <%= value %></li>
-      <% end %>
-      </ul>
-<% else %>
-  <p>No Isolation Data available.</p>
-<% end %>
+  <%= render_section(@isolations) %>
 
+  <!-- Additional Sections -->
+  <% additional_sections = [
+    { title: "Connection Between FACPs", data: @connection_betweens },
+    { title: "Interface with Other Systems", data: @interface_with_other_systems },
+    { title: "Evacuation Systems", data: @evacuation_systems },
+    { title: "Prerecorded Messages Audio Module", data: @prerecorded_message_audio_modules },
+    { title: "Telephone System", data: @telephone_systems },
+    { title: "Spare Parts", data: @spare_parts },
+    { title: "Scope of Work (SOW)", data: @scope_of_works },
+    { title: "Material & Delivery", data: @material_and_deliveries },
+    { title: "General & Commercial Data", data: @general_commercial_data }
+  ] %>
+
+  <% additional_sections.each do |section| %>
+    <%= render_section(section[:data]) %>
+  <% end %>
 
 </body>
 </html>

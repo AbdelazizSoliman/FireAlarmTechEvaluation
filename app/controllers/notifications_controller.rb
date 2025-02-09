@@ -180,25 +180,27 @@ class NotificationsController < ApplicationController
 
   def assign_subsystem_data
     @subsystem = @notification.notifiable
-    @supplier_data = @subsystem.supplier_data.first
-    @product_data = @subsystem.product_data.first
-    @fire_alarm_control_panel = @subsystem.fire_alarm_control_panels.first
-    @graphic_system = @subsystem.graphic_systems.first
-    @detectors_field_device = @subsystem.detectors_field_devices.first
-    @manual_pull_station = @subsystem.manual_pull_stations.first
-    @door_holder = @subsystem.door_holders.first
-    @notification_devices = @subsystem.notification_devices.first
-    @isolations = @subsystem.isolations.first
-    @connection_betweens = @subsystem.connection_betweens.first
-    @interface_with_other_systems = @subsystem.interface_with_other_systems.first
-    @evacuation_systems = @subsystem.evacuation_systems.first
-    @prerecorded_message_audio_modules = @subsystem.prerecorded_message_audio_modules.first
-    @telephone_systems = @subsystem.telephone_systems.first
-    @spare_parts = @subsystem.spare_parts.first
-    @scope_of_works = @subsystem.scope_of_works.first
-    @material_and_deliveries = @subsystem.material_and_deliveries.first
-    @general_commercial_data = @subsystem.general_commercial_data.first
-    Rails.logger.debug "Isolation Data: #{@isolation.inspect}"
+    additional_data = JSON.parse(@notification.additional_data || '{}')
+    supplier_id = additional_data['supplier_id']
+
+    @supplier_data = @subsystem.supplier_data.find_by(supplier_id: supplier_id)
+    @product_data = @subsystem.product_data.find_by(supplier_id: supplier_id)
+    @fire_alarm_control_panel = @subsystem.fire_alarm_control_panels.find_by(supplier_id: supplier_id)
+    @graphic_system = @subsystem.graphic_systems.find_by(supplier_id: supplier_id)
+    @detectors_field_device = @subsystem.detectors_field_devices.find_by(supplier_id: supplier_id)
+    @manual_pull_station = @subsystem.manual_pull_stations.find_by(supplier_id: supplier_id)
+    @door_holder = @subsystem.door_holders.find_by(supplier_id: supplier_id)
+    @notification_devices = @subsystem.notification_devices.find_by(supplier_id: supplier_id)
+    @isolations = @subsystem.isolations.find_by(supplier_id: supplier_id)
+    @connection_betweens = @subsystem.connection_betweens.find_by(supplier_id: supplier_id)
+    @interface_with_other_systems = @subsystem.interface_with_other_systems.find_by(supplier_id: supplier_id)
+    @evacuation_systems = @subsystem.evacuation_systems.find_by(supplier_id: supplier_id)
+    @prerecorded_message_audio_modules = @subsystem.prerecorded_message_audio_modules.find_by(supplier_id: supplier_id)
+    @telephone_systems = @subsystem.telephone_systems.find_by(supplier_id: supplier_id)
+    @spare_parts = @subsystem.spare_parts.find_by(supplier_id: supplier_id)
+    @scope_of_works = @subsystem.scope_of_works.find_by(supplier_id: supplier_id)
+    @material_and_deliveries = @subsystem.material_and_deliveries.find_by(supplier_id: supplier_id)
+    @general_commercial_data = @subsystem.general_commercial_data.find_by(supplier_id: supplier_id)
   end
 
   def add_pdf_section(pdf, section_title, data)

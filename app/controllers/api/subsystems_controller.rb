@@ -320,7 +320,7 @@ module Api
           body: "#{supplier.supplier_name} has submitted evaluation for subsystem ##{subsystem.name}.",
           notifiable: subsystem,
           notification_type: 'evaluation',
-          additional_data: { evaluation_report_path: relative_url_path }.to_json
+          additional_data: { evaluation_report_path: relative_url_path, supplier_id: supplier.id }.to_json
         )
       end
 

@@ -1,0 +1,27 @@
+<h1>Apple to Apple Comparison Results</h1>
+
+<h2>Evaluation Data</h2>
+
+<% @evaluation_data.each do |supplier_id, data| %>
+  <h3>Supplier: <%= Supplier.find(supplier_id).supplier_name %></h3>
+
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Attribute</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% data[:supplier_data].each do |key, value| %>
+        <tr>
+          <td><%= key %></td>
+          <td><%= value %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<!-- Optional: Export to Excel Button -->
+<%= link_to "Export to Excel", export_comparisons_path(supplier_ids: @suppliers.pluck(:id)), method: :get %>

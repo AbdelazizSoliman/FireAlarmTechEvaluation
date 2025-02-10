@@ -50,6 +50,13 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :comparisons, only: [:index] do
+    collection do
+      post :generate   # Generate Apple to Apple Comparison
+      get :export      # Export Apple to Apple Comparison to Excel (optional)
+    end
+  end
+
   # ✅ Supplier Routes (Non-API)
   resources :suppliers do
     collection do

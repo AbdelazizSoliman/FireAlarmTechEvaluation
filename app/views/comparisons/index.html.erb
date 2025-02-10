@@ -1,0 +1,38 @@
+<h1>Apple to Apple Comparison</h1>
+
+<%= form_with url: generate_comparisons_path, method: :post do %>
+  <div>
+    <label>Registration Type:</label>
+    <select name="registration_type">
+      <option value="">All</option>
+      <% @registration_types.each do |r_type| %>
+        <option value="<%= r_type %>"><%= r_type %></option>
+      <% end %>
+    </select>
+  </div>
+
+  <h2>Select Suppliers to Compare</h2>
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Supplier Name</th>
+        <th>Registration Type</th>
+        <!-- Add other columns here -->
+      </tr>
+    </thead>
+    <tbody>
+      <% @suppliers.each do |supplier| %>
+        <tr>
+          <td>
+            <input type="checkbox" name="supplier_ids[]" value="<%= supplier.id %>" />
+          </td>
+          <td><%= supplier.supplier_name %></td>
+          <td><%= supplier.registration_type %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  
+  <%= submit_tag "Generate Apple to Apple Comparison" %>
+<% end %>

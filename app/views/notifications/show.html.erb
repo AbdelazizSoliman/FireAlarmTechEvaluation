@@ -361,7 +361,7 @@
 
     <% if @notification.additional_data.present? %> 
   <% additional_data = JSON.parse(@notification.additional_data) rescue {} %>
-  <% if additional_data["evaluation_report_path"].present? && additional_data["supplier_id"] == @current_supplier.id %>
+  <% if additional_data["evaluation_report_path"].present? %>
     <%= link_to "Download Evaluation Report",
                 additional_data["evaluation_report_path"],
                 target: "_blank",

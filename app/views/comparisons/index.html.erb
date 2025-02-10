@@ -18,18 +18,35 @@
         <th></th>
         <th>Supplier Name</th>
         <th>Registration Type</th>
-        <!-- Add other columns here -->
+        <th>Project Name</th>
+        <th>Project Scope Name</th>
+        <th>System Name</th>
+        <th>Subsystem Name</th>
       </tr>
     </thead>
     <tbody>
       <% @suppliers.each do |supplier| %>
-        <tr>
-          <td>
-            <input type="checkbox" name="supplier_ids[]" value="<%= supplier.id %>" />
-          </td>
-          <td><%= supplier.supplier_name %></td>
-          <td><%= supplier.registration_type %></td>
-        </tr>
+        <% supplier.projects.each do |project| %>
+          <% project.project_scopes.each do |scope| %>
+            <% scope.systems.each do |system| %>
+              <% system.subsystems.each do |subsystem| %>
+                <% if subsystem.detectors_field_devices.present? || subsystem.fire_alarm_control_panels.present? %> <!-- Only show subsystems with evaluations -->
+                  <tr>
+                    <td>
+                      <input type="checkbox" name="supplier_ids[]" value="<%= supplier.id %>" />
+                    </td>
+                    <td><%= supplier.supplier_name %></td>
+                    <td><%= supplier.registration_type %></td>
+                    <td><%= project.name %></td>
+                    <td><%= scope.name %></td>
+                    <td><%= system.name %></td>
+                    <td><%= link_to subsystem.name, subsystem_path(subsystem) %></td>  <!-- Link to Subsystem Page -->
+                  </tr>
+                <% end %>
+              <% end %>
+            <% end %>
+          <% end %>
+        <% end %>
       <% end %>
     </tbody>
   </table>

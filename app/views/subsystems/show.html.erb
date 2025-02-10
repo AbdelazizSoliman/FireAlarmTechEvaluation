@@ -1,17 +1,22 @@
-<h1 class="text-xl font-bold">Subsystem: <%= @subsystem.name %> in System: <%= @subsystem.system.name %></h1>
+<h1><%= @subsystem.name %> Subsystem Evaluation Data</h1>
 
-<h2 class="text-lg font-semibold mt-6">Fire Alarm Control Panel Details</h2>
-<% if @subsystem.fire_alarm_control_panels.present? %>
-  <% @subsystem.fire_alarm_control_panels.each do |panel| %>
-    <ul class="list-disc ml-8">
-      <% panel.attributes.each do |key, value| %>
-        <% next if %w[id subsystem_id created_at updated_at].include?(key) %>
-        <li><strong><%= key.humanize %>:</strong> <%= value.present? ? value : "N/A" %></li>
+<% if @subsystem.evaluations.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Evaluation Attribute</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @subsystem.evaluations.each do |evaluation| %>
+        <tr>
+          <td><%= evaluation.attribute_name %></td>
+          <td><%= evaluation.value %></td>
+        </tr>
       <% end %>
-    </ul>
-  <% end %>
+    </tbody>
+  </table>
 <% else %>
-  <p>No Fire Alarm Control Panel details available for this subsystem.</p>
+  <p>No evaluations have been submitted for this subsystem yet.</p>
 <% end %>
-
-<%= link_to "Assign Supplier", assign_subsystem_path(@subsystem), class: "bg-green-500 text-white py-2 px-4 rounded" %>

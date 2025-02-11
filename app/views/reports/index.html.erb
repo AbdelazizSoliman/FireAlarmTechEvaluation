@@ -1,0 +1,60 @@
+<style>
+  /* Basic styling for the reports page */
+  .reports-container {
+    margin: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  .reports-container h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .reports-container ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .reports-container ul li {
+    font-size: 18px;
+    color: #555;
+    padding: 5px 0;
+  }
+
+  .reports-container ul li a {
+    text-decoration: none;
+    color: #0066cc;
+    font-weight: normal;
+  }
+
+  .reports-container ul li a:hover {
+    text-decoration: underline;
+    color: #004b8e;
+  }
+
+  .report-button {
+    display: block;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: rgb(216, 218, 221);
+    color: white;
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 16px;
+  }
+
+  .report-button:hover {
+    background-color: rgb(245, 60, 60);
+  }
+</style>
+
+<div class="reports-container">
+  <h1>Reports</h1>
+  
+  <%= link_to "Generate Evaluation/Tech. Report", evaluation_tech_report_reports_path, class: "report-button" %>
+</div>

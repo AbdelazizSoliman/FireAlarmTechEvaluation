@@ -1,0 +1,30 @@
+<div class="reports-container">
+  <h1>Evaluation/Tech. Report for <%= @supplier.supplier_name %></h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Evaluation Attribute</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @evaluations.each do |evaluation| %>
+        <tr>
+          <td>Supplier Data</td>
+          <td><%= evaluation.supplier_data %></td>
+        </tr>
+        <tr>
+          <td>Product Data</td>
+          <td><%= evaluation.product_data %></td>
+        </tr>
+        <tr>
+          <td>General Commercial Data</td>
+          <td><%= evaluation.general_commercial_data %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= link_to "Generate Excel Report", generate_evaluation_report_reports_path(supplier_id: @supplier.id), class: "report-button" %>
+</div>

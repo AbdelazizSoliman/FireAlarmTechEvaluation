@@ -1,0 +1,18 @@
+<div class="reports-container">
+  <h1>Generate Evaluation/Tech. Report</h1>
+
+  <ul>
+    <% @suppliers_with_subsystems.each do |supplier| %>
+      <li>
+        <strong><%= supplier.supplier_name %></strong>
+        <ul>
+          <% supplier.subsystems.each do |subsystem| %>
+            <li>
+              <%= link_to subsystem.name, evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id) %>
+            </li>
+          <% end %>
+        </ul>
+      </li>
+    <% end %>
+  </ul>
+</div>

@@ -50,6 +50,7 @@ Rails.application.routes.draw do
     end
   end
 
+  # ✅ Comparisons (Apple to Apple Comparison)
   resources :comparisons, only: [:index] do
     collection do
       post :generate   # Generate Apple to Apple Comparison
@@ -83,6 +84,23 @@ Rails.application.routes.draw do
       get :download
     end
   end
+
+  # ✅ Reports Routes
+ # Reports Routes
+ resources :reports, only: [:index] do
+  collection do
+    get :evaluation_tech_report
+    get :evaluation_data # Show evaluation data for a supplier and subsystem
+    get :generate_evaluation_report # Generate and download the evaluation report
+    get :evaluation_report  # Generate Evaluation/Tech Report
+    get :recommendation  # Generate Recommendation
+    get :apple_to_apple_comparison  # Generate Apple to Apple Comparison
+    get :sow  # Generate/Determine SOW between Suppliers & Installation Contractor
+    get :missing_items  # Generate Missing Items
+    get :differences  # Generate Differences between Bidders
+    get :interfaces  # Generate Interfaces among Systems
+  end
+end
 
   # ✅ Standalone Routes for Systems and Subsystems
   resources :project_scopes, only: [:index, :show, :new, :create]

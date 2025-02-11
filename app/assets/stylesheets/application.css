@@ -1,0 +1,42 @@
+/* Styles for the report buttons */
+.report-buttons {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 20px; /* Add space between each button */
+    align-items: center; /* Center the buttons */
+    margin-top: 30px;
+  }
+  
+  .btn-container {
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Align the buttons in the center */
+  }
+  
+  /* Main button styling */
+  .btn {
+    display: inline-block;
+    background-color: #d9534f; /* Red background */
+    color: white;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 8px; /* Rounded corners */
+    text-decoration: none;
+    width: 100%;
+    max-width: 400px; /* Limit button width */
+    margin-bottom: 10px; /* Space at the bottom */
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Button hover effect */
+  .btn:hover {
+    background-color: #c9302c; /* Darker red */
+  }
+  
+  /* Optional - add a little animation on hover */
+  .btn:active {
+    transform: scale(0.98); /* Shrink slightly on click */
+  }
+  

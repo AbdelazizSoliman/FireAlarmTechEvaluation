@@ -1,0 +1,24 @@
+<div class="reports-container">
+  <% if @supplier && @subsystem %>
+    <h1>Evaluation Data for <%= @supplier.supplier_name %> - <%= @subsystem.name %></h1>
+
+    <h2>Supplier Data</h2>
+    <p><%= @supplier_data.supplier_name %></p>
+    <p><%= @supplier_data.supplier_category %></p>
+
+    <h2>Product Data</h2>
+    <p><%= @product_data.manufacturer %></p>
+
+    <h2>Detectors</h2>
+    <p><%= @detectors.smoke_detectors %></p>
+
+    <h2>General Commercial Data</h2>
+    <p><%= @general_commercial_data.warranty_for_materials %></p>
+
+    <!-- Add more fields as necessary -->
+
+    <%= link_to "Generate Report", generate_evaluation_report_reports_path(supplier_id: @supplier.id, subsystem_id: @subsystem.id), class: "report-button" %>
+  <% else %>
+    <p>Could not find the evaluation data. Please check the parameters and try again.</p>
+  <% end %>
+</div>

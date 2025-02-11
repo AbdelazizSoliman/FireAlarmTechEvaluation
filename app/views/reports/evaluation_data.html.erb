@@ -1,7 +1,86 @@
 <!DOCTYPE html>
 <html>
  
+<style>
+    /* Styling for the page */
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9fafb;
+      color: #333;
+    }
 
+    h1, h2 {
+      color: #2c3e50;
+    }
+
+    h2 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.4rem;
+      padding: 0.3rem 0.6rem;
+      background-color: #ecf0f1;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      background-color: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    table thead th {
+      background-color: #009688;
+      color: #fff;
+      text-align: left;
+      padding: 12px;
+    }
+
+    table tbody tr:nth-child(odd) {
+      background-color: #f2f2f2;
+    }
+
+    table tbody td {
+      border-bottom: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      vertical-align: top;
+    }
+
+    table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-link {
+      text-decoration: none;
+      margin-right: 1rem;
+      border: 1px solid #e0e0e0;
+    }
+
+    .btn-link:hover {
+      text-decoration: underline;
+    }
+
+    .footer-links {
+      margin-top: 2rem;
+      font-size: 0.95rem;
+    }
+
+    .footer-links a.btn-link {
+      background-color: #009688;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+  </style>
+  
 <head>
   <meta charset="UTF-8">
   <title>Evaluation Data</title>
@@ -280,7 +359,7 @@
   <% end %>
 
  <div class="footer-links">
-  <%= link_to "Download Evaluation Report", generate_evaluation_report_reports_path(supplier_id: @supplier.id, subsystem_id: @subsystem.id), class: "btn-link", id: "downloadReportButton" %>
+  <%= link_to "Download Evaluation Report", generate_evaluation_report_reports_path(supplier_id: @supplier.id, subsystem_id: @subsystem.id), class: "btn-link", id: "downloadReportButton", rel: "noopener noreferrer", data: { turbo: false } %>
 </div>
 
 <script>

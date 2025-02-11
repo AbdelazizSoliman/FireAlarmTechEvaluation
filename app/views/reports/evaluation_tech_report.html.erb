@@ -1,38 +1,30 @@
-<div class="reports-container">
-  <h1>Generate Evaluation/Tech. Report</h1>
+<div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-3xl mx-auto">
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Generate Evaluation/Tech. Report</h1>
 
-  <ul>
-    <% @suppliers_with_subsystems.each do |supplier| %>
-      <li>
-        <strong><%= supplier.supplier_name %></strong>
-        <ul>
-          <% supplier.subsystems.each do |subsystem| %>
-            <li>
-              <%= link_to subsystem.name, evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id) %>
-              <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const downloadButton = document.getElementById("downloadReportButton");
-
-    if (downloadButton) {
-      downloadButton.onclick = function(e) {
-        // Prevent default behavior of the link
-        e.preventDefault();
-
-        // Disable the button after click to prevent multiple downloads
-        this.disabled = true;
-        this.innerText = 'Generating...'; // Optionally, change text to indicate processing
-
-        // Trigger the download function after the first click
-        const reportUrl = this.href;
-        window.location.href = reportUrl; // Direct the browser to generate the report
-      };
-    }
-  });
-</script>
-            </li>
-          <% end %>
-        </ul>
-      </li>
-    <% end %>
-  </ul>
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto bg-white rounded-lg shadow-md">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Supplier Name</th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Subsystems</th>
+        </tr>
+      </thead>
+      <tbody class="text-sm text-gray-700">
+        <% @suppliers_with_subsystems.each do |supplier| %>
+          <tr class="border-t">
+            <td class="px-6 py-3 font-semibold"><%= supplier.supplier_name %></td>
+            <td class="px-6 py-3">
+              <ul class="space-y-2">
+                <% supplier.subsystems.each do |subsystem| %>
+                  <li>
+                    <%= link_to subsystem.name, evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id), class: "text-blue-600 hover:text-blue-800 hover:underline" %>
+                  </li>
+                <% end %>
+              </ul>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>

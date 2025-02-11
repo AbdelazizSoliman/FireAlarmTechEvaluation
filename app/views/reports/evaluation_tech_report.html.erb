@@ -9,6 +9,26 @@
           <% supplier.subsystems.each do |subsystem| %>
             <li>
               <%= link_to subsystem.name, evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id) %>
+              <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const downloadButton = document.getElementById("downloadReportButton");
+
+    if (downloadButton) {
+      downloadButton.onclick = function(e) {
+        // Prevent default behavior of the link
+        e.preventDefault();
+
+        // Disable the button after click to prevent multiple downloads
+        this.disabled = true;
+        this.innerText = 'Generating...'; // Optionally, change text to indicate processing
+
+        // Trigger the download function after the first click
+        const reportUrl = this.href;
+        window.location.href = reportUrl; // Direct the browser to generate the report
+      };
+    }
+  });
+</script>
             </li>
           <% end %>
         </ul>

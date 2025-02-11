@@ -135,6 +135,19 @@ class ReportsController < ApplicationController
   def evaluation_data
     @supplier = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
+     # Create a unique hash based on the supplier's data to account for any updates
+  data_hash = Digest::SHA256.hexdigest(@supplier.updated_at.to_s + @subsystem.updated_at.to_s)
+
+  # Generate a unique filename with the data hash
+  report_filename = "evaluation_report_#{@subsystem.id}_supplier_#{@supplier.id}_#{data_hash}.pdf"
+
+  # Check if a report with the same data hash already exists
+  existing_report = Dir["#{Rails.root}/public/reports/#{report_filename}"].first
+
+  # If a report already exists, redirect to download the existing one
+  if existing_report
+    redirect_to existing_report and return
+  end
 
     # Fetching data related to the supplier and subsystem
     @supplier_data = @supplier.supplier_data.find_by(subsystem_id: @subsystem.id)

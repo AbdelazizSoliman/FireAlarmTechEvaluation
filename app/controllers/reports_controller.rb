@@ -117,31 +117,32 @@ class ReportsController < ApplicationController
   }
 
   #----------------------------------------------------------------
-  # Excel Report Generation
+  # Excel Report Generation (Only for the given supplier & subsystem)
   #----------------------------------------------------------------
   def generate_excel_report
     supplier = Supplier.find(params[:supplier_id])
     subsystem = Subsystem.find(params[:subsystem_id])
 
+    # Only fetch evaluation data for the given supplier (filtered by subsystem_id)
     data_sections = {
       "Supplier Data"                   => supplier_data(supplier),
-      "Product Data"                    => product_data(subsystem),
-      "Fire Alarm Control Panel"        => fire_alarm_control_panel(subsystem),
-      "Graphic Systems"                 => graphic_system(subsystem),
-      "Detectors Field Devices"         => detectors_field_device(subsystem),
-      "Manual Pull Station"             => manual_pull_station(subsystem),
-      "Door Holders"                    => door_holder(subsystem),
-      "Notification Devices"            => notification_devices(subsystem),
-      "Isolation Data"                  => isolations(subsystem),
-      "Connection Between FACPs"        => connection_betweens(subsystem),
-      "Interface with Other Systems"    => interface_with_other_systems(subsystem),
-      "Evacuation Systems"              => evacuation_systems(subsystem),
-      "Prerecorded Messages/Audio Module" => prerecorded_message_audio_modules(subsystem),
-      "Telephone System"                => telephone_systems(subsystem),
-      "Spare Parts"                     => spare_parts(subsystem),
-      "Scope of Work (SOW)"             => scope_of_works(subsystem),
-      "Material & Delivery"             => material_and_deliveries(subsystem),
-      "General & Commercial Data"       => general_commercial_data(subsystem)
+      "Product Data"                    => product_data(supplier, subsystem),
+      "Fire Alarm Control Panel"        => fire_alarm_control_panel(supplier, subsystem),
+      "Graphic Systems"                 => graphic_system(supplier, subsystem),
+      "Detectors Field Devices"         => detectors_field_device(supplier, subsystem),
+      "Manual Pull Station"             => manual_pull_station(supplier, subsystem),
+      "Door Holders"                    => door_holder(supplier, subsystem),
+      "Notification Devices"            => notification_devices(supplier, subsystem),
+      "Isolation Data"                  => isolations(supplier, subsystem),
+      "Connection Between FACPs"        => connection_betweens(supplier, subsystem),
+      "Interface with Other Systems"    => interface_with_other_systems(supplier, subsystem),
+      "Evacuation Systems"              => evacuation_systems(supplier, subsystem),
+      "Prerecorded Messages/Audio Module" => prerecorded_message_audio_modules(supplier, subsystem),
+      "Telephone System"                => telephone_systems(supplier, subsystem),
+      "Spare Parts"                     => spare_parts(supplier, subsystem),
+      "Scope of Work (SOW)"             => scope_of_works(supplier, subsystem),
+      "Material & Delivery"             => material_and_deliveries(supplier, subsystem),
+      "General & Commercial Data"       => general_commercial_data(supplier, subsystem)
     }
 
     p = Axlsx::Package.new
@@ -161,7 +162,7 @@ class ReportsController < ApplicationController
   end
 
   #----------------------------------------------------------------
-  # Other Actions
+  # Other Actions (index, evaluation_tech_report, evaluation_data, etc.)
   #----------------------------------------------------------------
   def index
     @suppliers_with_evaluations = Supplier.joins(:supplier_data, :product_data, :detectors_field_devices, :general_commercial_data)
@@ -256,72 +257,91 @@ class ReportsController < ApplicationController
     supplier.attributes.except("id", "created_at", "updated_at")
   end
 
-  def product_data(subsystem)
-    process_association(subsystem.product_data, "Product")
+  # The following methods now accept both supplier and subsystem so that
+  # we fetch only the records belonging to the given supplier and subsystem.
+  def product_data(supplier, subsystem)
+    record = supplier.product_data.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Product")
   end
 
-  def fire_alarm_control_panel(subsystem)
-    process_association(subsystem.fire_alarm_control_panels, "Panel")
+  def fire_alarm_control_panel(supplier, subsystem)
+    record = supplier.fire_alarm_control_panels.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Panel")
   end
 
-  def graphic_system(subsystem)
-    process_association(subsystem.graphic_systems, "Graphic System")
+  def graphic_system(supplier, subsystem)
+    record = supplier.graphic_systems.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Graphic System")
   end
 
-  def detectors_field_device(subsystem)
-    process_association(subsystem.detectors_field_devices, "Detector")
+  def detectors_field_device(supplier, subsystem)
+    record = supplier.detectors_field_devices.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Detector")
   end
 
-  def manual_pull_station(subsystem)
-    process_association(subsystem.manual_pull_stations, "Manual Pull Station")
+  def manual_pull_station(supplier, subsystem)
+    record = supplier.manual_pull_stations.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Manual Pull Station")
   end
 
-  def door_holder(subsystem)
-    process_association(subsystem.door_holders, "Door Holder")
+  def door_holder(supplier, subsystem)
+    record = supplier.door_holders.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Door Holder")
   end
 
-  def notification_devices(subsystem)
-    process_association(subsystem.notification_devices, "Notification Device")
+  def notification_devices(supplier, subsystem)
+    record = supplier.notification_devices.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Notification Device")
   end
 
-  def isolations(subsystem)
-    process_association(subsystem.isolations, "Isolation")
+  def isolations(supplier, subsystem)
+    record = supplier.isolations.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Isolation")
   end
 
-  def connection_betweens(subsystem)
-    process_association(subsystem.connection_betweens, "Connection")
+  def connection_betweens(supplier, subsystem)
+    record = supplier.connection_betweens.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Connection")
   end
 
-  def interface_with_other_systems(subsystem)
-    process_association(subsystem.interface_with_other_systems, "Interface")
+  def interface_with_other_systems(supplier, subsystem)
+    record = supplier.interface_with_other_systems.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Interface")
   end
 
-  def evacuation_systems(subsystem)
-    process_association(subsystem.evacuation_systems, "Evacuation System")
+  def evacuation_systems(supplier, subsystem)
+    record = supplier.evacuation_systems.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Evacuation System")
   end
 
-  def prerecorded_message_audio_modules(subsystem)
-    process_association(subsystem.prerecorded_message_audio_modules, "Prerecorded Message/Audio Module")
+  def prerecorded_message_audio_modules(supplier, subsystem)
+    record = supplier.prerecorded_message_audio_modules.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Prerecorded Message/Audio Module")
   end
 
-  def telephone_systems(subsystem)
-    process_association(subsystem.telephone_systems, "Telephone System")
+  def telephone_systems(supplier, subsystem)
+    record = supplier.telephone_systems.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Telephone System")
   end
 
-  def spare_parts(subsystem)
-    process_association(subsystem.spare_parts, "Spare Part")
+  def spare_parts(supplier, subsystem)
+    record = supplier.spare_parts.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Spare Part")
   end
 
-  def scope_of_works(subsystem)
-    process_association(subsystem.scope_of_works, "Scope of Work")
+  def scope_of_works(supplier, subsystem)
+    record = supplier.scope_of_works.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Scope of Work")
   end
 
-  def material_and_deliveries(subsystem)
-    process_association(subsystem.material_and_deliveries, "Material & Delivery")
+  def material_and_deliveries(supplier, subsystem)
+    record = supplier.material_and_deliveries.find_by(subsystem_id: subsystem.id)
+    process_association(record, "Material & Delivery")
   end
 
-  def general_commercial_data(subsystem)
-    process_association(subsystem.general_commercial_data, "General & Commercial")
+  def general_commercial_data(supplier, subsystem)
+    record = supplier.general_commercial_data.find_by(subsystem_id: subsystem.id)
+    process_association(record, "General & Commercial")
   end
 
   def set_suppliers

@@ -79,7 +79,6 @@ gem 'letter_opener_web'
 # Phonelib gem for handling phone numbers in a consistent format
 gem 'phonelib'
 
-gem 'axlsx_rails'
 
 gem 'caxlsx_rails'
 

@@ -2,6 +2,8 @@
 # exit on error
 set -o errexit
 
+sudo apt-get update && sudo apt-get install -y wkhtmltopdf
+
 bundle install
 bundle exec rails assets:precompile
 bundle exec rails assets:clean

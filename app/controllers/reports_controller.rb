@@ -195,7 +195,18 @@ class ReportsController < ApplicationController
     send_file report_path, type: 'application/pdf', disposition: 'attachment', filename: "evaluation_report_#{@subsystem.id}_#{@supplier.id}.pdf"
   end
 
+  def apple_to_apple_comparison
+    # Fetch all suppliers with subsystems
+    @suppliers_with_subsystems = Supplier.joins(:subsystems).distinct
+  end
+
   private
+
+  def set_suppliers
+    supplier_ids = params[:supplier_ids] # Fetch supplier IDs passed from the form
+    @suppliers = Supplier.where(id: supplier_ids) # Find the suppliers
+  end
+
 
   # Fetch and parse standards data from Excel
   def fetch_standard_data(sheet_name)
@@ -315,4 +326,5 @@ class ReportsController < ApplicationController
 
     comparison_result
   end
+
 end

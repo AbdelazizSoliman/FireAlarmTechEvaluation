@@ -1,5 +1,7 @@
 class RemoveCategoryFromSubsystems < ActiveRecord::Migration[7.1]
   def change
-    remove_column :subsystems, :category, :string
+    if column_exists?(:subsystems, :category)
+      remove_column :subsystems, :category, :string
+    end
   end
 end

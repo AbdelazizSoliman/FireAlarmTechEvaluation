@@ -108,9 +108,6 @@ end
   resources :systems, only: [:index, :show, :new, :create]
   resources :subsystems, only: [:index, :show, :new, :create]
 
-  # ✅ Devise routes for user authentication
-  devise_for :users
-
   # ✅ Health check route
   get "up" => "rails/health#show", as: :rails_health_check
 
@@ -119,6 +116,16 @@ end
   get 'reports/generate_excel_report', to: 'reports#generate_excel_report', as: 'generate_excel_report'
 
 
-  # ✅ Root route
-  root "pages#index"
+  devise_for :users
+
+  # Redirect authenticated users to Dashboard
+  authenticated :user do
+    root to: "dashboard#index", as: :authenticated_root
+  end
+
+  # Redirect unauthenticated users to the login page
+  devise_scope :user do
+    root to: "devise/sessions#new", as: :unauthenticated_root
+  end
+
 end

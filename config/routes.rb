@@ -116,6 +116,8 @@ end
 
   # ✅ Excel download route
   get 'projects/download_excel', to: 'projects#download_excel', as: 'download_excel'
+  get 'reports/generate_excel_report', to: 'reports#generate_excel_report', as: 'generate_excel_report'
+
 
   # ✅ Root route
   root "pages#index"

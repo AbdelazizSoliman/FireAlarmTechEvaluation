@@ -117,13 +117,12 @@ class ReportsController < ApplicationController
   }
 
   #----------------------------------------------------------------
-  # Excel Report Generation (Only for the given supplier & subsystem)
+  # Excel Report Generation for Single Supplier (Existing)
   #----------------------------------------------------------------
   def generate_excel_report
     supplier = Supplier.find(params[:supplier_id])
     subsystem = Subsystem.find(params[:subsystem_id])
 
-    # Only fetch evaluation data for the given supplier (filtered by subsystem_id)
     data_sections = {
       "Supplier Data"                   => supplier_data(supplier),
       "Product Data"                    => product_data(supplier, subsystem),
@@ -162,7 +161,145 @@ class ReportsController < ApplicationController
   end
 
   #----------------------------------------------------------------
-  # Other Actions (index, evaluation_tech_report, evaluation_data, etc.)
+  # Apple-to-Apple Comparison Report Generation
+  #----------------------------------------------------------------
+  # This action is called from the apple_to_apple_comparison view.
+  # It expects a GET parameter "selected_suppliers[]" that contains the IDs of suppliers to compare.
+  def generate_comparison_report
+    selected_ids = params[:selected_suppliers]
+    if selected_ids.blank?
+      flash[:alert] = "Please select at least one supplier."
+      redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
+    end
+    
+    suppliers = Supplier.where(id: selected_ids)
+
+    # Define the sections to be compared.
+    # For sections that require a subsystem, we assume comparison is done using each supplier’s first subsystem.
+    sections = {
+      "Supplier Data" => lambda { |supplier|
+        supplier_data(supplier)
+      },
+      "Product Data" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        product_data(supplier, subsystem)
+      },
+      "Fire Alarm Control Panel" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        fire_alarm_control_panel(supplier, subsystem)
+      },
+      "Graphic Systems" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        graphic_system(supplier, subsystem)
+      },
+      "Detectors Field Devices" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        detectors_field_device(supplier, subsystem)
+      },
+      "Manual Pull Station" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        manual_pull_station(supplier, subsystem)
+      },
+      "Door Holders" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        door_holder(supplier, subsystem)
+      },
+      "Notification Devices" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        notification_devices(supplier, subsystem)
+      },
+      "Isolation Data" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        isolations(supplier, subsystem)
+      },
+      "Connection Between FACPs" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        connection_betweens(supplier, subsystem)
+      },
+      "Interface with Other Systems" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        interface_with_other_systems(supplier, subsystem)
+      },
+      "Evacuation Systems" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        evacuation_systems(supplier, subsystem)
+      },
+      "Prerecorded Messages/Audio Module" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        prerecorded_message_audio_modules(supplier, subsystem)
+      },
+      "Telephone System" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        telephone_systems(supplier, subsystem)
+      },
+      "Spare Parts" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        spare_parts(supplier, subsystem)
+      },
+      "Scope of Work (SOW)" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        scope_of_works(supplier, subsystem)
+      },
+      "Material & Delivery" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        material_and_deliveries(supplier, subsystem)
+      },
+      "General & Commercial Data" => lambda { |supplier|
+        subsystem = supplier.subsystems.first
+        general_commercial_data(supplier, subsystem)
+      }
+    }
+
+    # Build a combined hash for each section.
+    # For each section, we combine the keys (attributes) across the selected suppliers.
+    # The final structure is: { section_name => { attribute => { supplier_name => value, ... } } }
+    comparison_data = {}
+    sections.each do |section_name, fetch_proc|
+      section_hash = {}
+      suppliers.each do |supplier|
+        data = fetch_proc.call(supplier) || {}
+        data.each do |attr, value|
+          section_hash[attr] ||= {}
+          section_hash[attr][supplier.supplier_name] = value
+        end
+      end
+      comparison_data[section_name] = section_hash
+    end
+
+    # Generate the Excel workbook.
+    p = Axlsx::Package.new
+    wb = p.workbook
+
+    wb.add_worksheet(name: "Apple to Apple Comparison") do |sheet|
+      # Header row: first column "Attribute", then one column per supplier.
+      header = ["Attribute"] + suppliers.map { |s| s.supplier_name }
+      sheet.add_row header, b: true
+
+      # For each section, add a section title row and then a row per attribute.
+      comparison_data.each do |section_name, attributes_hash|
+        # Section title row.
+        sheet.add_row [section_name], sz: 12, b: true
+
+        attributes_hash.each do |attribute, supplier_values|
+          row = [attribute]
+          suppliers.each do |supplier|
+            row << supplier_values[supplier.supplier_name].to_s
+          end
+          sheet.add_row row
+        end
+
+        # Add an empty row for spacing.
+        sheet.add_row []
+      end
+    end
+
+    send_data p.to_stream.read,
+              filename: "Apple_to_Apple_Comparison.xlsx",
+              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  end
+
+  #----------------------------------------------------------------
+  # Other Actions (index, evaluation_tech_report, evaluation_data, generate_evaluation_report)
   #----------------------------------------------------------------
   def index
     @suppliers_with_evaluations = Supplier.joins(:supplier_data, :product_data, :detectors_field_devices, :general_commercial_data)
@@ -257,8 +394,7 @@ class ReportsController < ApplicationController
     supplier.attributes.except("id", "created_at", "updated_at")
   end
 
-  # The following methods now accept both supplier and subsystem so that
-  # we fetch only the records belonging to the given supplier and subsystem.
+  # Methods for evaluation data that require both supplier and subsystem.
   def product_data(supplier, subsystem)
     record = supplier.product_data.find_by(subsystem_id: subsystem.id)
     process_association(record, "Product")

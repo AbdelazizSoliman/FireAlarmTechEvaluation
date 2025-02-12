@@ -21,7 +21,7 @@
               <td class="px-6 py-3">
                 <ul class="space-y-2">
                   <% supplier.subsystems.each do |subsystem| %>
-                    <li><%= subsystem.name %></li>
+                     <%= link_to subsystem.name, evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id), class: "text-blue-600 hover:text-blue-800 hover:underline" %>
                   <% end %>
                 </ul>
               </td>

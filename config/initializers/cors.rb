@@ -8,7 +8,7 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     origins 'http://localhost:5173', 
-            /https:\/\/supplier-portal-.*\.vercel\.app/  # Allow any deployment on Vercel
+             'https://supplier-portal-five-wine.vercel.app'
     resource '*',
       headers: :any,
       expose: ['Authorization'],

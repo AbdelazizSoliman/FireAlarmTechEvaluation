@@ -33,7 +33,6 @@ class SubsystemsController < ApplicationController
   private
 
   def set_nested_resources
-   
     @system = System.find(params[:system_id]) if params[:system_id]
   end
 

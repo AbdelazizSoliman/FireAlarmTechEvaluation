@@ -125,7 +125,7 @@ module Api
 
     def submit_all
       subsystem = Subsystem.find(params[:id])
-      supplier = current_supplier || Supplier.find_by(id: params[:supplier_id]) # Ensure supplier exists
+      supplier = current_supplier || ::Supplier.find_by(id: params[:supplier_id]) # Ensure supplier exists
 
       if supplier.nil?
         Rails.logger.error "🚨 Supplier not found! Params: #{params.inspect}"

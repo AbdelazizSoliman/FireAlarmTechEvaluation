@@ -26,8 +26,8 @@ class ApplicationController < ActionController::Base
   private
 
   def set_cors_headers
-    response.set_header('Access-Control-Allow-Origin', 'http://localhost:5173') # Frontend origin
-    response.set_header('Access-Control-Allow-Credentials', 'true')
+    # response.set_header('Access-Control-Allow-Origin', 'http://localhost:5173') # Frontend origin
+    # response.set_header('Access-Control-Allow-Credentials', 'true')
   end
 
   def set_unread_notifications_count

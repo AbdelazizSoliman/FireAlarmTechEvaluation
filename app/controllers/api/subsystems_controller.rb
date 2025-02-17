@@ -311,9 +311,9 @@ module Api
         )
 
         # 🔹 Generate a report with a unique file name for the supplier and subsystem
-        report_path = generate_evaluation_report(subsystem, supplier, evaluation_results)
-        relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
-        relative_url_path = '/' + relative_path
+        # report_path = generate_evaluation_report(subsystem, supplier, evaluation_results)
+        # relative_path = Pathname.new(report_path).relative_path_from(Rails.root.join('public')).to_s
+        # relative_url_path = '/' + relative_path
 
         # UPDATED: Update the notification message with supplier and subsystem names
         Notification.create!(
@@ -488,51 +488,51 @@ module Api
       results
     end
 
-    def generate_evaluation_report(subsystem, supplier, comparison_results)
-      file_name = "evaluation_report_#{subsystem.id}_supplier_#{supplier.id}_#{Time.now.to_i}.pdf"
-      file_path = Rails.root.join('public', 'reports', file_name)
+    # def generate_evaluation_report(subsystem, supplier, comparison_results)
+    #   file_name = "evaluation_report_#{subsystem.id}_supplier_#{supplier.id}_#{Time.now.to_i}.pdf"
+    #   file_path = Rails.root.join('public', 'reports', file_name)
 
-      Prawn::Document.generate(file_path) do |pdf|
-        # 🔹 Add supplier name below the title
-        pdf.text 'Evaluation Report', size: 30, style: :bold, align: :center
-        pdf.move_down 10
-        pdf.text "Supplier: #{supplier.supplier_name}", size: 14, style: :italic, align: :center
-        pdf.move_down 20
+    #   Prawn::Document.generate(file_path) do |pdf|
+    #     # 🔹 Add supplier name below the title
+    #     pdf.text 'Evaluation Report', size: 30, style: :bold, align: :center
+    #     pdf.move_down 10
+    #     pdf.text "Supplier: #{supplier.supplier_name}", size: 14, style: :italic, align: :center
+    #     pdf.move_down 20
 
-        comparison_results.each do |table_name, results|
-          next unless results.is_a?(Array)
+    #     comparison_results.each do |table_name, results|
+    #       next unless results.is_a?(Array)
 
-          pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
-          pdf.move_down 10
+    #       pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
+    #       pdf.move_down 10
 
-          table_data = [['Attribute', 'Submitted Value', 'Standard Value', 'Status']]
-          results.each do |result|
-            status_text = result[:is_accepted] == 1 ? 'Accepted' : 'Rejected'
-            table_data << [
-              result[:field],
-              result[:submitted_value],
-              result[:standard_value],
-              status_text
-            ]
-          end
+    #       table_data = [['Attribute', 'Submitted Value', 'Standard Value', 'Status']]
+    #       results.each do |result|
+    #         status_text = result[:is_accepted] == 1 ? 'Accepted' : 'Rejected'
+    #         table_data << [
+    #           result[:field],
+    #           result[:submitted_value],
+    #           result[:standard_value],
+    #           status_text
+    #         ]
+    #       end
 
-          pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
-            row(0).font_style = :bold
-            row(0).background_color = 'cccccc'
-            self.row_colors = %w[f0f0f0 ffffff]
-          end
-          pdf.move_down 20
-        end
+    #       pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
+    #         row(0).font_style = :bold
+    #         row(0).background_color = 'cccccc'
+    #         self.row_colors = %w[f0f0f0 ffffff]
+    #       end
+    #       pdf.move_down 20
+    #     end
 
-        overall = comparison_results[:overall_status]
-        percent = comparison_results[:acceptance_percentage].round(2)
+    #     overall = comparison_results[:overall_status]
+    #     percent = comparison_results[:acceptance_percentage].round(2)
 
-        pdf.text "Overall Acceptance: #{percent}%"
-        pdf.text "Overall Status: #{overall}"
-      end
+    #     pdf.text "Overall Acceptance: #{percent}%"
+    #     pdf.text "Overall Status: #{overall}"
+    #   end
 
-      file_path.to_s
-    end
+    #   file_path.to_s
+    # end
 
     # ---------------------------------------------------------------------
     # STRONG PARAMS (unchanged)

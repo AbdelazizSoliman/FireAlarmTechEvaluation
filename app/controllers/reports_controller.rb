@@ -343,7 +343,7 @@ class ReportsController < ApplicationController
   def generate_evaluation_report
     @supplier = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-
+  
     evaluation_results = perform_evaluation(
       subsystem: @subsystem,
       fire_alarm_control_panel: @subsystem.fire_alarm_control_panels.find_by(supplier_id: @supplier.id),
@@ -356,13 +356,15 @@ class ReportsController < ApplicationController
       telephone_systems: @subsystem.telephone_systems.find_by(supplier_id: @supplier.id),
       general_commercial_data: @subsystem.general_commercial_data.find_by(supplier_id: @supplier.id)
     )
-
-    report_path = generate_evaluation_pdf(@subsystem, @supplier, evaluation_results)
-    send_file report_path,
-              type: 'application/pdf',
-              disposition: 'attachment',
-              filename: "evaluation_report_#{@subsystem.id}_#{@supplier.id}.pdf"
+  
+    pdf_content = generate_evaluation_pdf(@subsystem, @supplier, evaluation_results)
+  
+    send_data pdf_content,
+              filename: "evaluation_report_#{@subsystem.id}_#{@supplier.id}.pdf",
+              type: "application/pdf",
+              disposition: "attachment"
   end
+  
 
   def apple_to_apple_comparison
     @suppliers_with_subsystems = Supplier.joins(:subsystems).distinct
@@ -494,44 +496,39 @@ class ReportsController < ApplicationController
 
   # Generate PDF based on evaluation results
   def generate_evaluation_pdf(subsystem, supplier, evaluation_results)
-    file_name = "evaluation_report_#{subsystem.id}_supplier_#{supplier.id}_#{Time.now.to_i}.pdf"
-    file_path = Rails.root.join('public', 'reports', file_name)
-
-    Prawn::Document.generate(file_path) do |pdf|
-      pdf.text 'Evaluation Report', size: 30, style: :bold, align: :center
+    pdf = Prawn::Document.new
+    pdf.text 'Evaluation Report', size: 30, style: :bold, align: :center
+    pdf.move_down 10
+    pdf.text "Supplier: #{supplier.supplier_name}", size: 14, style: :italic, align: :center
+    pdf.move_down 20
+  
+    evaluation_results.each do |table_name, results|
+      next unless results.is_a?(Array)
+      pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
       pdf.move_down 10
-      pdf.text "Supplier: #{supplier.supplier_name}", size: 14, style: :italic, align: :center
-      pdf.move_down 20
-
-      evaluation_results.each do |table_name, results|
-        next unless results.is_a?(Array)
-
-        pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
-        pdf.move_down 10
-
-        table_data = [['Attribute', 'Submitted Value', 'Standard Value', 'Status']]
-        results.each do |result|
-          status_text = result[:is_accepted] == 1 ? 'Accepted' : 'Rejected'
-          table_data << [result[:field], result[:submitted_value], result[:standard_value], status_text]
-        end
-
-        pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
-          row(0).font_style = :bold
-          row(0).background_color = 'cccccc'
-          self.row_colors = %w[f0f0f0 ffffff]
-        end
-        pdf.move_down 20
+  
+      table_data = [['Attribute', 'Submitted Value', 'Standard Value', 'Status']]
+      results.each do |result|
+        status_text = result[:is_accepted] == 1 ? 'Accepted' : 'Rejected'
+        table_data << [result[:field], result[:submitted_value], result[:standard_value], status_text]
       end
-
-      overall = evaluation_results[:overall_status]
-      percent = evaluation_results[:acceptance_percentage].round(2)
-
-      pdf.text "Overall Acceptance: #{percent}%"
-      pdf.text "Overall Status: #{overall}"
+  
+      pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
+        row(0).font_style = :bold
+        row(0).background_color = 'cccccc'
+        self.row_colors = %w[f0f0f0 ffffff]
+      end
+      pdf.move_down 20
     end
-
-    file_path.to_s
+  
+    overall = evaluation_results[:overall_status]
+    percent = evaluation_results[:acceptance_percentage].round(2)
+    pdf.text "Overall Acceptance: #{percent}%"
+    pdf.text "Overall Status: #{overall}"
+  
+    pdf.render  # Returns the PDF as a string
   end
+  
 
   # Perform evaluation based on data and standard comparison
   def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:,
@@ -592,5 +589,4 @@ class ReportsController < ApplicationController
 
     comparison_result
   end
-
 end

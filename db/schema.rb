@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_19_080551) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_19_084323) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -471,6 +471,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_19_080551) do
     t.datetime "updated_at", null: false
     t.bigint "subsystem_id", null: false
     t.bigint "supplier_id", null: false
+    t.string "supplier_category", default: "Uncategorized", null: false
     t.index ["subsystem_id"], name: "index_supplier_data_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_sup_data_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_supplier_data_on_supplier_id"
@@ -488,7 +489,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_19_080551) do
     t.string "password_digest"
     t.string "status"
     t.boolean "receive_evaluation_report"
-    t.string "registration_type", default: "evaluation", null: false
+    t.string "supplier_category", default: "evaluation", null: false
     t.string "evaluation_type"
     t.string "purpose"
     t.boolean "receive_rfq_mail", default: false, null: false

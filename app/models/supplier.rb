@@ -32,10 +32,10 @@ class Supplier < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   after_initialize :set_default_status, if: :new_record?
 
-  validates :supplier_name, :supplier_category, :total_years_in_saudi_market, :phone, :supplier_email, presence: true
+  validates :supplier_name, :total_years_in_saudi_market, :phone, :supplier_email, presence: true
   validates :supplier_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'must be a valid email address' }
 
-  validates :registration_type,
+  validates :supplier_category,
             inclusion: { in: ['Manufacturer / Vendor', 'System Integrator', 'Sub Contractor', 'Supplier'] }
 
   validates :purpose,

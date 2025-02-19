@@ -134,7 +134,6 @@ class SuppliersController < ApplicationController
       id: supplier.id,
       supplier_name: supplier.supplier_email,
       supplier_email: supplier.supplier_email,
-      supplier_category: supplier.supplier_category,
       phone: supplier.phone,
       total_years_in_saudi_market: supplier.total_years_in_saudi_market,
       status: supplier.status
@@ -158,7 +157,6 @@ class SuppliersController < ApplicationController
   def supplier_params
     params.require(:supplier).permit(
       :supplier_name,
-      :supplier_category,
       :total_years_in_saudi_market,
       :phone,
       :supplier_email,

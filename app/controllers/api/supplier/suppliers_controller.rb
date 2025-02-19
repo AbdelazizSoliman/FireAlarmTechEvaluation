@@ -151,7 +151,6 @@ module Api
       def supplier_params
         params.require(:supplier).permit(
           :supplier_name,
-          :supplier_category,
           :total_years_in_saudi_market,
           :phone,
           :supplier_email,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_07_203055) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_19_075543) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -479,7 +479,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_07_203055) do
 
   create_table "suppliers", force: :cascade do |t|
     t.string "supplier_name"
-    t.string "supplier_category"
     t.integer "total_years_in_saudi_market"
     t.string "phone"
     t.string "supplier_email"

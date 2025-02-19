@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_19_084323) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_19_184247) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -351,7 +351,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_19_084323) do
   create_table "product_data", force: :cascade do |t|
     t.string "manufacturer"
     t.string "submitted_product"
-    t.string "product_certifications"
+    t.text "product_certifications", default: [], array: true
     t.integer "total_years_in_saudi_market"
     t.string "coo"
     t.string "com_for_mfacp"

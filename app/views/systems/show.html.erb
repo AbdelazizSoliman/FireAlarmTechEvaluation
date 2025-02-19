@@ -3,7 +3,13 @@
 <ul>
   <% @subsystems.each do |subsystem| %>
     <li>
-      <%= link_to subsystem.name, subsystem_path(subsystem), class: "text-blue-500 hover:underline" %>
+      <% if subsystem.name == "FIRE ALARM" %>
+        <!-- For FIRE ALARM, link to /requirements_data -->
+        <%= link_to subsystem.name, requirements_data_path, class: "text-blue-500 hover:underline" %>
+      <% else %>
+        <!-- For everything else, link to the normal subsystem show page -->
+        <%= link_to subsystem.name, subsystem_path(subsystem), class: "text-blue-500 hover:underline" %>
+      <% end %>
     </li>
   <% end %>
 </ul>

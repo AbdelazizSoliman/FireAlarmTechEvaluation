@@ -597,7 +597,7 @@ module Api
 
     def product_data_params
       params.require(:product_data).permit(
-        :manufacturer, :submitted_product, :product_certifications,
+        :manufacturer, :submitted_product, { product_certifications: [] },
         :total_years_in_saudi_market, :coo, :com_for_mfacp, :com_for_detectors
       )
     end

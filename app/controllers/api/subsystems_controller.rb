@@ -388,7 +388,7 @@ module Api
           performance_bond total_price_excluding_vat subsystem_id
         ],
         supplier_data_attributes: %i[
-          id supplier_name total_years_in_saudi_market similar_projects subsystem_id
+          id supplier_name supplier_category total_years_in_saudi_market similar_projects subsystem_id
         ],
         product_data_attributes: %i[
           id manufacturer submitted_product product_certifications total_years_in_saudi_market coo
@@ -540,7 +540,7 @@ module Api
 
     def supplier_data_params
       params.require(:supplier_data).permit(
-        :supplier_name, :total_years_in_saudi_market, :similar_projects
+        :supplier_name, :supplier_category, :total_years_in_saudi_market, :similar_projects
       )
     end
 

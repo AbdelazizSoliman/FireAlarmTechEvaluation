@@ -151,12 +151,13 @@ module Api
       def supplier_params
         params.require(:supplier).permit(
           :supplier_name,
+          :supplier_category,
           :total_years_in_saudi_market,
           :phone,
           :supplier_email,
           :password,
           :password_confirmation,
-          :registration_type,
+          :supplier_category,
           :purpose,
           :evaluation_type,
           :receive_rfq_mail, # <-- Permit the new checkbox parameter

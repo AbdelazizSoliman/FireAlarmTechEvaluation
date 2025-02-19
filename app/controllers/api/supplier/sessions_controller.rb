@@ -23,6 +23,7 @@ module Api
           render json: {
             id: supplier.id,
             supplier_name: supplier.supplier_name,
+            supplier_category: supplier.supplier_category,
             supplier_email: supplier.supplier_email,
             phone: supplier.phone,
             total_years_in_saudi_market: supplier.total_years_in_saudi_market,

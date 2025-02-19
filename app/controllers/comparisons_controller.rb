@@ -1,6 +1,6 @@
 class ComparisonsController < ApplicationController
   def index
-    @registration_types = Supplier.distinct.pluck(:registration_type)
+    @supplier_categorys = Supplier.distinct.pluck(:supplier_category)
     # Fetch suppliers with subsystems that have evaluations submitted
     @suppliers = Supplier.includes(subsystems: %i[detectors_field_devices fire_alarm_control_panels product_data
                                                   notification_devices])
@@ -8,10 +8,10 @@ class ComparisonsController < ApplicationController
   end
 
   def generate
-    registration_type = params[:registration_type]
+    supplier_category = params[:supplier_category]
 
-    @suppliers = if registration_type.present?
-                   Supplier.joins(:subsystems).where(registration_type: registration_type)
+    @suppliers = if supplier_category.present?
+                   Supplier.joins(:subsystems).where(supplier_category: supplier_category)
                      .where.not(subsystems: { detectors_field_devices: nil }) # Filter subsystems with evaluations
                  else
                    Supplier.joins(:subsystems).where.not(subsystems: { detectors_field_devices: nil })

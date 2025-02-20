@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_19_184247) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_20_130010) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -231,6 +231,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_19_184247) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "supplier_id", null: false
+    t.decimal "screen_inch"
+    t.string "color"
+    t.string "life_span"
+    t.integer "no_of_buttons"
+    t.integer "no_of_function"
+    t.boolean "antibacterial"
     t.index ["subsystem_id"], name: "index_graphic_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_graph_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_graphic_systems_on_supplier_id"

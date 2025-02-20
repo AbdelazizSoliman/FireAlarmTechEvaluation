@@ -134,7 +134,25 @@
             </tr>
           <% end %>
         </tbody>
-      </table>
+      </table><tbody>
+  <% @product_data.attributes.except("id", "subsystem_id", "created_at", "updated_at").each do |key, value| %>
+    <tr>
+      <td><strong><%= key.humanize %></strong></td>
+      <td>
+        <% if key == "product_certifications" && value.is_a?(Array) %>
+          <ul class="list-disc ml-5">
+            <% value.each do |cert| %>
+              <li><%= cert %></li>
+            <% end %>
+          </ul>
+        <% else %>
+          <%= value %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+</tbody>
+
     <% else %>
       <p>No Product Data available.</p>
     <% end %>

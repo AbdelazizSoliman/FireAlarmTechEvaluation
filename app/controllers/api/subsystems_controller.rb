@@ -604,7 +604,17 @@ module Api
 
     def graphic_systems_params
       params.require(:graphic_systems).permit(
-        :workstation, :workstation_control_feature, :softwares, :licenses, :screens
+        :workstation,
+        :workstation_control_feature,
+        :softwares,
+        :licenses,
+        :screens,
+        :screen_inch,
+        :color,
+        :life_span,
+        :no_of_buttons,
+        :no_of_function,
+        :antibacterial
       )
     end
 

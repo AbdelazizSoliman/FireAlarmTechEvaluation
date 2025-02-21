@@ -11,26 +11,18 @@
         <th>Column 1</th>
         <th>Column 2</th>
         <th>Column 3</th>
-        <!-- Add more <th> as needed for extra columns -->
+        <!-- Add more <th> as needed -->
       </tr>
 
       <% rows.each_with_index do |row, row_index| %>
         <tr>
           <% row.each do |col_num, value| %>
-            <% # Convert col_num to integer for comparisons %>
             <% numeric_col = col_num.to_i %>
-
             <td>
-              <%= text_field_tag(
-                "sheets_data[#{sheet_name}][#{row_index}][#{col_num}]",
-                value,
-                # Disable all columns initially
-                disabled: true,
-                # Add a data attribute to know which column we're in
-                "data-col-num": numeric_col,
-                # A CSS class to target these fields with JavaScript
-                class: "editable-field w-full"
-              ) %>
+              <%= text_field_tag "sheets_data[#{sheet_name}][#{row_index}][#{col_num}]", value,
+                readonly: true,                      # Make all fields readonly by default
+                data: { col_num: numeric_col },       # Add data attribute for JavaScript targeting
+                class: "editable-field w-full" %>
             </td>
           <% end %>
         </tr>
@@ -39,14 +31,13 @@
     <br>
   <% end %>
 
-  <%= submit_tag "Save Changes", class: "btn btn-success" %>
+  <%= submit_tag "Update Excel", class: "btn btn-success" %>
 <% end %>
 
 <!-- Download Button -->
 <br>
-<%= link_to "Download Requirements", download_requirements_data_path, class: "btn btn-secondary" %>
+<%= link_to "Download Updated Excel", download_requirements_data_path, class: "btn btn-secondary" %>
 
-<!-- JavaScript to enable editing of columns 2+ on button click -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const editButton = document.getElementById("edit-requirements-button");
@@ -56,10 +47,9 @@
       e.preventDefault();
 
       fields.forEach(field => {
-        // data-col-num is a string, so convert or compare as string
-        // Column 1 must remain disabled
+        // Only remove readonly for columns other than column 1
         if (field.dataset.colNum !== "1") {
-          field.disabled = false; // Enable columns 2, 3, etc.
+          field.removeAttribute("readonly");
         }
       });
     });

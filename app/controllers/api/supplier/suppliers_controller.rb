@@ -37,6 +37,10 @@ module Api
               }
             )
 
+            ActionCable.server.broadcast("notifications_#{supplier.id}_channel", {
+                                           notification: notification.as_json(only: %i[id title body notification_type created_at])
+                                         })
+
             render json: { message: 'Supplier registered successfully', notification_id: notification.id },
                    status: :created
           else

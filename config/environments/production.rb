@@ -35,11 +35,16 @@ Rails.application.configure do
     authentication:       "plain",
     enable_starttls_auto: true
   }
-  config.action_mailer.default_url_options = { host: ENV.fetch("HOST", "your-production-url.com") }
+  config.action_mailer.default_url_options = { host: ENV.fetch("HOST", "https://digitalconstruction.onrender.com") }
 
   # I18n fallbacks
   config.i18n.fallbacks = true
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+
+  config.action_cable.allowed_request_origins = [
+  "https://digitalconstruction.onrender.com",
+  "http://localhost:3000"
+]
 end

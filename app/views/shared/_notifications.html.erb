@@ -1,0 +1,8 @@
+<div class="notifications-dropdown">
+  <h4>Unread Notifications (<%= @unread_notifications_count %>)</h4>
+  <% @notifications.each do |notification| %>
+    <div>
+      <strong><%= notification.title %></strong>: <%= notification.body %>
+    </div>
+  <% end %>
+</div>

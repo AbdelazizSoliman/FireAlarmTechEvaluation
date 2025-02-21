@@ -3,38 +3,46 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception, unless: -> { request.format.json? }
 
   before_action :set_cors_headers
-  # before_action :authenticate_user!
-  before_action :set_unread_notifications_count
+  before_action :authenticate_user!           # Uncomment if you want to require login for all pages
+  before_action :set_unread_notifications     # Load unread notifications globally
   helper_method :current_supplier
 
   protected
 
-  # protect all routes by default and allow some extra params:
+  # Permit additional Devise parameters
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: %i[first_name last_name terms_and_conditions])
     devise_parameter_sanitizer.permit(:account_update, keys: %i[first_name last_name])
   end
 
+  # Redirect after logout
   def after_sign_out_path_for(_resource_or_scope)
-    new_user_session_path # Redirect to the login page
+    new_user_session_path
   end
 
+  # Example of a helper method for a custom supplier session
   def current_supplier
-    @current_supplier ||= Supplier.find_by(id: session[:supplier_id]) # Using session
+    @current_supplier ||= Supplier.find_by(id: session[:supplier_id])
   end
 
   private
 
+  # Optional: set CORS headers if needed
   def set_cors_headers
-    # response.set_header('Access-Control-Allow-Origin', 'http://localhost:5173') # Frontend origin
+    # response.set_header('Access-Control-Allow-Origin', 'http://localhost:5173')
     # response.set_header('Access-Control-Allow-Credentials', 'true')
   end
 
-  def set_unread_notifications_count
+  # Loads all unread notifications (or user-specific if you have such logic)
+  def set_unread_notifications
     if current_user
       Rails.logger.info "Current User: #{current_user.full_name}"
-      @unread_notifications_count = Notification.where(read: false).count
+      # If notifications are specific to each user, use something like:
+      # @notifications = Notification.where(user_id: current_user.id, read: false).order(created_at: :desc)
+      @notifications = Notification.where(read: false).order(created_at: :desc)
+      @unread_notifications_count = @notifications.count
     else
+      @notifications = []
       @unread_notifications_count = 0
     end
   end

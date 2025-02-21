@@ -1,13 +1,9 @@
-class NotificationsChannel < ApplicationCable::Channel
+class NotificationChannel < ApplicationCable::Channel
   def subscribed
-    if params[:supplier_id].present?
-      stream_from "notifications_#{params[:supplier_id]}_channel"
-    else
-      stream_from "notifications_channel"
-    end
+    stream_from "notifications_#{params[:supplier_id]}_channel"
   end
 
   def unsubscribed
-    # Any cleanup when channel is unsubscribed
+    # Any cleanup needed when channel is unsubscribed
   end
 end

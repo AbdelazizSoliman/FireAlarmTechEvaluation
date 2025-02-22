@@ -1,4 +1,4 @@
-<h2>Excel Data Management</h2>
+<h2>Requirements Data Management</h2>
 
 <!-- Edit Requirements button -->
 <%= link_to "Edit Requirements", "#", class: "btn btn-primary mb-3", id: "edit-requirements-button" %>
@@ -31,12 +31,12 @@
     <br>
   <% end %>
 
-  <%= submit_tag "Update Excel", class: "btn btn-success" %>
+  <%= submit_tag "Save Changes", class: "btn btn-success" %>
 <% end %>
 
 <!-- Download Button -->
 <br>
-<%= link_to "Download Updated Excel", download_requirements_data_path, class: "btn btn-secondary" %>
+<%= link_to "Download Requirements", download_requirements_data_path, class: "btn btn-secondary" %>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {

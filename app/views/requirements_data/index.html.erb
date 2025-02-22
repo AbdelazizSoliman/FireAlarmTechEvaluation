@@ -20,8 +20,8 @@
             <% numeric_col = col_num.to_i %>
             <td>
               <%= text_field_tag "sheets_data[#{sheet_name}][#{row_index}][#{col_num}]", value,
-                readonly: true,                      # Initially, all fields are readonly
-                data: { col_num: numeric_col },
+                readonly: true,                      # All fields are read-only by default
+                data: { col_num: numeric_col, original_value: value },
                 class: "editable-field w-full" %>
             </td>
           <% end %>
@@ -39,7 +39,8 @@
 <%= link_to "Download Requirements", download_requirements_data_path, class: "btn btn-secondary" %>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  // Use turbo:load so it fires when navigating with Turbo Drive
+  document.addEventListener("turbo:load", () => {
     const toggleButton = document.getElementById("toggle-edit-button");
     const fields = document.querySelectorAll(".editable-field");
     let isEditing = false;
@@ -57,8 +58,9 @@
         toggleButton.innerText = "Cancel";
         isEditing = true;
       } else {
-        // Revert back to read-only for all fields
+        // Revert fields to their original values and reapply read-only attribute
         fields.forEach(field => {
+          field.value = field.dataset.originalValue; // Reset to original value
           field.setAttribute("readonly", "readonly");
         });
         toggleButton.innerText = "Edit Requirements";

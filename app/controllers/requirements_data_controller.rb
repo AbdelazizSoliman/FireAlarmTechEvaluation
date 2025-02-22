@@ -23,39 +23,35 @@ class RequirementsDataController < ApplicationController
         temp_file.unlink
       rescue ActiveStorage::FileNotFoundError => e
         Rails.logger.error "ActiveStorage file not found: #{e.message}"
-        flash[:alert] = "The Excel file is missing from external storage. Please contact the administrator."
-        redirect_to requirements_data_path
+        # Fallback to reading local file if file not found in Active Storage
+        spreadsheet = Roo::Excelx.new(FILE_PATH)
+        @sheets_data = read_all_sheets_data_from(spreadsheet)
+        flash[:alert] = "Using local file as fallback because external file is missing."
       end
     else
-      flash[:alert] = "No Excel file has been uploaded to external storage."
-      redirect_to requirements_data_path
+      # Fallback: read from local file at FILE_PATH if no file attached
+      spreadsheet = Roo::Excelx.new(FILE_PATH)
+      @sheets_data = read_all_sheets_data_from(spreadsheet)
+      flash[:alert] = "No external Excel file found. Displaying local data."
     end
   end
   
 
   # Update Data & Save Back to Excel, then persist to Active Storage
   def update
-    updated_data = params.require(:sheets_data).permit! # Permit all parameters
-    if write_to_excel(updated_data.to_h) # Write updates to local FILE_PATH
-      # After updating, attach the updated file to StandardFile for persistence
+    # 1) write_to_excel updates local file
+    if write_to_excel(updated_data.to_h)
       doc = StandardFile.first_or_initialize
-      doc.name = "standards.xlsx"
+      doc.excel_file.purge if doc.excel_file.attached?
       doc.excel_file.attach(
         io: File.open(FILE_PATH),
         filename: "standards.xlsx",
         content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       )
-      if doc.save
-        flash[:notice] = "Excel file updated successfully!"
-      else
-        flash[:alert] = "Failed to save updated Excel file to external storage."
-      end
-    else
-      flash[:alert] = "Failed to update Excel file."
+      doc.save
     end
-
-    redirect_to requirements_data_path
   end
+  
 
   # Download the Updated Excel File from Active Storage
   def download

@@ -24,11 +24,11 @@ class RequirementsDataController < ApplicationController
       rescue ActiveStorage::FileNotFoundError => e
         Rails.logger.error "ActiveStorage file not found: #{e.message}"
         flash[:alert] = "The Excel file is missing from external storage. Please contact the administrator."
-        redirect_to root_path and return
+        redirect_to requirements_data_path
       end
     else
       flash[:alert] = "No Excel file has been uploaded to external storage."
-      redirect_to root_path and return
+      redirect_to requirements_data_path
     end
   end
   

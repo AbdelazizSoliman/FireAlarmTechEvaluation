@@ -1,7 +1,7 @@
 <h2>Requirements Data Management</h2>
 
-<!-- Edit Requirements button -->
-<%= link_to "Edit Requirements", "#", class: "btn btn-primary mb-3", id: "edit-requirements-button" %>
+<!-- Toggle Edit Requirements button -->
+<%= link_to "Edit Requirements", "#", class: "btn btn-primary mb-3", id: "toggle-edit-button" %>
 
 <%= form_with url: requirements_data_path, method: :post do %>
   <% @sheets_data.each do |sheet_name, rows| %>
@@ -20,8 +20,8 @@
             <% numeric_col = col_num.to_i %>
             <td>
               <%= text_field_tag "sheets_data[#{sheet_name}][#{row_index}][#{col_num}]", value,
-                readonly: true,                      # Make all fields readonly by default
-                data: { col_num: numeric_col },       # Add data attribute for JavaScript targeting
+                readonly: true,                      # Initially, all fields are readonly
+                data: { col_num: numeric_col },
                 class: "editable-field w-full" %>
             </td>
           <% end %>
@@ -40,18 +40,30 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const editButton = document.getElementById("edit-requirements-button");
+    const toggleButton = document.getElementById("toggle-edit-button");
     const fields = document.querySelectorAll(".editable-field");
+    let isEditing = false;
 
-    editButton.addEventListener("click", (e) => {
+    toggleButton.addEventListener("click", (e) => {
       e.preventDefault();
 
-      fields.forEach(field => {
-        // Only remove readonly for columns other than column 1
-        if (field.dataset.colNum !== "1") {
-          field.removeAttribute("readonly");
-        }
-      });
+      if (!isEditing) {
+        // Enable editing for columns other than column 1
+        fields.forEach(field => {
+          if (field.dataset.colNum !== "1") {
+            field.removeAttribute("readonly");
+          }
+        });
+        toggleButton.innerText = "Cancel";
+        isEditing = true;
+      } else {
+        // Revert back to read-only for all fields
+        fields.forEach(field => {
+          field.setAttribute("readonly", "readonly");
+        });
+        toggleButton.innerText = "Edit Requirements";
+        isEditing = false;
+      }
     });
   });
 </script>

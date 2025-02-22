@@ -1,5 +1,4 @@
 class ReportsController < ApplicationController
-
   COMPARISON_FIELDS = {
     fire_alarm_control_panels: {
       sheet_name: 'Fire Alarm Control Panel',
@@ -163,8 +162,6 @@ class ReportsController < ApplicationController
   #----------------------------------------------------------------
   # Apple-to-Apple Comparison Report Generation
   #----------------------------------------------------------------
-  # This action is called from the apple_to_apple_comparison view.
-  # It expects a GET parameter "selected_suppliers[]" that contains the IDs of suppliers to compare.
   def generate_comparison_report
     selected_ids = params[:selected_suppliers]
     if selected_ids.blank?
@@ -175,7 +172,6 @@ class ReportsController < ApplicationController
     suppliers = Supplier.where(id: selected_ids)
 
     # Define the sections to be compared.
-    # For sections that require a subsystem, we assume comparison is done using each supplier’s first subsystem.
     sections = {
       "Supplier Data" => lambda { |supplier|
         supplier_data(supplier)
@@ -251,8 +247,6 @@ class ReportsController < ApplicationController
     }
 
     # Build a combined hash for each section.
-    # For each section, we combine the keys (attributes) across the selected suppliers.
-    # The final structure is: { section_name => { attribute => { supplier_name => value, ... } } }
     comparison_data = {}
     sections.each do |section_name, fetch_proc|
       section_hash = {}
@@ -271,15 +265,13 @@ class ReportsController < ApplicationController
     wb = p.workbook
 
     wb.add_worksheet(name: "Apple to Apple Comparison") do |sheet|
-      # Header row: first column "Attribute", then one column per supplier.
+      # Header row
       header = ["Attribute"] + suppliers.map { |s| s.supplier_name }
       sheet.add_row header, b: true
 
       # For each section, add a section title row and then a row per attribute.
       comparison_data.each do |section_name, attributes_hash|
-        # Section title row.
         sheet.add_row [section_name], sz: 12, b: true
-
         attributes_hash.each do |attribute, supplier_values|
           row = [attribute]
           suppliers.each do |supplier|
@@ -287,9 +279,7 @@ class ReportsController < ApplicationController
           end
           sheet.add_row row
         end
-
-        # Add an empty row for spacing.
-        sheet.add_row []
+        sheet.add_row [] # empty row for spacing
       end
     end
 
@@ -364,7 +354,6 @@ class ReportsController < ApplicationController
               type: "application/pdf",
               disposition: "attachment"
   end
-  
 
   def apple_to_apple_comparison
     @suppliers_with_subsystems = Supplier.joins(:subsystems).distinct
@@ -487,32 +476,59 @@ class ReportsController < ApplicationController
     @suppliers = Supplier.where(id: supplier_ids)
   end
 
-  # Fetch and parse standards data from Excel
+  # ------------------------------------------------------------------
+  # UPDATED: Fetch standards from S3 (via StandardFile) rather than local
+  # ------------------------------------------------------------------
+  require 'tempfile'
+  require 'rubyXL'
+
   def fetch_standard_data(sheet_name)
-    standard_file_path = Rails.root.join('lib', 'standards.xlsx')
-    standard_workbook = RubyXL::Parser.parse(standard_file_path)
-    standard_workbook.worksheets.find { |ws| ws.sheet_name == sheet_name }
+    # 1) Locate the attached Excel file in StandardFile
+    doc = StandardFile.first
+    unless doc && doc.excel_file.attached?
+      Rails.logger.error "No StandardFile or excel_file attached!"
+      return nil
+    end
+
+    begin
+      # 2) Download the file from S3 into a Tempfile
+      temp_file = Tempfile.new(["standards", ".xlsx"])
+      temp_file.binmode
+      temp_file.write(doc.excel_file.download)
+      temp_file.rewind
+
+      # 3) Parse with RubyXL
+      standard_workbook = RubyXL::Parser.parse(temp_file.path)
+      standard_sheet = standard_workbook.worksheets.find { |ws| ws.sheet_name == sheet_name }
+      return standard_sheet
+    rescue => e
+      Rails.logger.error "Error reading standard data from S3: #{e.message}"
+      return nil
+    ensure
+      temp_file.close
+      temp_file.unlink
+    end
   end
 
-  # Generate PDF based on evaluation results
   def generate_evaluation_pdf(subsystem, supplier, evaluation_results)
     pdf = Prawn::Document.new
     pdf.text 'Evaluation Report', size: 30, style: :bold, align: :center
     pdf.move_down 10
     pdf.text "Supplier: #{supplier.supplier_name}", size: 14, style: :italic, align: :center
     pdf.move_down 20
-  
+
     evaluation_results.each do |table_name, results|
       next unless results.is_a?(Array)
+
       pdf.text "#{table_name.to_s.humanize} Results", size: 20, style: :bold
       pdf.move_down 10
-  
+
       table_data = [['Attribute', 'Submitted Value', 'Standard Value', 'Status']]
       results.each do |result|
         status_text = result[:is_accepted] == 1 ? 'Accepted' : 'Rejected'
         table_data << [result[:field], result[:submitted_value], result[:standard_value], status_text]
       end
-  
+
       pdf.table(table_data, header: true, position: :center, width: pdf.bounds.width) do
         row(0).font_style = :bold
         row(0).background_color = 'cccccc'
@@ -520,15 +536,14 @@ class ReportsController < ApplicationController
       end
       pdf.move_down 20
     end
-  
+
     overall = evaluation_results[:overall_status]
     percent = evaluation_results[:acceptance_percentage].round(2)
     pdf.text "Overall Acceptance: #{percent}%"
     pdf.text "Overall Status: #{overall}"
-  
-    pdf.render  # Returns the PDF as a string
+
+    pdf.render
   end
-  
 
   # Perform evaluation based on data and standard comparison
   def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:,
@@ -564,7 +579,7 @@ class ReportsController < ApplicationController
     comparison_results
   end
 
-  # Compare specific field data with standards
+  # Compare specific field data with standards from S3
   def compare_field_data(field_name, field_data)
     comparison_result = []
     sheet_name = COMPARISON_FIELDS.dig(field_name, :sheet_name)
@@ -576,7 +591,8 @@ class ReportsController < ApplicationController
     comparison_fields = COMPARISON_FIELDS[field_name][:fields]
     comparison_fields.each do |field, location|
       submitted_value = field_data&.send(field)
-      standard_value = standard_sheet[location[:sheet_row]][location[:sheet_column]].value
+      cell = standard_sheet[location[:sheet_row]][location[:sheet_column]] rescue nil
+      standard_value = cell&.value
       is_accepted = (submitted_value.to_i >= standard_value.to_i) ? 1 : 0
 
       comparison_result << {

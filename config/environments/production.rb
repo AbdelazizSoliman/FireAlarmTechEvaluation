@@ -10,7 +10,7 @@ Rails.application.configure do
   config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
 
   # Use local file storage for uploaded files (adjust if needed)
-  config.active_storage.service = :local
+  config.active_storage.service = :amazon
 
   # Force all access over SSL
   config.force_ssl = true

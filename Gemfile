@@ -6,6 +6,8 @@ source 'https://rubygems.org'
 # Define the Ruby version for the application
 ruby '3.2.2'
 
+gem 'aws-sdk-s3', require: false
+
 # Specify the version of Rails to be used
 # Ensure compatibility with 7.1.3, with a minimum version of 7.1.3.4
 gem 'rails', '~> 7.1.3', '>= 7.1.3.4'

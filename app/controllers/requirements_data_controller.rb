@@ -10,22 +10,28 @@ class RequirementsDataController < ApplicationController
   def index
     doc = StandardFile.first
     if doc&.excel_file&.attached?
-      # Download file to a temporary file and read with Roo
-      temp_file = Tempfile.new(["standards", ".xlsx"])
-      temp_file.binmode
-      temp_file.write(doc.excel_file.download)
-      temp_file.rewind
-
-      spreadsheet = Roo::Excelx.new(temp_file.path)
-      @sheets_data = read_all_sheets_data_from(spreadsheet)
-      
-      temp_file.close
-      temp_file.unlink
+      begin
+        temp_file = Tempfile.new(["standards", ".xlsx"])
+        temp_file.binmode
+        temp_file.write(doc.excel_file.download)
+        temp_file.rewind
+  
+        spreadsheet = Roo::Excelx.new(temp_file.path)
+        @sheets_data = read_all_sheets_data_from(spreadsheet)
+  
+        temp_file.close
+        temp_file.unlink
+      rescue ActiveStorage::FileNotFoundError => e
+        Rails.logger.error "ActiveStorage file not found: #{e.message}"
+        flash[:alert] = "The Excel file is missing from external storage. Please contact the administrator."
+        redirect_to root_path and return
+      end
     else
-      # Fallback: read from local file
-      @sheets_data = read_all_sheets_data
+      flash[:alert] = "No Excel file has been uploaded to external storage."
+      redirect_to root_path and return
     end
   end
+  
 
   # Update Data & Save Back to Excel, then persist to Active Storage
   def update

@@ -18,71 +18,74 @@ class NotificationsController < ApplicationController
   end
 
   def approve_supplier
+    Rails.logger.info 'Starting approve_supplier action'
     @notification = Notification.find(params[:id])
     @supplier = @notification.notifiable
-
-    begin
-      ActiveRecord::Base.transaction do
-        # ✅ Update supplier's status and receive_evaluation_report
-        @supplier.update!(
-          receive_evaluation_report: params[:receive_evaluation_report] == 'true',
-          status: 'approved'
-        )
-
-        if @supplier.purpose == 'Need to Quote' && @supplier.receive_rfq_mail == true
-          Rails.logger.info "Triggering RFQ email for supplier #{@supplier.id}"
-          SupplierMailer.with(supplier: @supplier).rfq_email.deliver_now
-        else
-          Rails.logger.info 'Conditions not met for sending RFQ email'
-        end
-
-        # ✅ Update project approvals (Updating join table directly)
-        if params[:project_ids].present?
-          ActiveRecord::Base.connection.execute("
-            UPDATE projects_suppliers
-            SET approved = true
-            WHERE supplier_id = #{@supplier.id} AND project_id IN (#{params[:project_ids].join(',')})
-          ")
-        end
-
-        # ✅ Update project scope approvals
-        if params[:project_scope_ids].present?
-          ActiveRecord::Base.connection.execute("
-            UPDATE project_scopes_suppliers
-            SET approved = true
-            WHERE supplier_id = #{@supplier.id} AND project_scope_id IN (#{params[:project_scope_ids].join(',')})
-          ")
-        end
-
-        # ✅ Update systems approvals
-        if params[:system_ids].present?
-          ActiveRecord::Base.connection.execute("
-            UPDATE systems_suppliers
-            SET approved = true
-            WHERE supplier_id = #{@supplier.id} AND system_id IN (#{params[:system_ids].join(',')})
-          ")
-        end
-
-        # ✅ Update subsystems approvals
-        if params[:subsystem_ids].present?
-          ActiveRecord::Base.connection.execute("
-            UPDATE subsystems_suppliers
-            SET approved = true
-            WHERE supplier_id = #{@supplier.id} AND subsystem_id IN (#{params[:subsystem_ids].join(',')})
-          ")
-        end
-
-        # ✅ Mark notification as resolved
-        @notification.update!(status: 'resolved')
+  
+    ActiveRecord::Base.transaction do
+      # Update supplier's status and receive_evaluation_report
+      @supplier.update!(
+        receive_evaluation_report: params[:receive_evaluation_report] == 'true',
+        status: 'approved'
+      )
+  
+      # Update join table entries for projects, project scopes, systems, and subsystems
+      if params[:project_ids].present?
+        ActiveRecord::Base.connection.execute("
+          UPDATE projects_suppliers
+          SET approved = true
+          WHERE supplier_id = #{@supplier.id} AND project_id IN (#{params[:project_ids].join(',')})
+        ")
       end
-
-      flash[:notice] = 'Supplier approved successfully.'
-    rescue StandardError => e
-      flash[:alert] = "Error approving supplier: #{e.message}"
+  
+      if params[:project_scope_ids].present?
+        ActiveRecord::Base.connection.execute("
+          UPDATE project_scopes_suppliers
+          SET approved = true
+          WHERE supplier_id = #{@supplier.id} AND project_scope_id IN (#{params[:project_scope_ids].join(',')})
+        ")
+      end
+  
+      if params[:system_ids].present?
+        ActiveRecord::Base.connection.execute("
+          UPDATE systems_suppliers
+          SET approved = true
+          WHERE supplier_id = #{@supplier.id} AND system_id IN (#{params[:system_ids].join(',')})
+        ")
+      end
+  
+      if params[:subsystem_ids].present?
+        ActiveRecord::Base.connection.execute("
+          UPDATE subsystems_suppliers
+          SET approved = true
+          WHERE supplier_id = #{@supplier.id} AND subsystem_id IN (#{params[:subsystem_ids].join(',')})
+        ")
+      end
+  
+      # Mark notification as resolved
+      @notification.update!(status: 'resolved')
+  
+      # Reload supplier to pick up approved join table changes
+      @supplier.reload
+  
+      Rails.logger.info "After update, supplier purpose: #{@supplier.purpose.inspect}, receive_rfq_mail: #{@supplier.receive_rfq_mail.inspect}"
+      Rails.logger.info "Approved subsystems: #{@supplier.approved_subsystems.pluck(:name).inspect}"
+  
+      # Trigger RFQ email only if conditions are met
+      if @supplier.purpose == 'Need to Quote' && @supplier.receive_rfq_mail
+        Rails.logger.info "Triggering RFQ email for supplier #{@supplier.id}"
+        SupplierMailer.with(supplier: @supplier).rfq_email.deliver_now
+      else
+        Rails.logger.info "Conditions not met for sending RFQ email"
+      end
     end
-
-    redirect_to notifications_path
+  
+    redirect_to notifications_path, notice: 'Supplier approved successfully.'
+  rescue StandardError => e
+    redirect_to manage_membership_notification_path(@notification, supplier_id: @supplier.id),
+                alert: "Error: #{e.message}"
   end
+  
 
   def reject_supplier
     ActiveRecord::Base.transaction do

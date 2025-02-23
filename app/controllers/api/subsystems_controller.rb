@@ -385,7 +385,7 @@ module Api
         general_commercial_data_attributes: %i[
           id warranty_for_materials warranty_for_configuration_programming
           support_and_maintenance spare_parts_availability advanced_payment_minimum
-          performance_bond total_price_excluding_vat subsystem_id
+          performance_bond total_price_excluding_vat subsystem_id supplier_id
         ],
         supplier_data_attributes: %i[
           id supplier_name supplier_category total_years_in_saudi_market similar_projects subsystem_id
@@ -393,10 +393,108 @@ module Api
         product_data_attributes: %i[
           id manufacturer submitted_product product_certifications total_years_in_saudi_market coo
           com_for_mfacp com_for_detectors subsystem_id
+        ],
+        fire_alarm_control_panels_attributes: %i[
+          id standards total_no_of_panels total_number_of_loop_cards total_number_of_circuits_per_card_loop
+          total_no_of_loops total_no_of_spare_loops total_no_of_detectors_per_loop spare_no_of_loops_per_panel
+          initiating_devices_polarity_insensitivity spare_percentage_per_loop fa_repeater auto_dialer
+          dot_matrix_printer printer_listing power_standby_24_alarm_5 power_standby_24_alarm_15
+          internal_batteries_backup_capacity_panel external_batteries_backup_time subsystem_id supplier_id
+        ],
+        detectors_field_devices_attributes: %i[
+          id smoke_detectors smoke_detectors_with_built_in_isolator smoke_detectors_wall_mounted_with_built_in_isolator
+          smoke_detectors_with_led_indicators smoke_detectors_with_led_and_built_in_isolator heat_detector
+          heat_detectors_with_built_in_isolator high_temperature_heat_detector heat_rate_of_rise multi_detectors
+          multi_detectors_with_built_in_isolator high_sensitive_detectors_for_harsh_environments sensitivity_range
+          beam_detector_transmitter beam_detector_receiver duct_smoke_detectors flow_switches_interface_module
+          tamper_switches_interface_module gas_detectors flame_detectors
+          smoke_detectors_value smoke_detectors_unit_rate smoke_detectors_amount smoke_detectors_notes
+          smoke_detectors_with_built_in_isolator_value smoke_detectors_with_built_in_isolator_unit_rate
+          smoke_detectors_with_built_in_isolator_amount smoke_detectors_with_built_in_isolator_notes
+          smoke_detectors_wall_mounted_with_built_in_isolator_value smoke_detectors_wall_mounted_with_built_in_isolator_unit_rate
+          smoke_detectors_wall_mounted_with_built_in_isolator_amount smoke_detectors_wall_mounted_with_built_in_isolator_notes
+          smoke_detectors_with_led_indicators_value smoke_detectors_with_led_indicators_unit_rate
+          smoke_detectors_with_led_indicators_amount smoke_detectors_with_led_indicators_notes
+          smoke_detectors_with_led_and_built_in_isolator_value smoke_detectors_with_led_and_built_in_isolator_unit_rate
+          smoke_detectors_with_led_and_built_in_isolator_amount smoke_detectors_with_led_and_built_in_isolator_notes
+          heat_detectors_value heat_detectors_unit_rate heat_detectors_amount heat_detectors_notes
+          heat_detectors_with_built_in_isolator_value heat_detectors_with_built_in_isolator_unit_rate
+          heat_detectors_with_built_in_isolator_amount heat_detectors_with_built_in_isolator_notes
+          high_temperature_heat_detectors_value high_temperature_heat_detectors_unit_rate
+          high_temperature_heat_detectors_amount high_temperature_heat_detectors_notes
+          heat_rate_of_rise_value heat_rate_of_rise_unit_rate heat_rate_of_rise_amount heat_rate_of_rise_notes
+          multi_detectors_value multi_detectors_unit_rate multi_detectors_amount multi_detectors_notes
+          multi_detectors_with_built_in_isolator_value multi_detectors_with_built_in_isolator_unit_rate
+          multi_detectors_with_built_in_isolator_amount multi_detectors_with_built_in_isolator_notes
+          high_sensitive_detectors_for_harsh_environments_value high_sensitive_detectors_for_harsh_environments_unit_rate
+          high_sensitive_detectors_for_harsh_environments_amount high_sensitive_detectors_for_harsh_environments_notes
+          sensitivity_range_value sensitivity_range_unit_rate sensitivity_range_amount sensitivity_range_notes
+          beam_detector_transmitter_value beam_detector_transmitter_unit_rate beam_detector_transmitter_amount beam_detector_transmitter_notes
+          beam_detector_receiver_value beam_detector_receiver_unit_rate beam_detector_receiver_amount beam_detector_receiver_notes
+          duct_smoke_detectors_value duct_smoke_detectors_unit_rate duct_smoke_detectors_amount duct_smoke_detectors_notes
+          flow_switches_interface_module_value flow_switches_interface_module_unit_rate flow_switches_interface_module_amount flow_switches_interface_module_notes
+          tamper_switches_interface_module_value tamper_switches_interface_module_unit_rate tamper_switches_interface_module_amount tamper_switches_interface_module_notes
+          gas_detectors_value gas_detectors_unit_rate gas_detectors_amount gas_detectors_notes
+          flame_detectors_value flame_detectors_unit_rate flame_detectors_amount flame_detectors_notes
+          subsystem_id supplier_id
+        ],
+        manual_pull_stations_attributes: %i[
+          id type break_glass break_glass_weather_proof subsystem_id supplier_id
+        ],
+        door_holders_attributes: %i[
+          id total_no_of_devices total_no_of_devices_unit_rate total_no_of_devices_amount total_no_of_devices_notes
+          total_no_of_relays total_no_of_relays_unit_rate total_no_of_relays_amount total_no_of_relays_notes
+          subsystem_id supplier_id
+        ],
+        graphic_systems_attributes: %i[
+          id workstation workstation_control_feature softwares licenses screens screen_inch color life_span
+          no_of_buttons no_of_function antibacterial subsystem_id supplier_id
+        ],
+        notification_devices_attributes: %i[
+          id notification_addressing fire_alarm_strobe fire_alarm_strobe_wp fire_alarm_horn fire_alarm_horn_wp
+          fire_alarm_horn_with_strobe fire_alarm_horn_with_strobe_wp subsystem_id supplier_id
+        ],
+        isolations_attributes: %i[
+          id built_in_fault_isolator_for_each_detector built_in_fault_isolator_for_each_mcp_bg
+          built_in_fault_isolator_for_each_sounder_horn built_in_fault_isolator_for_monitor_control_modules
+          grouping_for_each_12_15 subsystem_id supplier_id
+        ],
+        connection_betweens_attributes: %i[
+          id connection_type network_module cables_for_connection subsystem_id supplier_id
+        ],
+        interface_with_other_systems_attributes: %i[
+          id integration_type1 integration_type2 integration_type3 integration_type4 integration_type5 integration_type6 integration_type7 integration_type8 integration_type9 integration_type10
+          total_no_of_control_modules total_no_of_monitor_modules total_no_of_dual_monitor_modules total_no_of_zone_module
+          subsystem_id supplier_id
+        ],
+        evacuation_systems_attributes: %i[
+          id included_in_fire_alarm_system evacuation_system_part_of_fa_panel amplifier_power_output total_no_of_amplifiers
+          total_no_of_evacuation_speakers_circuits total_no_of_wattage_per_panel fire_rated_speakers_watt
+          speakers_tapping_watt total_no_of_speakers subsystem_id supplier_id
+        ],
+        prerecorded_message_audio_modules_attributes: %i[
+          id message_type total_time_for_messages total_no_of_voice_messages message_storage_location master_microphone
+          subsystem_id supplier_id
+        ],
+        telephone_systems_attributes: %i[
+          id number_of_firefighter_telephone_circuits_per_panel total_no_of_firefighter_telephone_cabinet
+          total_no_of_firefighter_phones total_no_of_firefighter_jacks subsystem_id supplier_id
+        ],
+        spare_parts_attributes: %i[
+          id total_no_of_device1 total_no_of_device2 total_no_of_device3 total_no_of_device4 subsystem_id supplier_id
+        ],
+        scope_of_works_attributes: %i[
+          id supply install supervision_test_commissioning cables_supply cables_size_2cx1_5mm cables_size_2cx2_5mm
+          pulling_cables cables_terminations design_review_verification heat_map_study voltage_drop_study_for_initiating_devices_loop
+          voltage_drop_notification_circuits battery_calculation cause_and_effect_matrix high_level_riser_diagram shop_drawings
+          shop_drawings_verification training_days subsystem_id supplier_id
+        ],
+        material_and_deliveries_attributes: %i[
+          id material_availability delivery_time_period delivery_type delivery_to subsystem_id supplier_id
         ]
-        # Add other nested attributes for all associations here
       )
     end
+    
 
     # UPDATED: Include the new parameters in evaluation
     def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:,

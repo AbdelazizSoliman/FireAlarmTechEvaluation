@@ -3,7 +3,7 @@ class SupplierMailer < ApplicationMailer
     @supplier = params[:supplier]
     # Assuming the supplier’s associations (projects, subsystems, etc.) are already loaded
     @projects = @supplier.projects
-    @subsystems = @supplier.subsystems
+    @subsystems = @supplier.approved_subsystems
 
     # Build a subject line that includes the project name(s) and subsystem(s)
     subject_text = "RFQ for #{@projects.pluck(:name).join(', ')} - #{@subsystems.pluck(:name).join(', ')}"

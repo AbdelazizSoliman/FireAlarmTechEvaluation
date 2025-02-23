@@ -79,8 +79,10 @@ class Supplier < ApplicationRecord
 
   # Fetch approved subsystems and projects
   def approved_subsystems
-    subsystems_suppliers.where(approved: true).map(&:subsystem)
+    Subsystem.joins("INNER JOIN subsystems_suppliers ON subsystems.id = subsystems_suppliers.subsystem_id")
+             .where("subsystems_suppliers.supplier_id = ? AND subsystems_suppliers.approved = ?", id, true)
   end
+  
 
   def approved_projects
     projects_suppliers.where(approved: true).map(&:project)

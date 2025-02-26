@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Evaluation Result</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9fafb; }
+    h1, h2 { color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+    th, td { border: 1px solid #e0e0e0; padding: 8px; }
+    th { background-color: #009688; color: #fff; }
+    tr:nth-child(odd) { background-color: #f2f2f2; }
+    .summary { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Evaluation Result for <%= @supplier.supplier_name %> - <%= @subsystem.name %></h1>
+
+  <% @evaluation_results.each do |section, results| %>
+    <h2><%= section.to_s.humanize %> Results</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Submitted Value</th>
+          <th>Standard Value</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% results.each do |result| %>
+          <tr>
+            <td><%= result[:field] %></td>
+            <td><%= result[:submitted_value] %></td>
+            <td><%= result[:standard_value] %></td>
+            <td><%= result[:is_accepted] == 1 ? "Accepted" : "Rejected" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+
+  <div class="summary">
+    <p>Overall Acceptance: <%= @acceptance_percentage.round(2) %>%</p>
+    <p>Overall Status: <%= @overall_status %></p>
+  </div>
+</body>
+</html>

@@ -123,40 +123,40 @@ class ReportsController < ApplicationController
     subsystem = Subsystem.find(params[:subsystem_id])
 
     data_sections = {
-      "Supplier Data"                   => supplier_data(supplier),
-      "Product Data"                    => product_data(supplier, subsystem),
-      "Fire Alarm Control Panel"        => fire_alarm_control_panel(supplier, subsystem),
-      "Graphic Systems"                 => graphic_system(supplier, subsystem),
-      "Detectors Field Devices"         => detectors_field_device(supplier, subsystem),
-      "Manual Pull Station"             => manual_pull_station(supplier, subsystem),
-      "Door Holders"                    => door_holder(supplier, subsystem),
-      "Notification Devices"            => notification_devices(supplier, subsystem),
-      "Isolation Data"                  => isolations(supplier, subsystem),
-      "Connection Between FACPs"        => connection_betweens(supplier, subsystem),
-      "Interface with Other Systems"    => interface_with_other_systems(supplier, subsystem),
-      "Evacuation Systems"              => evacuation_systems(supplier, subsystem),
-      "Prerecorded Messages/Audio Module" => prerecorded_message_audio_modules(supplier, subsystem),
-      "Telephone System"                => telephone_systems(supplier, subsystem),
-      "Spare Parts"                     => spare_parts(supplier, subsystem),
-      "Scope of Work (SOW)"             => scope_of_works(supplier, subsystem),
-      "Material & Delivery"             => material_and_deliveries(supplier, subsystem),
-      "General & Commercial Data"       => general_commercial_data(supplier, subsystem)
+      'Supplier Data' => supplier_data(supplier),
+      'Product Data' => product_data(supplier, subsystem),
+      'Fire Alarm Control Panel' => fire_alarm_control_panel(supplier, subsystem),
+      'Graphic Systems' => graphic_system(supplier, subsystem),
+      'Detectors Field Devices' => detectors_field_device(supplier, subsystem),
+      'Manual Pull Station' => manual_pull_station(supplier, subsystem),
+      'Door Holders' => door_holder(supplier, subsystem),
+      'Notification Devices' => notification_devices(supplier, subsystem),
+      'Isolation Data' => isolations(supplier, subsystem),
+      'Connection Between FACPs' => connection_betweens(supplier, subsystem),
+      'Interface with Other Systems' => interface_with_other_systems(supplier, subsystem),
+      'Evacuation Systems' => evacuation_systems(supplier, subsystem),
+      'Prerecorded Messages/Audio Module' => prerecorded_message_audio_modules(supplier, subsystem),
+      'Telephone System' => telephone_systems(supplier, subsystem),
+      'Spare Parts' => spare_parts(supplier, subsystem),
+      'Scope of Work (SOW)' => scope_of_works(supplier, subsystem),
+      'Material & Delivery' => material_and_deliveries(supplier, subsystem),
+      'General & Commercial Data' => general_commercial_data(supplier, subsystem)
     }
 
     p = Axlsx::Package.new
     wb = p.workbook
 
-    wb.add_worksheet(name: "Evaluation Data") do |sheet|
-      sheet.add_row ["Attribute", "Value"], b: true
+    wb.add_worksheet(name: 'Evaluation Data') do |sheet|
+      sheet.add_row %w[Attribute Value], b: true
       data_sections.each do |section, data|
-        sheet.add_row [section, ""], sz: 12, b: true
+        sheet.add_row [section, ''], sz: 12, b: true
         data.each { |key, value| sheet.add_row [key.humanize, value] }
       end
     end
 
     send_data p.to_stream.read,
               filename: "Evaluation_Data_#{supplier.supplier_name}_#{subsystem.name}.xlsx",
-              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
   #----------------------------------------------------------------
@@ -165,82 +165,82 @@ class ReportsController < ApplicationController
   def generate_comparison_report
     selected_ids = params[:selected_suppliers]
     if selected_ids.blank?
-      flash[:alert] = "Please select at least one supplier."
+      flash[:alert] = 'Please select at least one supplier.'
       redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
     end
-    
+
     suppliers = Supplier.where(id: selected_ids)
 
     # Define the sections to be compared.
     sections = {
-      "Supplier Data" => lambda { |supplier|
+      'Supplier Data' => lambda { |supplier|
         supplier_data(supplier)
       },
-      "Product Data" => lambda { |supplier|
+      'Product Data' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         product_data(supplier, subsystem)
       },
-      "Fire Alarm Control Panel" => lambda { |supplier|
+      'Fire Alarm Control Panel' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         fire_alarm_control_panel(supplier, subsystem)
       },
-      "Graphic Systems" => lambda { |supplier|
+      'Graphic Systems' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         graphic_system(supplier, subsystem)
       },
-      "Detectors Field Devices" => lambda { |supplier|
+      'Detectors Field Devices' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         detectors_field_device(supplier, subsystem)
       },
-      "Manual Pull Station" => lambda { |supplier|
+      'Manual Pull Station' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         manual_pull_station(supplier, subsystem)
       },
-      "Door Holders" => lambda { |supplier|
+      'Door Holders' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         door_holder(supplier, subsystem)
       },
-      "Notification Devices" => lambda { |supplier|
+      'Notification Devices' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         notification_devices(supplier, subsystem)
       },
-      "Isolation Data" => lambda { |supplier|
+      'Isolation Data' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         isolations(supplier, subsystem)
       },
-      "Connection Between FACPs" => lambda { |supplier|
+      'Connection Between FACPs' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         connection_betweens(supplier, subsystem)
       },
-      "Interface with Other Systems" => lambda { |supplier|
+      'Interface with Other Systems' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         interface_with_other_systems(supplier, subsystem)
       },
-      "Evacuation Systems" => lambda { |supplier|
+      'Evacuation Systems' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         evacuation_systems(supplier, subsystem)
       },
-      "Prerecorded Messages/Audio Module" => lambda { |supplier|
+      'Prerecorded Messages/Audio Module' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         prerecorded_message_audio_modules(supplier, subsystem)
       },
-      "Telephone System" => lambda { |supplier|
+      'Telephone System' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         telephone_systems(supplier, subsystem)
       },
-      "Spare Parts" => lambda { |supplier|
+      'Spare Parts' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         spare_parts(supplier, subsystem)
       },
-      "Scope of Work (SOW)" => lambda { |supplier|
+      'Scope of Work (SOW)' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         scope_of_works(supplier, subsystem)
       },
-      "Material & Delivery" => lambda { |supplier|
+      'Material & Delivery' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         material_and_deliveries(supplier, subsystem)
       },
-      "General & Commercial Data" => lambda { |supplier|
+      'General & Commercial Data' => lambda { |supplier|
         subsystem = supplier.subsystems.first
         general_commercial_data(supplier, subsystem)
       }
@@ -264,9 +264,9 @@ class ReportsController < ApplicationController
     p = Axlsx::Package.new
     wb = p.workbook
 
-    wb.add_worksheet(name: "Apple to Apple Comparison") do |sheet|
+    wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
       # Header row
-      header = ["Attribute"] + suppliers.map { |s| s.supplier_name }
+      header = ['Attribute'] + suppliers.map { |s| s.supplier_name }
       sheet.add_row header, b: true
 
       # For each section, add a section title row and then a row per attribute.
@@ -284,16 +284,40 @@ class ReportsController < ApplicationController
     end
 
     send_data p.to_stream.read,
-              filename: "Apple_to_Apple_Comparison.xlsx",
-              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              filename: 'Apple_to_Apple_Comparison.xlsx',
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  end
+
+  def evaluation_result
+    @supplier = Supplier.find(params[:supplier_id])
+    @subsystem = Subsystem.find(params[:subsystem_id])
+
+    evaluation_results = perform_evaluation(
+      subsystem: @subsystem,
+      fire_alarm_control_panel: @subsystem.fire_alarm_control_panels.find_by(supplier_id: @supplier.id),
+      detectors_field_device: @subsystem.detectors_field_devices.find_by(supplier_id: @supplier.id),
+      door_holders: @subsystem.door_holders.find_by(supplier_id: @supplier.id),
+      notification_devices: @subsystem.notification_devices.find_by(supplier_id: @supplier.id),
+      isolation_record: @subsystem.isolations.find_by(supplier_id: @supplier.id),
+      manual_pull_station: @subsystem.manual_pull_stations.find_by(supplier_id: @supplier.id),
+      evacuation_systems: @subsystem.evacuation_systems.find_by(supplier_id: @supplier.id),
+      telephone_systems: @subsystem.telephone_systems.find_by(supplier_id: @supplier.id),
+      general_commercial_data: @subsystem.general_commercial_data.find_by(supplier_id: @supplier.id)
+    )
+
+    # Separate out the detailed section results and the overall metrics
+    @evaluation_results = evaluation_results.reject { |k, _| %i[overall_status acceptance_percentage].include?(k) }
+    @overall_status = evaluation_results[:overall_status]
+    @acceptance_percentage = evaluation_results[:acceptance_percentage]
   end
 
   #----------------------------------------------------------------
   # Other Actions (index, evaluation_tech_report, evaluation_data, generate_evaluation_report)
   #----------------------------------------------------------------
   def index
-    @suppliers_with_evaluations = Supplier.joins(:supplier_data, :product_data, :detectors_field_devices, :general_commercial_data)
-                                           .distinct
+    @suppliers_with_evaluations = Supplier.joins(:supplier_data, :product_data, :detectors_field_devices,
+                                                 :general_commercial_data)
+      .distinct
   end
 
   def evaluation_tech_report
@@ -306,9 +330,7 @@ class ReportsController < ApplicationController
     data_hash = Digest::SHA256.hexdigest(@supplier.updated_at.to_s + @subsystem.updated_at.to_s)
     report_filename = "evaluation_report_#{@subsystem.id}_supplier_#{@supplier.id}_#{data_hash}.pdf"
     existing_report = Dir["#{Rails.root}/public/reports/#{report_filename}"].first
-    if existing_report
-      redirect_to existing_report and return
-    end
+    redirect_to existing_report and return if existing_report
 
     @supplier_data = @supplier.supplier_data.find_by(subsystem_id: @subsystem.id)
     @product_data = @supplier.product_data.find_by(subsystem_id: @subsystem.id)
@@ -333,7 +355,7 @@ class ReportsController < ApplicationController
   def generate_evaluation_report
     @supplier = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-  
+
     evaluation_results = perform_evaluation(
       subsystem: @subsystem,
       fire_alarm_control_panel: @subsystem.fire_alarm_control_panels.find_by(supplier_id: @supplier.id),
@@ -346,13 +368,13 @@ class ReportsController < ApplicationController
       telephone_systems: @subsystem.telephone_systems.find_by(supplier_id: @supplier.id),
       general_commercial_data: @subsystem.general_commercial_data.find_by(supplier_id: @supplier.id)
     )
-  
+
     pdf_content = generate_evaluation_pdf(@subsystem, @supplier, evaluation_results)
-  
+
     send_data pdf_content,
               filename: "evaluation_report_#{@subsystem.id}_#{@supplier.id}.pdf",
-              type: "application/pdf",
-              disposition: "attachment"
+              type: 'application/pdf',
+              disposition: 'attachment'
   end
 
   def apple_to_apple_comparison
@@ -369,12 +391,13 @@ class ReportsController < ApplicationController
     data = {}
     if association.respond_to?(:each)
       association.each_with_index do |record, index|
-        record.attributes.except("id", "subsystem_id", "created_at", "updated_at", "supplier_id").each do |key, value|
+        record.attributes.except('id', 'subsystem_id', 'created_at', 'updated_at', 'supplier_id').each do |key, value|
           data["#{label_prefix} #{index + 1} - #{key.humanize}"] = value
         end
       end
     elsif association.present?
-      association.attributes.except("id", "subsystem_id", "created_at", "updated_at", "supplier_id").each do |key, value|
+      association.attributes.except('id', 'subsystem_id', 'created_at', 'updated_at',
+                                    'supplier_id').each do |key, value|
         data["#{label_prefix} - #{key.humanize}"] = value
       end
     end
@@ -382,93 +405,93 @@ class ReportsController < ApplicationController
   end
 
   def supplier_data(supplier)
-    supplier.attributes.except("id", "created_at", "updated_at")
+    supplier.attributes.except('id', 'created_at', 'updated_at')
   end
 
   # Methods for evaluation data that require both supplier and subsystem.
   def product_data(supplier, subsystem)
     record = supplier.product_data.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Product")
+    process_association(record, 'Product')
   end
 
   def fire_alarm_control_panel(supplier, subsystem)
     record = supplier.fire_alarm_control_panels.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Panel")
+    process_association(record, 'Panel')
   end
 
   def graphic_system(supplier, subsystem)
     record = supplier.graphic_systems.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Graphic System")
+    process_association(record, 'Graphic System')
   end
 
   def detectors_field_device(supplier, subsystem)
     record = supplier.detectors_field_devices.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Detector")
+    process_association(record, 'Detector')
   end
 
   def manual_pull_station(supplier, subsystem)
     record = supplier.manual_pull_stations.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Manual Pull Station")
+    process_association(record, 'Manual Pull Station')
   end
 
   def door_holder(supplier, subsystem)
     record = supplier.door_holders.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Door Holder")
+    process_association(record, 'Door Holder')
   end
 
   def notification_devices(supplier, subsystem)
     record = supplier.notification_devices.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Notification Device")
+    process_association(record, 'Notification Device')
   end
 
   def isolations(supplier, subsystem)
     record = supplier.isolations.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Isolation")
+    process_association(record, 'Isolation')
   end
 
   def connection_betweens(supplier, subsystem)
     record = supplier.connection_betweens.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Connection")
+    process_association(record, 'Connection')
   end
 
   def interface_with_other_systems(supplier, subsystem)
     record = supplier.interface_with_other_systems.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Interface")
+    process_association(record, 'Interface')
   end
 
   def evacuation_systems(supplier, subsystem)
     record = supplier.evacuation_systems.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Evacuation System")
+    process_association(record, 'Evacuation System')
   end
 
   def prerecorded_message_audio_modules(supplier, subsystem)
     record = supplier.prerecorded_message_audio_modules.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Prerecorded Message/Audio Module")
+    process_association(record, 'Prerecorded Message/Audio Module')
   end
 
   def telephone_systems(supplier, subsystem)
     record = supplier.telephone_systems.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Telephone System")
+    process_association(record, 'Telephone System')
   end
 
   def spare_parts(supplier, subsystem)
     record = supplier.spare_parts.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Spare Part")
+    process_association(record, 'Spare Part')
   end
 
   def scope_of_works(supplier, subsystem)
     record = supplier.scope_of_works.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Scope of Work")
+    process_association(record, 'Scope of Work')
   end
 
   def material_and_deliveries(supplier, subsystem)
     record = supplier.material_and_deliveries.find_by(subsystem_id: subsystem.id)
-    process_association(record, "Material & Delivery")
+    process_association(record, 'Material & Delivery')
   end
 
   def general_commercial_data(supplier, subsystem)
     record = supplier.general_commercial_data.find_by(subsystem_id: subsystem.id)
-    process_association(record, "General & Commercial")
+    process_association(record, 'General & Commercial')
   end
 
   def set_suppliers
@@ -486,13 +509,13 @@ class ReportsController < ApplicationController
     # 1) Locate the attached Excel file in StandardFile
     doc = StandardFile.first
     unless doc && doc.excel_file.attached?
-      Rails.logger.error "No StandardFile or excel_file attached!"
+      Rails.logger.error 'No StandardFile or excel_file attached!'
       return nil
     end
 
     begin
       # 2) Download the file from S3 into a Tempfile
-      temp_file = Tempfile.new(["standards", ".xlsx"])
+      temp_file = Tempfile.new(['standards', '.xlsx'])
       temp_file.binmode
       temp_file.write(doc.excel_file.download)
       temp_file.rewind
@@ -500,10 +523,10 @@ class ReportsController < ApplicationController
       # 3) Parse with RubyXL
       standard_workbook = RubyXL::Parser.parse(temp_file.path)
       standard_sheet = standard_workbook.worksheets.find { |ws| ws.sheet_name == sheet_name }
-      return standard_sheet
-    rescue => e
+      standard_sheet
+    rescue StandardError => e
       Rails.logger.error "Error reading standard data from S3: #{e.message}"
-      return nil
+      nil
     ensure
       temp_file.close
       temp_file.unlink
@@ -591,9 +614,13 @@ class ReportsController < ApplicationController
     comparison_fields = COMPARISON_FIELDS[field_name][:fields]
     comparison_fields.each do |field, location|
       submitted_value = field_data&.send(field)
-      cell = standard_sheet[location[:sheet_row]][location[:sheet_column]] rescue nil
+      cell = begin
+        standard_sheet[location[:sheet_row]][location[:sheet_column]]
+      rescue StandardError
+        nil
+      end
       standard_value = cell&.value
-      is_accepted = (submitted_value.to_i >= standard_value.to_i) ? 1 : 0
+      is_accepted = submitted_value.to_i >= standard_value.to_i ? 1 : 0
 
       comparison_result << {
         field: field.to_s.humanize,

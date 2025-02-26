@@ -372,7 +372,7 @@
 <div class="footer-links">
   <%= link_to "Download Evaluation Report", generate_evaluation_report_reports_path(supplier_id: @supplier.id, subsystem_id: @subsystem.id), class: "btn-link", id: "downloadReportButton", rel: "noopener noreferrer", data: { turbo: false } %>
   <%= link_to "Save Data as Excel", generate_excel_report_path(supplier_id: @supplier.id, subsystem_id: @subsystem.id), class: "btn-link", id: "downloadExcelButton", rel: "noopener noreferrer", data: { turbo: false } %>
-  <%= link_to "Show Evaluation Result", evaluation_result_report_path(supplier_id: @supplier.id, subsystem_id: @subsystem.id), class: "btn-link", data: { turbo: false } %>
+  <%= link_to "Show Evaluation Result", evaluation_result_reports_path(supplier_id: @supplier.id, subsystem_id: @subsystem.id), class: "btn-link", data: { turbo: false } %>
 </div>
 
 <script>

@@ -164,94 +164,47 @@ class ReportsController < ApplicationController
   #----------------------------------------------------------------
   def generate_comparison_report
     selected_ids = params[:selected_suppliers]
-    if selected_ids.blank?
-      flash[:alert] = 'Please select at least one supplier.'
+    subsystem_id = params[:subsystem_id]
+
+    # Validate user input
+    if selected_ids.blank? || subsystem_id.blank?
+      flash[:alert] = 'Please select at least one supplier and a subsystem.'
       redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
     end
 
+    # The single subsystem the user selected in the dropdown
+    subsystem = Subsystem.find(subsystem_id)
+    # All the suppliers the user checked
     suppliers = Supplier.where(id: selected_ids)
 
-    # Define the sections to be compared.
+    # Define the sections for your comparison
     sections = {
-      'Supplier Data' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        supplier_data(supplier, subsystem)
-      },
-      'Product Data' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        product_data(supplier, subsystem)
-      },
-      'Fire Alarm Control Panel' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        fire_alarm_control_panel(supplier, subsystem)
-      },
-      'Graphic Systems' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        graphic_system(supplier, subsystem)
-      },
-      'Detectors Field Devices' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        detectors_field_device(supplier, subsystem)
-      },
-      'Manual Pull Station' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        manual_pull_station(supplier, subsystem)
-      },
-      'Door Holders' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        door_holder(supplier, subsystem)
-      },
-      'Notification Devices' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        notification_devices(supplier, subsystem)
-      },
-      'Isolation Data' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        isolations(supplier, subsystem)
-      },
-      'Connection Between FACPs' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        connection_betweens(supplier, subsystem)
-      },
-      'Interface with Other Systems' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        interface_with_other_systems(supplier, subsystem)
-      },
-      'Evacuation Systems' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        evacuation_systems(supplier, subsystem)
-      },
-      'Prerecorded Messages/Audio Module' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        prerecorded_message_audio_modules(supplier, subsystem)
-      },
-      'Telephone System' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        telephone_systems(supplier, subsystem)
-      },
-      'Spare Parts' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        spare_parts(supplier, subsystem)
-      },
-      'Scope of Work (SOW)' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        scope_of_works(supplier, subsystem)
-      },
-      'Material & Delivery' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        material_and_deliveries(supplier, subsystem)
-      },
-      'General & Commercial Data' => lambda { |supplier|
-        subsystem = supplier.subsystems.first
-        general_commercial_data(supplier, subsystem)
-      }
+      'Supplier Data' => ->(supplier) { supplier_data(supplier, subsystem) },
+      'Product Data' => ->(supplier) { product_data(supplier, subsystem) },
+      'Fire Alarm Control Panel' => ->(supplier) { fire_alarm_control_panel(supplier, subsystem) },
+      'Graphic Systems' => ->(supplier) { graphic_system(supplier, subsystem) },
+      'Detectors Field Devices' => ->(supplier) { detectors_field_device(supplier, subsystem) },
+      'Manual Pull Station' => ->(supplier) { manual_pull_station(supplier, subsystem) },
+      'Door Holders' => ->(supplier) { door_holder(supplier, subsystem) },
+      'Notification Devices' => ->(supplier) { notification_devices(supplier, subsystem) },
+      'Isolation Data' => ->(supplier) { isolations(supplier, subsystem) },
+      'Connection Between FACPs' => ->(supplier) { connection_betweens(supplier, subsystem) },
+      'Interface with Other Systems' => ->(supplier) { interface_with_other_systems(supplier, subsystem) },
+      'Evacuation Systems' => ->(supplier) { evacuation_systems(supplier, subsystem) },
+      'Prerecorded Messages/Audio Module' => ->(supplier) { prerecorded_message_audio_modules(supplier, subsystem) },
+      'Telephone System' => ->(supplier) { telephone_systems(supplier, subsystem) },
+      'Spare Parts' => ->(supplier) { spare_parts(supplier, subsystem) },
+      'Scope of Work (SOW)' => ->(supplier) { scope_of_works(supplier, subsystem) },
+      'Material & Delivery' => ->(supplier) { material_and_deliveries(supplier, subsystem) },
+      'General & Commercial Data' => ->(supplier) { general_commercial_data(supplier, subsystem) }
     }
 
-    # Build a combined hash for each section.
+    # Build the combined data for each section
     comparison_data = {}
     sections.each do |section_name, fetch_proc|
       section_hash = {}
       suppliers.each do |supplier|
+        # For each supplier, we only fetch data for the chosen subsystem
         data = fetch_proc.call(supplier) || {}
         data.each do |attr, value|
           section_hash[attr] ||= {}
@@ -261,37 +214,35 @@ class ReportsController < ApplicationController
       comparison_data[section_name] = section_hash
     end
 
-    # Generate the Excel workbook with custom styles.
+    # Generate the Excel workbook
     p = Axlsx::Package.new
     wb = p.workbook
 
-    # Define your custom styles.
+    # Example styling
     styles = wb.styles
     header_style = styles.add_style(bg_color: '4472C4', fg_color: 'FFFFFF', b: true, alignment: { horizontal: :center })
     section_title_style = styles.add_style(bg_color: 'D9D9D9', fg_color: '000000', b: true, sz: 12)
     cell_style = styles.add_style(border: { style: :thin, color: '000000' }, alignment: { horizontal: :left })
-    # Optionally define alternating row colors for a more dynamic look.
-    alternating_styles = [styles.add_style(bg_color: 'F2F2F2'), styles.add_style(bg_color: 'FFFFFF')]
 
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
-      # Header row
-      header = ['Attribute'] + suppliers.map { |s| s.supplier_name }
+      # 1) Header row
+      header = ['Attribute'] + suppliers.map(&:supplier_name)
       sheet.add_row header, style: header_style
 
-      # For each section, add a section title row and then a row per attribute.
+      # 2) For each section, add a section title, then each attribute row
       comparison_data.each do |section_name, attributes_hash|
         sheet.add_row [section_name], style: section_title_style
-        attributes_hash.each_with_index do |(attribute, supplier_values), idx|
+
+        attributes_hash.each do |attribute, supplier_values|
           row = [attribute]
           suppliers.each do |supplier|
             row << supplier_values[supplier.supplier_name].to_s
           end
-          # Use alternating styles for rows.
-          row_style = [cell_style] * row.size
-          row_style[0] = alternating_styles[idx % 2] # Example: apply alternating style to first cell if desired
-          sheet.add_row row, style: row_style
+          sheet.add_row row, style: [cell_style] * row.size
         end
-        sheet.add_row [] # empty row for spacing
+
+        # blank row for spacing
+        sheet.add_row []
       end
     end
 

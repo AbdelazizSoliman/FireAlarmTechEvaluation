@@ -2,7 +2,19 @@
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-3xl mx-auto">
   <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Generate Apple to Apple Comparison</h1>
 
+  <!-- The form will pass both selected_suppliers[] and subsystem_id -->
   <form action="<%= generate_comparison_report_reports_path %>" method="get" data-turbo="false">
+
+    <!-- 1) Add a single dropdown to pick the subsystem to compare in Excel -->
+    <div class="mb-4">
+      <label for="subsystem_id" class="block font-semibold mb-1">Choose Subsystem (for Excel Comparison):</label>
+      <%= select_tag :subsystem_id,
+          options_from_collection_for_select(Subsystem.all, :id, :name, selected: nil),
+          include_blank: "Select Subsystem",
+          class: "border rounded px-2 py-1" %>
+    </div>
+
+    <!-- 2) The existing table that displays each supplier's subsystems row-by-row -->
     <div class="overflow-x-auto">
       <table class="min-w-full table-auto bg-white rounded-lg shadow-md">
         <thead class="bg-gray-200">
@@ -17,11 +29,8 @@
             <% supplier.approved_subsystems.each do |subsystem| %>
               <tr class="border-t">
                 <!-- 
-                  Even though each row shows a unique (supplier, subsystem) pair, 
-                  we keep the same checkbox param "selected_suppliers[]" 
-                  so that the user can select the supplier (no matter the subsystem).
-                  If you need to select specific subsystem(s), 
-                  you'll want to pass a combined param or a separate param for subsystem_id. 
+                  We keep the same checkbox param "selected_suppliers[]"
+                  so that the user can select the supplier (no matter how many subsystems appear).
                 -->
                 <td class="px-6 py-3">
                   <input type="checkbox" name="selected_suppliers[]" value="<%= supplier.id %>">
@@ -46,5 +55,6 @@
         Generate Comparison
       </button>
     </div>
+
   </form>
 </div>

@@ -174,7 +174,8 @@ class ReportsController < ApplicationController
     # Define the sections to be compared.
     sections = {
       'Supplier Data' => lambda { |supplier|
-        supplier_data(supplier)
+        subsystem = supplier.subsystems.first
+        supplier_data(supplier, subsystem)
       },
       'Product Data' => lambda { |supplier|
         subsystem = supplier.subsystems.first

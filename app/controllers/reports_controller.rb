@@ -171,9 +171,11 @@ class ReportsController < ApplicationController
       redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
     end
   
+    # Get the selected suppliers.
     suppliers = Supplier.where(id: selected_ids)
+    chosen_subsystem_id = subsystem_id.to_i
   
-    # Define sections for the comparison.
+    # Define the sections for comparison.
     sections = {
       'Supplier Data' => ->(supplier, subsystem) { supplier_data(supplier, subsystem) },
       'Product Data' => ->(supplier, subsystem) { product_data(supplier, subsystem) },
@@ -195,17 +197,17 @@ class ReportsController < ApplicationController
       'General & Commercial Data' => ->(supplier, subsystem) { general_commercial_data(supplier, subsystem) }
     }
   
-    # Build the combined data for each section.
+    # Build the comparison data for each section.
     comparison_data = {}
     sections.each do |section_name, fetch_proc|
       section_hash = {}
       suppliers.each do |supplier|
-        # For each supplier, try to find the chosen subsystem from that supplier's own subsystems.
-        chosen_subsystem = supplier.subsystems.find_by(id: subsystem_id)
+        # Use approved_subsystems to match the chosen subsystem.
+        chosen_subsystem = supplier.approved_subsystems.find_by(id: chosen_subsystem_id)
         data = chosen_subsystem ? fetch_proc.call(supplier, chosen_subsystem) : {}
         data.each do |attr, value|
           section_hash[attr] ||= {}
-          section_hash[attr][supplier.supplier_name] = value.presence || "N/A"
+          section_hash[attr][supplier.supplier_name] = value.present? ? value : "N/A"
         end
       end
       comparison_data[section_name] = section_hash
@@ -215,7 +217,6 @@ class ReportsController < ApplicationController
     p = Axlsx::Package.new
     wb = p.workbook
   
-    # Define custom styles.
     styles = wb.styles
     header_style = styles.add_style(bg_color: '4472C4', fg_color: 'FFFFFF', b: true, alignment: { horizontal: :center })
     section_title_style = styles.add_style(bg_color: 'D9D9D9', fg_color: '000000', b: true, sz: 12)
@@ -227,7 +228,6 @@ class ReportsController < ApplicationController
   
       comparison_data.each do |section_name, attributes_hash|
         sheet.add_row [section_name], style: section_title_style
-  
         attributes_hash.each do |attribute, supplier_values|
           row = [attribute]
           suppliers.each do |supplier|
@@ -235,7 +235,6 @@ class ReportsController < ApplicationController
           end
           sheet.add_row row, style: [cell_style] * row.size
         end
-  
         sheet.add_row [] # blank row for spacing
       end
     end
@@ -244,6 +243,7 @@ class ReportsController < ApplicationController
               filename: 'Apple_to_Apple_Comparison.xlsx',
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+  
   
 
   def evaluation_result

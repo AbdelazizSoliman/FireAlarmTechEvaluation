@@ -93,6 +93,7 @@ Rails.application.routes.draw do
     get :evaluation_data # Show evaluation data for a supplier and subsystem
     get :generate_evaluation_report # Generate and download the evaluation report
     get :evaluation_report  # Generate Evaluation/Tech Report
+    get :evaluation_result
     get :recommendation  # Generate Recommendation
     get :apple_to_apple_comparison  # Generate Apple to Apple Comparison
     get :generate_comparison_report

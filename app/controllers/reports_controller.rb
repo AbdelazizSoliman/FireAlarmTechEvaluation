@@ -123,7 +123,7 @@ class ReportsController < ApplicationController
     subsystem = Subsystem.find(params[:subsystem_id])
 
     data_sections = {
-      'Supplier Data' => supplier_data(supplier),
+      'Supplier Data' => supplier_data(supplier, subsystem),
       'Product Data' => product_data(supplier, subsystem),
       'Fire Alarm Control Panel' => fire_alarm_control_panel(supplier, subsystem),
       'Graphic Systems' => graphic_system(supplier, subsystem),

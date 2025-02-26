@@ -261,24 +261,35 @@ class ReportsController < ApplicationController
       comparison_data[section_name] = section_hash
     end
 
-    # Generate the Excel workbook.
+    # Generate the Excel workbook with custom styles.
     p = Axlsx::Package.new
     wb = p.workbook
+
+    # Define your custom styles.
+    styles = wb.styles
+    header_style = styles.add_style(bg_color: '4472C4', fg_color: 'FFFFFF', b: true, alignment: { horizontal: :center })
+    section_title_style = styles.add_style(bg_color: 'D9D9D9', fg_color: '000000', b: true, sz: 12)
+    cell_style = styles.add_style(border: { style: :thin, color: '000000' }, alignment: { horizontal: :left })
+    # Optionally define alternating row colors for a more dynamic look.
+    alternating_styles = [styles.add_style(bg_color: 'F2F2F2'), styles.add_style(bg_color: 'FFFFFF')]
 
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
       # Header row
       header = ['Attribute'] + suppliers.map { |s| s.supplier_name }
-      sheet.add_row header, b: true
+      sheet.add_row header, style: header_style
 
       # For each section, add a section title row and then a row per attribute.
       comparison_data.each do |section_name, attributes_hash|
-        sheet.add_row [section_name], sz: 12, b: true
-        attributes_hash.each do |attribute, supplier_values|
+        sheet.add_row [section_name], style: section_title_style
+        attributes_hash.each_with_index do |(attribute, supplier_values), idx|
           row = [attribute]
           suppliers.each do |supplier|
             row << supplier_values[supplier.supplier_name].to_s
           end
-          sheet.add_row row
+          # Use alternating styles for rows.
+          row_style = [cell_style] * row.size
+          row_style[0] = alternating_styles[idx % 2] # Example: apply alternating style to first cell if desired
+          sheet.add_row row, style: row_style
         end
         sheet.add_row [] # empty row for spacing
       end

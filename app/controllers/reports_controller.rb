@@ -407,11 +407,13 @@ class ReportsController < ApplicationController
 
   def supplier_data(supplier, subsystem)
     supplier.attributes.except('id', 'created_at', 'updated_at')
+    record = supplier.product_data.find_by(subsystem_id: subsystem.id)
+    process_association(record, 'Supplier')
   end
 
   # Methods for evaluation data that require both supplier and subsystem.
   def product_data(supplier, subsystem)
-    record = supplier.product_data.find_by(subsystem_id: subsystem.id)
+    record = supplier.supplier_data.find_by(subsystem_id: subsystem.id)
     process_association(record, 'Product')
   end
 

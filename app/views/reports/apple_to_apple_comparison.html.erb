@@ -1,7 +1,8 @@
+<!-- app/views/reports/apple_to_apple_comparison.html.erb -->
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-3xl mx-auto">
   <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Generate Apple to Apple Comparison</h1>
 
-  <form action="<%= generate_comparison_report_reports_path %>" method="get" data-turbo="false" >
+  <form action="<%= generate_comparison_report_reports_path %>" method="get" data-turbo="false">
     <div class="overflow-x-auto">
       <table class="min-w-full table-auto bg-white rounded-lg shadow-md">
         <thead class="bg-gray-200">
@@ -13,26 +14,35 @@
         </thead>
         <tbody class="text-sm text-gray-700">
           <% @suppliers_with_subsystems.each do |supplier| %>
-            <tr class="border-t">
-              <td class="px-6 py-3">
-                <input type="checkbox" name="selected_suppliers[]" value="<%= supplier.id %>">
-              </td>
-              <td class="px-6 py-3 font-semibold"><%= supplier.supplier_name %></td>
-              <td class="px-6 py-3">
-                <ul class="space-y-2">
-                  <% supplier.approved_subsystems.each do |subsystem| %>
-                     <%= link_to subsystem.name, evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id), class: "text-blue-600 hover:text-blue-800 hover:underline" %>
-                  <% end %>
-                </ul>
-              </td>
-            </tr>
+            <% supplier.approved_subsystems.each do |subsystem| %>
+              <tr class="border-t">
+                <!-- 
+                  Even though each row shows a unique (supplier, subsystem) pair, 
+                  we keep the same checkbox param "selected_suppliers[]" 
+                  so that the user can select the supplier (no matter the subsystem).
+                  If you need to select specific subsystem(s), 
+                  you'll want to pass a combined param or a separate param for subsystem_id. 
+                -->
+                <td class="px-6 py-3">
+                  <input type="checkbox" name="selected_suppliers[]" value="<%= supplier.id %>">
+                </td>
+                <td class="px-6 py-3 font-semibold">
+                  <%= supplier.supplier_name %>
+                </td>
+                <td class="px-6 py-3">
+                  <%= link_to subsystem.name,
+                             evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id),
+                             class: "text-blue-600 hover:text-blue-800 hover:underline" %>
+                </td>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>
     </div>
 
     <div class="mt-6 flex justify-center">
-      <button type="submit" class="p-3 bg-red-600 rounded-md hover:text text-white">
+      <button type="submit" class="p-3 bg-red-600 rounded-md text-white hover:bg-red-700">
         Generate Comparison
       </button>
     </div>

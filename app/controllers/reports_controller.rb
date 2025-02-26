@@ -405,7 +405,7 @@ class ReportsController < ApplicationController
     data
   end
 
-  def supplier_data(supplier)
+  def supplier_data(supplier, subsystem)
     supplier.attributes.except('id', 'created_at', 'updated_at')
   end
 

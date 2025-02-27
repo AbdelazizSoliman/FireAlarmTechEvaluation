@@ -395,12 +395,26 @@ module Api
           com_for_mfacp com_for_detectors subsystem_id
         ],
         fire_alarm_control_panels_attributes: %i[
-          id standards total_no_of_panels total_number_of_loop_cards total_number_of_circuits_per_card_loop
-          total_no_of_loops total_no_of_spare_loops total_no_of_detectors_per_loop spare_no_of_loops_per_panel
-          initiating_devices_polarity_insensitivity spare_percentage_per_loop fa_repeater auto_dialer
-          dot_matrix_printer printer_listing power_standby_24_alarm_5 power_standby_24_alarm_15
-          internal_batteries_backup_capacity_panel external_batteries_backup_time subsystem_id supplier_id
+          id standards
+          total_no_of_panels total_no_of_panels_unit_rate total_no_of_panels_amount total_no_of_panels_notes
+          total_number_of_loop_cards total_number_of_loop_cards_unit_rate total_number_of_loop_cards_amount total_number_of_loop_cards_notes
+          total_number_of_circuits_per_card_loop total_number_of_circuits_per_card_loop_unit_rate total_number_of_circuits_per_card_loop_amount total_number_of_circuits_per_card_loop_notes
+          total_no_of_loops total_no_of_loops_unit_rate total_no_of_loops_amount total_no_of_loops_notes
+          total_no_of_spare_loops total_no_of_spare_loops_unit_rate total_no_of_spare_loops_amount total_no_of_spare_loops_notes
+          total_no_of_detectors_per_loop total_no_of_detectors_per_loop_unit_rate total_no_of_detectors_per_loop_amount total_no_of_detectors_per_loop_notes
+          spare_no_of_loops_per_panel spare_no_of_loops_per_panel_unit_rate spare_no_of_loops_per_panel_amount spare_no_of_loops_per_panel_notes
+          initiating_devices_polarity_insensitivity
+          spare_percentage_per_loop spare_percentage_per_loop_unit_rate spare_percentage_per_loop_amount spare_percentage_per_loop_notes
+          fa_repeater fa_repeater_unit_rate fa_repeater_amount fa_repeater_notes
+          auto_dialer auto_dialer_unit_rate auto_dialer_amount auto_dialer_notes
+          dot_matrix_printer dot_matrix_printer_unit_rate dot_matrix_printer_amount dot_matrix_printer_notes
+          printer_listing
+          power_standby_24_alarm_5 power_standby_24_alarm_15
+          internal_batteries_backup_capacity_panel internal_batteries_backup_capacity_panel_unit_rate internal_batteries_backup_capacity_panel_amount internal_batteries_backup_capacity_panel_notes
+          external_batteries_backup_time external_batteries_backup_time_unit_rate external_batteries_backup_time_amount external_batteries_backup_time_notes
+          subsystem_id supplier_id
         ],
+
         detectors_field_devices_attributes: %i[
           id smoke_detectors smoke_detectors_with_built_in_isolator smoke_detectors_wall_mounted_with_built_in_isolator
           smoke_detectors_with_led_indicators smoke_detectors_with_led_and_built_in_isolator heat_detector
@@ -494,7 +508,6 @@ module Api
         ]
       )
     end
-    
 
     # UPDATED: Include the new parameters in evaluation
     def perform_evaluation(subsystem:, fire_alarm_control_panel:, detectors_field_device:, door_holders:,
@@ -644,16 +657,58 @@ module Api
 
     def fire_alarm_control_panel_params
       params.require(:fire_alarm_control_panel).permit(
-        :standards, :total_no_of_panels, :total_number_of_loop_cards,
-        :total_number_of_circuits_per_card_loop, :total_no_of_loops,
-        :total_no_of_spare_loops, :total_no_of_detectors_per_loop,
-        :spare_no_of_loops_per_panel, :initiating_devices_polarity_insensitivity,
-        :spare_percentage_per_loop, :fa_repeater, :auto_dialer,
-        :dot_matrix_printer, :printer_listing, :power_standby_24_alarm_5,
-        :power_standby_24_alarm_15, :internal_batteries_backup_capacity_panel,
-        :external_batteries_backup_time
+        :standards, 
+        # total_no_of_panels group
+        :total_no_of_panels, :total_no_of_panels_unit_rate, :total_no_of_panels_amount, :total_no_of_panels_notes,
+        
+        # total_number_of_loop_cards group
+        :total_number_of_loop_cards, :total_number_of_loop_cards_unit_rate, :total_number_of_loop_cards_amount, :total_number_of_loop_cards_notes,
+        
+        # total_number_of_circuits_per_card_loop group
+        :total_number_of_circuits_per_card_loop, :total_number_of_circuits_per_card_loop_unit_rate, :total_number_of_circuits_per_card_loop_amount, :total_number_of_circuits_per_card_loop_notes,
+        
+        # total_no_of_loops group
+        :total_no_of_loops, :total_no_of_loops_unit_rate, :total_no_of_loops_amount, :total_no_of_loops_notes,
+        
+        # total_no_of_spare_loops group
+        :total_no_of_spare_loops, :total_no_of_spare_loops_unit_rate, :total_no_of_spare_loops_amount, :total_no_of_spare_loops_notes,
+        
+        # total_no_of_detectors_per_loop group
+        :total_no_of_detectors_per_loop, :total_no_of_detectors_per_loop_unit_rate, :total_no_of_detectors_per_loop_amount, :total_no_of_detectors_per_loop_notes,
+        
+        # spare_no_of_loops_per_panel group
+        :spare_no_of_loops_per_panel, :spare_no_of_loops_per_panel_unit_rate, :spare_no_of_loops_per_panel_amount, :spare_no_of_loops_per_panel_notes,
+        
+        # field without extra cost fields
+        :initiating_devices_polarity_insensitivity,
+        
+        # spare_percentage_per_loop group
+        :spare_percentage_per_loop, :spare_percentage_per_loop_unit_rate, :spare_percentage_per_loop_amount, :spare_percentage_per_loop_notes,
+        
+        # fa_repeater group
+        :fa_repeater, :fa_repeater_unit_rate, :fa_repeater_amount, :fa_repeater_notes,
+        
+        # auto_dialer group
+        :auto_dialer, :auto_dialer_unit_rate, :auto_dialer_amount, :auto_dialer_notes,
+        
+        # dot_matrix_printer group
+        :dot_matrix_printer, :dot_matrix_printer_unit_rate, :dot_matrix_printer_amount, :dot_matrix_printer_notes,
+        
+        # fields without extra cost fields
+        :printer_listing,
+        :power_standby_24_alarm_5, :power_standby_24_alarm_15,
+        
+        # internal_batteries_backup_capacity_panel group
+        :internal_batteries_backup_capacity_panel, :internal_batteries_backup_capacity_panel_unit_rate, :internal_batteries_backup_capacity_panel_amount, :internal_batteries_backup_capacity_panel_notes,
+        
+        # external_batteries_backup_time group
+        :external_batteries_backup_time, :external_batteries_backup_time_unit_rate, :external_batteries_backup_time_amount, :external_batteries_backup_time_notes,
+        
+        # foreign keys
+        :subsystem_id, :supplier_id
       )
     end
+    
 
     def detectors_field_devices_params
       params.require(:detectors_field_devices).permit(

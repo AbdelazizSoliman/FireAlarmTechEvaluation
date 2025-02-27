@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_22_085501) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_27_150658) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -227,6 +227,45 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_22_085501) do
     t.datetime "updated_at", null: false
     t.bigint "subsystem_id", null: false
     t.bigint "supplier_id", null: false
+    t.integer "total_no_of_panels_unit_rate"
+    t.integer "total_no_of_panels_amount"
+    t.text "total_no_of_panels_notes"
+    t.integer "total_number_of_loop_cards_unit_rate"
+    t.integer "total_number_of_loop_cards_amount"
+    t.text "total_number_of_loop_cards_notes"
+    t.integer "total_number_of_circuits_per_card_loop_unit_rate"
+    t.integer "total_number_of_circuits_per_card_loop_amount"
+    t.text "total_number_of_circuits_per_card_loop_notes"
+    t.integer "total_no_of_loops_unit_rate"
+    t.integer "total_no_of_loops_amount"
+    t.text "total_no_of_loops_notes"
+    t.integer "total_no_of_spare_loops_unit_rate"
+    t.integer "total_no_of_spare_loops_amount"
+    t.text "total_no_of_spare_loops_notes"
+    t.integer "total_no_of_detectors_per_loop_unit_rate"
+    t.integer "total_no_of_detectors_per_loop_amount"
+    t.text "total_no_of_detectors_per_loop_notes"
+    t.integer "spare_no_of_loops_per_panel_unit_rate"
+    t.integer "spare_no_of_loops_per_panel_amount"
+    t.text "spare_no_of_loops_per_panel_notes"
+    t.integer "spare_percentage_per_loop_unit_rate"
+    t.integer "spare_percentage_per_loop_amount"
+    t.text "spare_percentage_per_loop_notes"
+    t.integer "fa_repeater_unit_rate"
+    t.integer "fa_repeater_amount"
+    t.text "fa_repeater_notes"
+    t.integer "auto_dialer_unit_rate"
+    t.integer "auto_dialer_amount"
+    t.text "auto_dialer_notes"
+    t.integer "dot_matrix_printer_unit_rate"
+    t.integer "dot_matrix_printer_amount"
+    t.text "dot_matrix_printer_notes"
+    t.integer "internal_batteries_backup_capacity_panel_unit_rate"
+    t.integer "internal_batteries_backup_capacity_panel_amount"
+    t.text "internal_batteries_backup_capacity_panel_notes"
+    t.integer "external_batteries_backup_time_unit_rate"
+    t.integer "external_batteries_backup_time_amount"
+    t.text "external_batteries_backup_time_notes"
     t.index ["subsystem_id"], name: "index_fire_alarm_control_panels_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_fire_ctrl_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_fire_alarm_control_panels_on_supplier_id"

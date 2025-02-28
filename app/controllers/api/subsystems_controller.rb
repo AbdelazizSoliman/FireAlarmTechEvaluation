@@ -771,7 +771,7 @@ module Api
       )
     end
 
-    def notification_device_params
+    def notification_devices_params
       params.require(:notification_device).permit(
         :notification_addressing,
         :fire_alarm_strobe, :fire_alarm_strobe_unit_rate, :fire_alarm_strobe_amount, :fire_alarm_strobe_notes,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_28_123016) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_28_124604) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -343,6 +343,21 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_28_123016) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "supplier_id", null: false
+    t.integer "built_in_fault_isolator_for_each_detector_unit_rate"
+    t.integer "built_in_fault_isolator_for_each_detector_amount"
+    t.text "built_in_fault_isolator_for_each_detector_notes"
+    t.integer "built_in_fault_isolator_for_each_mcp_bg_unit_rate"
+    t.integer "built_in_fault_isolator_for_each_mcp_bg_amount"
+    t.text "built_in_fault_isolator_for_each_mcp_bg_notes"
+    t.integer "built_in_fault_isolator_for_each_sounder_horn_unit_rate"
+    t.integer "built_in_fault_isolator_for_each_sounder_horn_amount"
+    t.text "built_in_fault_isolator_for_each_sounder_horn_notes"
+    t.integer "built_in_fault_isolator_for_monitor_control_modules_unit_rate"
+    t.integer "built_in_fault_isolator_for_monitor_control_modules_amount"
+    t.text "built_in_fault_isolator_for_monitor_control_modules_notes"
+    t.integer "grouping_for_each_12_15_unit_rate"
+    t.integer "grouping_for_each_12_15_amount"
+    t.text "grouping_for_each_12_15_notes"
     t.index ["subsystem_id"], name: "index_isolations_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_iso_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_isolations_on_supplier_id"

@@ -788,12 +788,32 @@ module Api
     def isolation_params
       params.require(:isolations).permit(
         :built_in_fault_isolator_for_each_detector,
+        :built_in_fault_isolator_for_each_detector_unit_rate,
+        :built_in_fault_isolator_for_each_detector_amount,
+        :built_in_fault_isolator_for_each_detector_notes,
+    
         :built_in_fault_isolator_for_each_mcp_bg,
+        :built_in_fault_isolator_for_each_mcp_bg_unit_rate,
+        :built_in_fault_isolator_for_each_mcp_bg_amount,
+        :built_in_fault_isolator_for_each_mcp_bg_notes,
+    
         :built_in_fault_isolator_for_each_sounder_horn,
+        :built_in_fault_isolator_for_each_sounder_horn_unit_rate,
+        :built_in_fault_isolator_for_each_sounder_horn_amount,
+        :built_in_fault_isolator_for_each_sounder_horn_notes,
+    
         :built_in_fault_isolator_for_monitor_control_modules,
-        :grouping_for_each_12_15
+        :built_in_fault_isolator_for_monitor_control_modules_unit_rate,
+        :built_in_fault_isolator_for_monitor_control_modules_amount,
+        :built_in_fault_isolator_for_monitor_control_modules_notes,
+    
+        :grouping_for_each_12_15,
+        :grouping_for_each_12_15_unit_rate,
+        :grouping_for_each_12_15_amount,
+        :grouping_for_each_12_15_notes
       )
     end
+    
 
     def connection_betweens_params
       params.require(:connection_betweens).permit(

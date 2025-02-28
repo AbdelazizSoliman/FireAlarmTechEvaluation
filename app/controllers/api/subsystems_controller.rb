@@ -657,58 +657,42 @@ module Api
 
     def fire_alarm_control_panel_params
       params.require(:fire_alarm_control_panel).permit(
-        :standards, 
+        :standards,
         # total_no_of_panels group
         :total_no_of_panels, :total_no_of_panels_unit_rate, :total_no_of_panels_amount, :total_no_of_panels_notes,
-        
         # total_number_of_loop_cards group
         :total_number_of_loop_cards, :total_number_of_loop_cards_unit_rate, :total_number_of_loop_cards_amount, :total_number_of_loop_cards_notes,
-        
         # total_number_of_circuits_per_card_loop group
         :total_number_of_circuits_per_card_loop, :total_number_of_circuits_per_card_loop_unit_rate, :total_number_of_circuits_per_card_loop_amount, :total_number_of_circuits_per_card_loop_notes,
-        
         # total_no_of_loops group
         :total_no_of_loops, :total_no_of_loops_unit_rate, :total_no_of_loops_amount, :total_no_of_loops_notes,
-        
         # total_no_of_spare_loops group
         :total_no_of_spare_loops, :total_no_of_spare_loops_unit_rate, :total_no_of_spare_loops_amount, :total_no_of_spare_loops_notes,
-        
         # total_no_of_detectors_per_loop group
         :total_no_of_detectors_per_loop, :total_no_of_detectors_per_loop_unit_rate, :total_no_of_detectors_per_loop_amount, :total_no_of_detectors_per_loop_notes,
-        
         # spare_no_of_loops_per_panel group
         :spare_no_of_loops_per_panel, :spare_no_of_loops_per_panel_unit_rate, :spare_no_of_loops_per_panel_amount, :spare_no_of_loops_per_panel_notes,
-        
         # field without extra cost fields
         :initiating_devices_polarity_insensitivity,
-        
         # spare_percentage_per_loop group
         :spare_percentage_per_loop, :spare_percentage_per_loop_unit_rate, :spare_percentage_per_loop_amount, :spare_percentage_per_loop_notes,
-        
         # fa_repeater group
         :fa_repeater, :fa_repeater_unit_rate, :fa_repeater_amount, :fa_repeater_notes,
-        
         # auto_dialer group
         :auto_dialer, :auto_dialer_unit_rate, :auto_dialer_amount, :auto_dialer_notes,
-        
         # dot_matrix_printer group
         :dot_matrix_printer, :dot_matrix_printer_unit_rate, :dot_matrix_printer_amount, :dot_matrix_printer_notes,
-        
         # fields without extra cost fields
         :printer_listing,
         :power_standby_24_alarm_5, :power_standby_24_alarm_15,
-        
         # internal_batteries_backup_capacity_panel group
         :internal_batteries_backup_capacity_panel, :internal_batteries_backup_capacity_panel_unit_rate, :internal_batteries_backup_capacity_panel_amount, :internal_batteries_backup_capacity_panel_notes,
-        
         # external_batteries_backup_time group
         :external_batteries_backup_time, :external_batteries_backup_time_unit_rate, :external_batteries_backup_time_amount, :external_batteries_backup_time_notes,
-        
         # foreign keys
         :subsystem_id, :supplier_id
       )
     end
-    
 
     def detectors_field_devices_params
       params.require(:detectors_field_devices).permit(
@@ -783,7 +767,6 @@ module Api
         :subsystem_id, :supplier_id
       )
     end
-    
 
     def isolation_params
       params.require(:isolations).permit(
@@ -791,29 +774,24 @@ module Api
         :built_in_fault_isolator_for_each_detector_unit_rate,
         :built_in_fault_isolator_for_each_detector_amount,
         :built_in_fault_isolator_for_each_detector_notes,
-    
         :built_in_fault_isolator_for_each_mcp_bg,
         :built_in_fault_isolator_for_each_mcp_bg_unit_rate,
         :built_in_fault_isolator_for_each_mcp_bg_amount,
         :built_in_fault_isolator_for_each_mcp_bg_notes,
-    
         :built_in_fault_isolator_for_each_sounder_horn,
         :built_in_fault_isolator_for_each_sounder_horn_unit_rate,
         :built_in_fault_isolator_for_each_sounder_horn_amount,
         :built_in_fault_isolator_for_each_sounder_horn_notes,
-    
         :built_in_fault_isolator_for_monitor_control_modules,
         :built_in_fault_isolator_for_monitor_control_modules_unit_rate,
         :built_in_fault_isolator_for_monitor_control_modules_amount,
         :built_in_fault_isolator_for_monitor_control_modules_notes,
-    
         :grouping_for_each_12_15,
         :grouping_for_each_12_15_unit_rate,
         :grouping_for_each_12_15_amount,
         :grouping_for_each_12_15_notes
       )
     end
-    
 
     def connection_betweens_params
       params.require(:connection_betweens).permit(
@@ -825,20 +803,32 @@ module Api
 
     def interface_with_other_params
       params.require(:interface_with_other_systems).permit(
-        :integration_type1,
-        :integration_type2,
-        :integration_type3,
-        :integration_type4,
-        :integration_type5,
-        :integration_type6,
-        :integration_type7,
-        :integration_type8,
-        :integration_type9,
-        :integration_type10,
+        :bms_connection,
+        :elevator_control_system,
+        :fire_suppression_system,
+        :staircase_pressurization_system,
+        :hvac_system,
+        :cctv_system,
+        :access_control_system,
+        :pa_va_system,
+        :lighting_control_system,
+        :electrical_panels,
         :total_no_of_control_modules,
+        :total_no_of_control_modules_unit_rate,
+        :total_no_of_control_modules_amount,
+        :total_no_of_control_modules_notes,
         :total_no_of_monitor_modules,
+        :total_no_of_monitor_modules_unit_rate,
+        :total_no_of_monitor_modules_amount,
+        :total_no_of_monitor_modules_notes,
         :total_no_of_dual_monitor_modules,
-        :total_no_of_zone_module
+        :total_no_of_dual_monitor_modules_unit_rate,
+        :total_no_of_dual_monitor_modules_amount,
+        :total_no_of_dual_monitor_modules_notes,
+        :total_no_of_zone_module,
+        :total_no_of_zone_module_unit_rate,
+        :total_no_of_zone_module_amount,
+        :total_no_of_zone_module_notes
       )
     end
 
@@ -861,7 +851,6 @@ module Api
         :subsystem_id, :supplier_id
       )
     end
-    
 
     def prerecorded_message_audio_modules_params
       params.require(:prerecorded_message_audio_modules).permit(
@@ -879,26 +868,21 @@ module Api
         :number_of_firefighter_telephone_circuits_per_panel_unit_rate,
         :number_of_firefighter_telephone_circuits_per_panel_amount,
         :number_of_firefighter_telephone_circuits_per_panel_notes,
-    
         :total_no_of_firefighter_telephone_cabinet,
         :total_no_of_firefighter_telephone_cabinet_unit_rate,
         :total_no_of_firefighter_telephone_cabinet_amount,
         :total_no_of_firefighter_telephone_cabinet_notes,
-    
         :total_no_of_firefighter_phones,
         :total_no_of_firefighter_phones_unit_rate,
         :total_no_of_firefighter_phones_amount,
         :total_no_of_firefighter_phones_notes,
-    
         :total_no_of_firefighter_jacks,
         :total_no_of_firefighter_jacks_unit_rate,
         :total_no_of_firefighter_jacks_amount,
         :total_no_of_firefighter_jacks_notes,
-        
         :subsystem_id, :supplier_id
       )
     end
-    
 
     def spare_parts_params
       params.require(:spare_parts).permit(

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_28_131452) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_28_151856) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -325,16 +325,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_28_131452) do
   end
 
   create_table "interface_with_other_systems", force: :cascade do |t|
-    t.string "integration_type1"
-    t.string "integration_type2"
-    t.string "integration_type3"
-    t.string "integration_type4"
-    t.string "integration_type5"
-    t.string "integration_type6"
-    t.string "integration_type7"
-    t.string "integration_type8"
-    t.string "integration_type9"
-    t.string "integration_type10"
+    t.string "bms_connection"
+    t.string "elevator_control_system"
+    t.string "fire_suppression_system"
+    t.string "staircase_pressurization_system"
+    t.string "hvac_system"
+    t.string "cctv_system"
+    t.string "access_control_system"
+    t.string "pa_va_system"
+    t.string "lighting_control_system"
+    t.string "electrical_panels"
     t.integer "total_no_of_control_modules"
     t.integer "total_no_of_monitor_modules"
     t.integer "total_no_of_dual_monitor_modules"
@@ -343,6 +343,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_28_131452) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "supplier_id", null: false
+    t.integer "total_no_of_control_modules_unit_rate"
+    t.integer "total_no_of_control_modules_amount"
+    t.text "total_no_of_control_modules_notes"
+    t.integer "total_no_of_monitor_modules_unit_rate"
+    t.integer "total_no_of_monitor_modules_amount"
+    t.text "total_no_of_monitor_modules_notes"
+    t.integer "total_no_of_dual_monitor_modules_unit_rate"
+    t.integer "total_no_of_dual_monitor_modules_amount"
+    t.text "total_no_of_dual_monitor_modules_notes"
+    t.integer "total_no_of_zone_module_unit_rate"
+    t.integer "total_no_of_zone_module_amount"
+    t.text "total_no_of_zone_module_notes"
     t.index ["subsystem_id"], name: "index_interface_with_other_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_iface_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_interface_with_other_systems_on_supplier_id"

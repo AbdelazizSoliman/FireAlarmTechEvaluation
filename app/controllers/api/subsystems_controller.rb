@@ -876,11 +876,29 @@ module Api
     def telephone_system_params
       params.require(:telephone_systems).permit(
         :number_of_firefighter_telephone_circuits_per_panel,
+        :number_of_firefighter_telephone_circuits_per_panel_unit_rate,
+        :number_of_firefighter_telephone_circuits_per_panel_amount,
+        :number_of_firefighter_telephone_circuits_per_panel_notes,
+    
         :total_no_of_firefighter_telephone_cabinet,
+        :total_no_of_firefighter_telephone_cabinet_unit_rate,
+        :total_no_of_firefighter_telephone_cabinet_amount,
+        :total_no_of_firefighter_telephone_cabinet_notes,
+    
         :total_no_of_firefighter_phones,
-        :total_no_of_firefighter_jacks
+        :total_no_of_firefighter_phones_unit_rate,
+        :total_no_of_firefighter_phones_amount,
+        :total_no_of_firefighter_phones_notes,
+    
+        :total_no_of_firefighter_jacks,
+        :total_no_of_firefighter_jacks_unit_rate,
+        :total_no_of_firefighter_jacks_amount,
+        :total_no_of_firefighter_jacks_notes,
+        
+        :subsystem_id, :supplier_id
       )
     end
+    
 
     def spare_parts_params
       params.require(:spare_parts).permit(

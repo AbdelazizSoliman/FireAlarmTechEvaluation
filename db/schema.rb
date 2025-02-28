@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_28_130122) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_28_131452) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -647,6 +647,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_28_130122) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "supplier_id", null: false
+    t.integer "number_of_firefighter_telephone_circuits_per_panel_unit_rate"
+    t.integer "number_of_firefighter_telephone_circuits_per_panel_amount"
+    t.text "number_of_firefighter_telephone_circuits_per_panel_notes"
+    t.integer "total_no_of_firefighter_telephone_cabinet_unit_rate"
+    t.integer "total_no_of_firefighter_telephone_cabinet_amount"
+    t.text "total_no_of_firefighter_telephone_cabinet_notes"
+    t.integer "total_no_of_firefighter_phones_unit_rate"
+    t.integer "total_no_of_firefighter_phones_amount"
+    t.text "total_no_of_firefighter_phones_notes"
+    t.integer "total_no_of_firefighter_jacks_unit_rate"
+    t.integer "total_no_of_firefighter_jacks_amount"
+    t.text "total_no_of_firefighter_jacks_notes"
     t.index ["subsystem_id"], name: "index_telephone_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_tel_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_telephone_systems_on_supplier_id"

@@ -846,15 +846,22 @@ module Api
       params.require(:evacuation_systems).permit(
         :included_in_fire_alarm_system,
         :evacuation_system_part_of_fa_panel,
-        :amplifier_power_output,
-        :total_no_of_amplifiers,
-        :total_no_of_evacuation_speakers_circuits,
-        :total_no_of_wattage_per_panel,
         :fire_rated_speakers_watt,
         :speakers_tapping_watt,
-        :total_no_of_speakers
+        # cost fields for amplifier_power_output
+        :amplifier_power_output, :amplifier_power_output_unit_rate, :amplifier_power_output_amount, :amplifier_power_output_notes,
+        # cost fields for total_no_of_amplifiers
+        :total_no_of_amplifiers, :total_no_of_amplifiers_unit_rate, :total_no_of_amplifiers_amount, :total_no_of_amplifiers_notes,
+        # cost fields for total_no_of_evacuation_speakers_circuits
+        :total_no_of_evacuation_speakers_circuits, :total_no_of_evacuation_speakers_circuits_unit_rate, :total_no_of_evacuation_speakers_circuits_amount, :total_no_of_evacuation_speakers_circuits_notes,
+        # cost fields for total_no_of_wattage_per_panel
+        :total_no_of_wattage_per_panel, :total_no_of_wattage_per_panel_unit_rate, :total_no_of_wattage_per_panel_amount, :total_no_of_wattage_per_panel_notes,
+        # cost fields for total_no_of_speakers
+        :total_no_of_speakers, :total_no_of_speakers_unit_rate, :total_no_of_speakers_amount, :total_no_of_speakers_notes,
+        :subsystem_id, :supplier_id
       )
     end
+    
 
     def prerecorded_message_audio_modules_params
       params.require(:prerecorded_message_audio_modules).permit(

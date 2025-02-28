@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_28_124604) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_28_130122) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -199,6 +199,21 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_28_124604) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "supplier_id", null: false
+    t.integer "amplifier_power_output_unit_rate"
+    t.integer "amplifier_power_output_amount"
+    t.text "amplifier_power_output_notes"
+    t.integer "total_no_of_amplifiers_unit_rate"
+    t.integer "total_no_of_amplifiers_amount"
+    t.text "total_no_of_amplifiers_notes"
+    t.integer "total_no_of_evacuation_speakers_circuits_unit_rate"
+    t.integer "total_no_of_evacuation_speakers_circuits_amount"
+    t.text "total_no_of_evacuation_speakers_circuits_notes"
+    t.integer "total_no_of_wattage_per_panel_unit_rate"
+    t.integer "total_no_of_wattage_per_panel_amount"
+    t.text "total_no_of_wattage_per_panel_notes"
+    t.integer "total_no_of_speakers_unit_rate"
+    t.integer "total_no_of_speakers_amount"
+    t.text "total_no_of_speakers_notes"
     t.index ["subsystem_id"], name: "index_evacuation_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_evac_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_evacuation_systems_on_supplier_id"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_28_151856) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_28_163428) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -565,6 +565,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_28_151856) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "supplier_id", null: false
+    t.integer "total_no_of_device1_unit_rate"
+    t.integer "total_no_of_device1_amount"
+    t.text "total_no_of_device1_notes"
+    t.integer "total_no_of_device2_unit_rate"
+    t.integer "total_no_of_device2_amount"
+    t.text "total_no_of_device2_notes"
+    t.integer "total_no_of_device3_unit_rate"
+    t.integer "total_no_of_device3_amount"
+    t.text "total_no_of_device3_notes"
+    t.integer "total_no_of_device4_unit_rate"
+    t.integer "total_no_of_device4_amount"
+    t.text "total_no_of_device4_notes"
     t.index ["subsystem_id"], name: "index_spare_parts_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_spare_parts_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_spare_parts_on_supplier_id"

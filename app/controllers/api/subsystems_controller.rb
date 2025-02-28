@@ -887,11 +887,24 @@ module Api
     def spare_parts_params
       params.require(:spare_parts).permit(
         :total_no_of_device1,
+        :total_no_of_device1_unit_rate,
+        :total_no_of_device1_amount,
+        :total_no_of_device1_notes,
         :total_no_of_device2,
+        :total_no_of_device2_unit_rate,
+        :total_no_of_device2_amount,
+        :total_no_of_device2_notes,
         :total_no_of_device3,
-        :total_no_of_device4
+        :total_no_of_device3_unit_rate,
+        :total_no_of_device3_amount,
+        :total_no_of_device3_notes,
+        :total_no_of_device4,
+        :total_no_of_device4_unit_rate,
+        :total_no_of_device4_amount,
+        :total_no_of_device4_notes
       )
     end
+    
 
     def scope_of_work_params
       params.require(:scope_of_works).permit(

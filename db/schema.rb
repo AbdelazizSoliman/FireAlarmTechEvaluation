@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_02_27_150658) do
+ActiveRecord::Schema[7.1].define(version: 2025_02_28_123016) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -387,6 +387,24 @@ ActiveRecord::Schema[7.1].define(version: 2025_02_27_150658) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "supplier_id", null: false
+    t.integer "fire_alarm_strobe_unit_rate"
+    t.integer "fire_alarm_strobe_amount"
+    t.text "fire_alarm_strobe_notes"
+    t.integer "fire_alarm_strobe_wp_unit_rate"
+    t.integer "fire_alarm_strobe_wp_amount"
+    t.text "fire_alarm_strobe_wp_notes"
+    t.integer "fire_alarm_horn_unit_rate"
+    t.integer "fire_alarm_horn_amount"
+    t.text "fire_alarm_horn_notes"
+    t.integer "fire_alarm_horn_wp_unit_rate"
+    t.integer "fire_alarm_horn_wp_amount"
+    t.text "fire_alarm_horn_wp_notes"
+    t.integer "fire_alarm_horn_with_strobe_unit_rate"
+    t.integer "fire_alarm_horn_with_strobe_amount"
+    t.text "fire_alarm_horn_with_strobe_notes"
+    t.integer "fire_alarm_horn_with_strobe_wp_unit_rate"
+    t.integer "fire_alarm_horn_with_strobe_wp_amount"
+    t.text "fire_alarm_horn_with_strobe_wp_notes"
     t.index ["subsystem_id"], name: "index_notification_devices_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_notif_dev_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_notification_devices_on_supplier_id"

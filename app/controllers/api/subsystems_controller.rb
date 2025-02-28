@@ -771,17 +771,19 @@ module Api
       )
     end
 
-    def notification_devices_params
-      params.require(:notification_devices).permit(
+    def notification_device_params
+      params.require(:notification_device).permit(
         :notification_addressing,
-        :fire_alarm_strobe,
-        :fire_alarm_strobe_wp,
-        :fire_alarm_horn,
-        :fire_alarm_horn_wp,
-        :fire_alarm_horn_with_strobe,
-        :fire_alarm_horn_with_strobe_wp
+        :fire_alarm_strobe, :fire_alarm_strobe_unit_rate, :fire_alarm_strobe_amount, :fire_alarm_strobe_notes,
+        :fire_alarm_strobe_wp, :fire_alarm_strobe_wp_unit_rate, :fire_alarm_strobe_wp_amount, :fire_alarm_strobe_wp_notes,
+        :fire_alarm_horn, :fire_alarm_horn_unit_rate, :fire_alarm_horn_amount, :fire_alarm_horn_notes,
+        :fire_alarm_horn_wp, :fire_alarm_horn_wp_unit_rate, :fire_alarm_horn_wp_amount, :fire_alarm_horn_wp_notes,
+        :fire_alarm_horn_with_strobe, :fire_alarm_horn_with_strobe_unit_rate, :fire_alarm_horn_with_strobe_amount, :fire_alarm_horn_with_strobe_notes,
+        :fire_alarm_horn_with_strobe_wp, :fire_alarm_horn_with_strobe_wp_unit_rate, :fire_alarm_horn_with_strobe_wp_amount, :fire_alarm_horn_with_strobe_wp_notes,
+        :subsystem_id, :supplier_id
       )
     end
+    
 
     def isolation_params
       params.require(:isolations).permit(

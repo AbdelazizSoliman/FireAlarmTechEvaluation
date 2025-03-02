@@ -240,33 +240,29 @@ class ReportsController < ApplicationController
     )
   
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
-      # For each section, we will group attributes.
+      # Updated grouping: Merge attributes that have trailing keywords.
       comparison_data.each do |section_name, attributes_hash|
-        # Section title row
         sheet.add_row [section_name], style: section_title_style
   
-        # Group the attribute keys.
-        # We assume that attributes with cost fields come in groups:
-        # For a base attribute, there might be a key (e.g., "Panel - Total no of panels")
-        # plus associated keys ending with "unit rate", "amount", and "notes".
+        # Group attributes by base name.
         grouped = {}
         attributes_hash.each do |attr, supplier_values|
-          if attr =~ /(.+?)\s+(unit rate|amount|notes)$/i
+          if attr =~ /(.+?)\s+(value|unit rate|amount|notes)$/i
             base = $1.strip
-            suffix = $2.downcase.to_sym
-            grouped[base] ||= {}
-            grouped[base][suffix] = supplier_values
+            suffix = $2.downcase.gsub(" ", "_").to_sym  # converts "unit rate" to :unit_rate, etc.
           else
-            grouped[attr] ||= {}
-            grouped[attr][:value] = supplier_values
+            base = attr.strip
+            suffix = :value
           end
+          grouped[base] ||= {}
+          grouped[base][suffix] = supplier_values
         end
   
-        # Separate into simple attributes (only :value) and cost attributes (having additional keys)
-        simple_groups = grouped.select { |_base, h| h.keys == [:value] }
-        cost_groups = grouped.select { |_base, h| h.keys.sort != [:value] }
+        # Separate into simple attributes and cost attributes.
+        simple_groups = grouped.select { |_, h| h.keys.sort == [:value] }
+        cost_groups = grouped.select { |_, h| h.keys.sort != [:value] }
   
-        # For simple attributes, output header and rows.
+        # Output simple groups.
         unless simple_groups.empty?
           simple_header = ['Attribute'] + suppliers.map(&:supplier_name)
           sheet.add_row simple_header, style: header_style
@@ -277,12 +273,12 @@ class ReportsController < ApplicationController
             end
             sheet.add_row row, style: [cell_style] * row.size
           end
-          sheet.add_row [] # spacing
+          sheet.add_row [] # blank row for spacing
         end
   
-        # For cost attributes, output header and rows.
+        # Output cost groups.
         unless cost_groups.empty?
-          # For each supplier, we want columns: Value, Unit Rate, Amount, Notes.
+          # For each supplier, we want 4 columns: Value, Unit Rate, Amount, Notes.
           cost_header = ['Attribute']
           suppliers.each do |_supplier|
             cost_header += ["Value", "Unit Rate", "Amount", "Notes"]
@@ -292,7 +288,6 @@ class ReportsController < ApplicationController
           cost_groups.each do |base, h|
             row = [base]
             suppliers.each do |supplier|
-              # For each supplier, pick the values from the grouped hash.
               val = h[:value] ? h[:value][supplier.supplier_name] : "N/A"
               unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : "N/A"
               amount = h[:amount] ? h[:amount][supplier.supplier_name] : "N/A"
@@ -301,7 +296,7 @@ class ReportsController < ApplicationController
             end
             sheet.add_row row, style: [cell_style] * row.size
           end
-          sheet.add_row [] # spacing
+          sheet.add_row [] # blank row for spacing
         end
       end
     end
@@ -311,8 +306,6 @@ class ReportsController < ApplicationController
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
   
-  
-
   def evaluation_result
     @supplier = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])

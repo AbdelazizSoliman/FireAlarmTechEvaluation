@@ -1,5 +1,7 @@
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-3xl mx-auto">
-  <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Generate Apple to Apple Comparison</h1>
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">
+    Generate Apple to Apple Comparison
+  </h1>
 
   <form action="<%= generate_comparison_report_reports_path %>" method="get" data-turbo="false">
     <!-- Subsystem Dropdown Filter -->
@@ -24,12 +26,17 @@
         </thead>
         <tbody class="text-sm text-gray-700">
           <% @suppliers_with_subsystems.each do |supplier| %>
+            <% # If a subsystem is selected, filter to that ID; otherwise show all subsystems. %>
             <% if params[:subsystem_id].present? %>
-              <% filtered_subsystems = supplier.approved_subsystems.select { |sub| sub.id == params[:subsystem_id].to_i } %>
-              <% next if filtered_subsystems.empty? %>
+              <% numeric_id = params[:subsystem_id].to_i %>
+              <% filtered_subsystems = supplier.approved_subsystems.select { |sub| sub.id == numeric_id } %>
             <% else %>
               <% filtered_subsystems = supplier.approved_subsystems %>
             <% end %>
+
+            <% # If no matching subsystem, skip this supplier entirely. %>
+            <% next if filtered_subsystems.empty? %>
+
             <% filtered_subsystems.each do |subsystem| %>
               <tr class="border-t">
                 <td class="px-6 py-3">
@@ -51,14 +58,19 @@
     </div>
 
     <div class="mt-6 flex justify-center space-x-4">
+      <!-- 'Generate Comparison' -> Creates the Excel file -->
       <button type="submit" class="p-3 bg-red-600 rounded-md text-white hover:bg-red-700">
         Generate Comparison
       </button>
-      <%= link_to "Show Comparison", show_comparison_report_reports_path(
+
+      <!-- 'Show Comparison' -> Takes you to an HTML version of the same comparison (optional) -->
+      <%= link_to "Show Comparison",
+        show_comparison_report_reports_path(
           selected_suppliers: params[:selected_suppliers],
           subsystem_id: params[:subsystem_id]
         ),
-        class: "p-3 bg-blue-600 rounded-md text-white hover:bg-blue-700" %>
+        class: "p-3 bg-blue-600 rounded-md text-white hover:bg-blue-700"
+      %>
     </div>
   </form>
 </div>

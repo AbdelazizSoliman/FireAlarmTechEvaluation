@@ -306,6 +306,60 @@ class ReportsController < ApplicationController
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
   
+  def show_comparison_report
+    selected_ids = params[:selected_suppliers]
+    subsystem_id = params[:subsystem_id]
+
+    if selected_ids.blank? || subsystem_id.blank?
+      flash[:alert] = "Please select at least one supplier and a subsystem."
+      redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
+    end
+
+    # Fetch the selected suppliers
+    suppliers = Supplier.where(id: selected_ids)
+    chosen_subsystem_id = subsystem_id.to_i
+
+    # Define the same sections used in generate_comparison_report
+    sections = {
+      'Supplier Data' => ->(supplier, subsystem) { supplier_data(supplier, subsystem) },
+      'Product Data' => ->(supplier, subsystem) { product_data(supplier, subsystem) },
+      'Fire Alarm Control Panel' => ->(supplier, subsystem) { fire_alarm_control_panel(supplier, subsystem) },
+      'Graphic Systems' => ->(supplier, subsystem) { graphic_system(supplier, subsystem) },
+      'Detectors Field Devices' => ->(supplier, subsystem) { detectors_field_device(supplier, subsystem) },
+      'Manual Pull Station' => ->(supplier, subsystem) { manual_pull_station(supplier, subsystem) },
+      'Door Holders' => ->(supplier, subsystem) { door_holder(supplier, subsystem) },
+      'Notification Devices' => ->(supplier, subsystem) { notification_devices(supplier, subsystem) },
+      'Isolation Data' => ->(supplier, subsystem) { isolations(supplier, subsystem) },
+      'Connection Between FACPs' => ->(supplier, subsystem) { connection_betweens(supplier, subsystem) },
+      'Interface with Other Systems' => ->(supplier, subsystem) { interface_with_other_systems(supplier, subsystem) },
+      'Evacuation Systems' => ->(supplier, subsystem) { evacuation_systems(supplier, subsystem) },
+      'Prerecorded Messages/Audio Module' => ->(supplier, subsystem) { prerecorded_message_audio_modules(supplier, subsystem) },
+      'Telephone System' => ->(supplier, subsystem) { telephone_systems(supplier, subsystem) },
+      'Spare Parts' => ->(supplier, subsystem) { spare_parts(supplier, subsystem) },
+      'Scope of Work (SOW)' => ->(supplier, subsystem) { scope_of_works(supplier, subsystem) },
+      'Material & Delivery' => ->(supplier, subsystem) { material_and_deliveries(supplier, subsystem) },
+      'General & Commercial Data' => ->(supplier, subsystem) { general_commercial_data(supplier, subsystem) }
+    }
+
+    # Build the comparison data (just like generate_comparison_report)
+    comparison_data = {}
+    sections.each do |section_name, fetch_proc|
+      section_hash = {}
+      suppliers.each do |supplier|
+        chosen_subsystem = supplier.approved_subsystems.find_by(id: chosen_subsystem_id)
+        data = chosen_subsystem ? fetch_proc.call(supplier, chosen_subsystem) : {}
+        data.each do |attr, value|
+          section_hash[attr] ||= {}
+          section_hash[attr][supplier.supplier_name] = value.present? ? value : "N/A"
+        end
+      end
+      comparison_data[section_name] = section_hash
+    end
+
+    # Store the data for rendering in the view
+    @comparison_data = comparison_data
+  end
+
   def evaluation_result
     @supplier = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])

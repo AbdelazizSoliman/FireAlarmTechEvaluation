@@ -450,7 +450,35 @@ class ReportsController < ApplicationController
   end
 
   def apple_to_apple_comparison
-    @suppliers_with_subsystems = Supplier.joins(:subsystems).distinct
+    # 1) If user clicked 'Generate Comparison'
+    if params[:commit] == "generate"
+      if params[:selected_suppliers].blank? || params[:subsystem_id].blank?
+        flash[:alert] = "Please select at least one supplier and a subsystem."
+        redirect_to apple_to_apple_comparison_reports_path and return
+      end
+      redirect_to generate_comparison_report_reports_path(
+        selected_suppliers: params[:selected_suppliers],
+        subsystem_id: params[:subsystem_id]
+      ) and return
+    end
+
+    # 2) If user clicked 'Show Comparison'
+    if params[:commit] == "show"
+      if params[:selected_suppliers].blank? || params[:subsystem_id].blank?
+        flash[:alert] = "Please select at least one supplier and a subsystem."
+        redirect_to apple_to_apple_comparison_reports_path and return
+      end
+      redirect_to show_comparison_report_reports_path(
+        selected_suppliers: params[:selected_suppliers],
+        subsystem_id: params[:subsystem_id]
+      ) and return
+    end
+
+    # 3) Otherwise, we're just displaying or filtering
+    # Build the data for the form
+    @subsystem_id = params[:subsystem_id].presence
+    @suppliers_with_subsystems = Supplier.includes(:approved_subsystems)
+    # (If you have a special query for suppliers, do it here.)
   end
 
   #----------------------------------------------------------------

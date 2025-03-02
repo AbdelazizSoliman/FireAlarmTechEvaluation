@@ -3,19 +3,21 @@
     Generate Apple to Apple Comparison
   </h1>
 
-  <form action="<%= generate_comparison_report_reports_path %>" method="get" data-turbo="false">
+  <!-- The form posts to apple_to_apple_comparison_reports_path -->
+  <form action="<%= apple_to_apple_comparison_reports_path %>" method="get" data-turbo="false">
     <!-- Subsystem Dropdown Filter -->
-<div class="mb-4">
-  <label for="subsystem_id" class="block font-semibold mb-1">
-    Choose Subsystem (for Excel Comparison):
-  </label>
-  <%= select_tag :subsystem_id,
-      options_from_collection_for_select(Subsystem.all, :id, :name, params[:subsystem_id]),
-      include_blank: "Select Subsystem",
-      class: "border rounded px-2 py-1",
-      onchange: 'this.form.submit();' %>
-</div>
-
+    <div class="mb-4">
+      <label for="subsystem_id" class="block font-semibold mb-1">
+        Choose Subsystem (for Excel Comparison):
+      </label>
+      <%= select_tag :subsystem_id,
+          options_from_collection_for_select(
+            Subsystem.all, :id, :name, @subsystem_id
+          ),
+          include_blank: "Select Subsystem",
+          class: "border rounded px-2 py-1",
+          onchange: "this.form.submit();" %>
+    </div>
 
     <div class="overflow-x-auto">
       <table class="min-w-full table-auto bg-white rounded-lg shadow-md">
@@ -28,15 +30,13 @@
         </thead>
         <tbody class="text-sm text-gray-700">
           <% @suppliers_with_subsystems.each do |supplier| %>
-            <% # If a subsystem is selected, filter to that ID; otherwise show all subsystems. %>
-            <% if params[:subsystem_id].present? %>
-              <% numeric_id = params[:subsystem_id].to_i %>
+            <!-- Filter the subsystem if @subsystem_id is present -->
+            <% if @subsystem_id.present? %>
+              <% numeric_id = @subsystem_id.to_i %>
               <% filtered_subsystems = supplier.approved_subsystems.select { |sub| sub.id == numeric_id } %>
             <% else %>
               <% filtered_subsystems = supplier.approved_subsystems %>
             <% end %>
-
-            <% # If no matching subsystem, skip this supplier entirely. %>
             <% next if filtered_subsystems.empty? %>
 
             <% filtered_subsystems.each do |subsystem| %>
@@ -49,8 +49,8 @@
                 </td>
                 <td class="px-6 py-3">
                   <%= link_to subsystem.name,
-                             evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id),
-                             class: "text-blue-600 hover:text-blue-800 hover:underline" %>
+                      evaluation_data_reports_path(supplier_id: supplier.id, subsystem_id: subsystem.id),
+                      class: "text-blue-600 hover:text-blue-800 hover:underline" %>
                 </td>
               </tr>
             <% end %>
@@ -60,15 +60,17 @@
     </div>
 
     <div class="mt-6 flex justify-center space-x-4">
-      <!-- 'Generate Comparison' -> Creates the Excel file -->
-      <button type="submit" class="p-3 bg-red-600 rounded-md text-white hover:bg-red-700">
+      <!-- 'Generate Comparison' => commit=generate -->
+      <button type="submit" name="commit" value="generate"
+              class="p-3 bg-red-600 rounded-md text-white hover:bg-red-700">
         Generate Comparison
       </button>
 
-        <!-- 'Show Comparison' -> Renders HTML version -->
-  <button type="submit" name="commit" value="show" class="p-3 bg-blue-600 rounded-md text-white hover:bg-blue-700">
-    Show Comparison
-  </button>
+      <!-- 'Show Comparison' => commit=show -->
+      <button type="submit" name="commit" value="show"
+              class="p-3 bg-blue-600 rounded-md text-white hover:bg-blue-700">
+        Show Comparison
+      </button>
     </div>
   </form>
 </div>

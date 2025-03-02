@@ -213,6 +213,9 @@ class ReportsController < ApplicationController
       comparison_data[section_name] = section_hash
     end
   
+    # Log the comparison data structure for inspection.
+    Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
+  
     # Generate the Excel workbook.
     p = Axlsx::Package.new
     wb = p.workbook
@@ -243,7 +246,6 @@ class ReportsController < ApplicationController
               filename: 'Apple_to_Apple_Comparison.xlsx',
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
-  
   
 
   def evaluation_result

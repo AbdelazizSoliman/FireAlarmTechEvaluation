@@ -202,7 +202,6 @@ class ReportsController < ApplicationController
     sections.each do |section_name, fetch_proc|
       section_hash = {}
       suppliers.each do |supplier|
-        # Use approved_subsystems to match the chosen subsystem.
         chosen_subsystem = supplier.approved_subsystems.find_by(id: chosen_subsystem_id)
         data = chosen_subsystem ? fetch_proc.call(supplier, chosen_subsystem) : {}
         data.each do |attr, value|
@@ -213,7 +212,7 @@ class ReportsController < ApplicationController
       comparison_data[section_name] = section_hash
     end
   
-    # Log the comparison data structure for inspection.
+    # Log the comparison data for inspection.
     Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
   
     # Generate the Excel workbook.
@@ -221,24 +220,89 @@ class ReportsController < ApplicationController
     wb = p.workbook
   
     styles = wb.styles
-    header_style = styles.add_style(bg_color: '4472C4', fg_color: 'FFFFFF', b: true, alignment: { horizontal: :center })
-    section_title_style = styles.add_style(bg_color: 'D9D9D9', fg_color: '000000', b: true, sz: 12)
-    cell_style = styles.add_style(border: { style: :thin, color: '000000' }, alignment: { horizontal: :left })
+    header_style = styles.add_style(
+      bg_color: '4472C4',
+      fg_color: 'FFFFFF',
+      b: true,
+      alignment: { horizontal: :center },
+      border: { style: :thin, color: '000000' }
+    )
+    section_title_style = styles.add_style(
+      bg_color: 'D9D9D9',
+      fg_color: '000000',
+      b: true,
+      sz: 12,
+      border: { style: :thin, color: '000000' }
+    )
+    cell_style = styles.add_style(
+      border: { style: :thin, color: '000000' },
+      alignment: { horizontal: :left }
+    )
   
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
-      header = ['Attribute'] + suppliers.map(&:supplier_name)
-      sheet.add_row header, style: header_style
-  
+      # For each section, we will group attributes.
       comparison_data.each do |section_name, attributes_hash|
+        # Section title row
         sheet.add_row [section_name], style: section_title_style
-        attributes_hash.each do |attribute, supplier_values|
-          row = [attribute]
-          suppliers.each do |supplier|
-            row << supplier_values[supplier.supplier_name].to_s
+  
+        # Group the attribute keys.
+        # We assume that attributes with cost fields come in groups:
+        # For a base attribute, there might be a key (e.g., "Panel - Total no of panels")
+        # plus associated keys ending with "unit rate", "amount", and "notes".
+        grouped = {}
+        attributes_hash.each do |attr, supplier_values|
+          if attr =~ /(.+?)\s+(unit rate|amount|notes)$/i
+            base = $1.strip
+            suffix = $2.downcase.to_sym
+            grouped[base] ||= {}
+            grouped[base][suffix] = supplier_values
+          else
+            grouped[attr] ||= {}
+            grouped[attr][:value] = supplier_values
           end
-          sheet.add_row row, style: [cell_style] * row.size
         end
-        sheet.add_row [] # blank row for spacing
+  
+        # Separate into simple attributes (only :value) and cost attributes (having additional keys)
+        simple_groups = grouped.select { |_base, h| h.keys == [:value] }
+        cost_groups = grouped.select { |_base, h| h.keys.sort != [:value] }
+  
+        # For simple attributes, output header and rows.
+        unless simple_groups.empty?
+          simple_header = ['Attribute'] + suppliers.map(&:supplier_name)
+          sheet.add_row simple_header, style: header_style
+          simple_groups.each do |base, h|
+            row = [base]
+            suppliers.each do |supplier|
+              row << h[:value][supplier.supplier_name].to_s
+            end
+            sheet.add_row row, style: [cell_style] * row.size
+          end
+          sheet.add_row [] # spacing
+        end
+  
+        # For cost attributes, output header and rows.
+        unless cost_groups.empty?
+          # For each supplier, we want columns: Value, Unit Rate, Amount, Notes.
+          cost_header = ['Attribute']
+          suppliers.each do |_supplier|
+            cost_header += ["Value", "Unit Rate", "Amount", "Notes"]
+          end
+          sheet.add_row cost_header, style: header_style
+  
+          cost_groups.each do |base, h|
+            row = [base]
+            suppliers.each do |supplier|
+              # For each supplier, pick the values from the grouped hash.
+              val = h[:value] ? h[:value][supplier.supplier_name] : "N/A"
+              unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : "N/A"
+              amount = h[:amount] ? h[:amount][supplier.supplier_name] : "N/A"
+              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ""
+              row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
+            end
+            sheet.add_row row, style: [cell_style] * row.size
+          end
+          sheet.add_row [] # spacing
+        end
       end
     end
   
@@ -246,6 +310,7 @@ class ReportsController < ApplicationController
               filename: 'Apple_to_Apple_Comparison.xlsx',
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+  
   
 
   def evaluation_result

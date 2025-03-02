@@ -96,6 +96,7 @@ Rails.application.routes.draw do
     get :evaluation_result
     get :recommendation  # Generate Recommendation
     get :apple_to_apple_comparison  # Generate Apple to Apple Comparison
+    get :show_comparison_report
     get :generate_comparison_report
     get :sow  # Generate/Determine SOW between Suppliers & Installation Contractor
     get :missing_items  # Generate Missing Items

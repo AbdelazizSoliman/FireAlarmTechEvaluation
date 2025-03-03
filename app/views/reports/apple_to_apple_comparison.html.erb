@@ -5,34 +5,39 @@
 
   <!-- The form posts to apple_to_apple_comparison_reports_path -->
   <form action="<%= apple_to_apple_comparison_reports_path %>" method="get" data-turbo="false">
-    <!-- Subsystem Dropdown Filter -->
-    <div class="mb-4 flex items-center space-x-2">
-      <label for="subsystem_id" class="block font-semibold mb-1">
-        Choose Subsystem (for Excel Comparison):
-      </label>
-      <%= select_tag :subsystem_id,
+   <div class="mb-4 flex items-center space-x-4">
+  <!-- Subsystem Dropdown Filter -->
+  <div class="flex items-center space-x-2">
+    <label for="subsystem_id" class="block font-semibold mb-1">
+      Choose Subsystem (for Excel Comparison):
+    </label>
+    <%= select_tag :subsystem_id,
           options_from_collection_for_select(
             Subsystem.all, :id, :name, @subsystem_id
           ),
           include_blank: "Select Subsystem",
           class: "border rounded px-2 py-1" %>
+  </div>
 
-      <!-- Filter button (re‐renders the form) -->
-      <button type="submit" name="commit" value="filter"
-              class="px-3 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">
-        Filter
-      </button>
-    </div>
+  <!-- Evaluation Type Dropdown Filter -->
+  <div class="flex items-center space-x-2">
+    <label for="evaluation_type" class="block font-semibold mb-1">
+      Evaluation Type:
+    </label>
+    <%= select_tag :evaluation_type,
+          options_for_select([["All", ""], ["TechnicalOnly", "TechnicalOnly"], ["Technical&Evaluation", "Technical&Evaluation"]], params[:evaluation_type]),
+          class: "border rounded px-2 py-1" %>
+  </div>
 
-    <!-- Evaluation Type Filter -->
-<div class="mb-4 flex items-center space-x-2">
-  <label for="evaluation_type" class="block font-semibold mb-1">
-    Evaluation Type:
-  </label>
-  <%= select_tag :evaluation_type,
-      options_for_select([["All", ""], ["TechnicalOnly", "TechnicalOnly"], ["Technical&Evaluation", "Technical&Evaluation"]], params[:evaluation_type]),
-      class: "border rounded px-2 py-1" %>
+  <!-- Filter Button -->
+  <div>
+    <button type="submit" name="commit" value="filter"
+            class="px-3 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">
+      Filter
+    </button>
+  </div>
 </div>
+
 
 
     <div class="overflow-x-auto">

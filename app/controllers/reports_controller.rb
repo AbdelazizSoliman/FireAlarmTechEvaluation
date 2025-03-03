@@ -475,7 +475,7 @@ class ReportsController < ApplicationController
     else
       @subsystem_id = params[:subsystem_id].presence
       # Use the actual association for subsystems if "approved_subsystems" doesn't exist
-      @suppliers_with_subsystems = Supplier.includes(:approved_subsystems)
+      @suppliers_with_subsystems = Supplier.includes(:subsystems)
     end
   end
   

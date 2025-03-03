@@ -6,7 +6,7 @@
   <!-- The form posts to apple_to_apple_comparison_reports_path -->
   <form action="<%= apple_to_apple_comparison_reports_path %>" method="get" data-turbo="false">
     <!-- Subsystem Dropdown Filter -->
-    <div class="mb-4">
+    <div class="mb-4 flex items-center space-x-2">
       <label for="subsystem_id" class="block font-semibold mb-1">
         Choose Subsystem (for Excel Comparison):
       </label>
@@ -15,8 +15,13 @@
             Subsystem.all, :id, :name, @subsystem_id
           ),
           include_blank: "Select Subsystem",
-          class: "border rounded px-2 py-1",
-          onchange: "this.form.submit();" %>
+          class: "border rounded px-2 py-1" %>
+
+      <!-- Filter button (re‐renders the form) -->
+      <button type="submit" name="commit" value="filter"
+              class="px-3 py-2 bg-gray-400 text-white rounded hover:bg-gray-500">
+        Filter
+      </button>
     </div>
 
     <div class="overflow-x-auto">

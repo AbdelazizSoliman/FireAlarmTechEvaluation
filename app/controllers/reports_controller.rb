@@ -450,8 +450,8 @@ class ReportsController < ApplicationController
   end
 
   def apple_to_apple_comparison
-    # 1) If user clicked 'Generate Comparison'
-    if params[:commit] == "generate"
+    case params[:commit]
+    when "generate"
       if params[:selected_suppliers].blank? || params[:subsystem_id].blank?
         flash[:alert] = "Please select at least one supplier and a subsystem."
         redirect_to apple_to_apple_comparison_reports_path and return
@@ -460,10 +460,8 @@ class ReportsController < ApplicationController
         selected_suppliers: params[:selected_suppliers],
         subsystem_id: params[:subsystem_id]
       ) and return
-    end
-
-    # 2) If user clicked 'Show Comparison'
-    if params[:commit] == "show"
+  
+    when "show"
       if params[:selected_suppliers].blank? || params[:subsystem_id].blank?
         flash[:alert] = "Please select at least one supplier and a subsystem."
         redirect_to apple_to_apple_comparison_reports_path and return
@@ -472,14 +470,15 @@ class ReportsController < ApplicationController
         selected_suppliers: params[:selected_suppliers],
         subsystem_id: params[:subsystem_id]
       ) and return
+  
+    # If user clicked the new "Filter" button, or is just loading the page
+    else
+      @subsystem_id = params[:subsystem_id].presence
+      # Use the actual association for subsystems if "approved_subsystems" doesn't exist
+      @suppliers_with_subsystems = Supplier.includes(:approved_subsystems)
     end
-
-    # 3) Otherwise, we're just displaying or filtering
-    # Build the data for the form
-    @subsystem_id = params[:subsystem_id].presence
-    @suppliers_with_subsystems = Supplier.includes(:approved_subsystems)
-    # (If you have a special query for suppliers, do it here.)
   end
+  
 
   #----------------------------------------------------------------
   # Private Helper Methods

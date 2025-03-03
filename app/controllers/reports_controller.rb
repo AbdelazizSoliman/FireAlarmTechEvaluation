@@ -292,8 +292,7 @@ class ReportsController < ApplicationController
               unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : "N/A"
               amount = h[:amount] ? h[:amount][supplier.supplier_name] : "N/A"
               notes = h[:notes] ? h[:notes][supplier.supplier_name] : ""
-              
-              if supplier.supplier_evaluation_type == "TechnicalOnly"
+              if supplier.evaluation_type == "TechnicalOnly"
                 # For TechnicalOnly suppliers, hide the unit rate and amount
                 row += [val.to_s, "", "", notes.to_s]
               else
@@ -481,7 +480,7 @@ class ReportsController < ApplicationController
       # Use the actual association for subsystems if "approved_subsystems" doesn't exist
       evaluation_type = params[:evaluation_type]
 if evaluation_type.present?
-  @suppliers_with_subsystems = Supplier.where(supplier_evaluation_type: evaluation_type).includes(:subsystems)
+  @suppliers_with_subsystems = Supplier.where(evaluation_type: evaluation_type).includes(:subsystems)
 else
   @suppliers_with_subsystems = Supplier.includes(:subsystems)
 end

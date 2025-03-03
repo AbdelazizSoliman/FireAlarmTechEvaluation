@@ -284,7 +284,7 @@ class ReportsController < ApplicationController
             cost_header += ["Value", "Unit Rate", "Amount", "Notes"]
           end
           sheet.add_row cost_header, style: header_style
-  
+
           cost_groups.each do |base, h|
             row = [base]
             suppliers.each do |supplier|
@@ -292,7 +292,13 @@ class ReportsController < ApplicationController
               unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : "N/A"
               amount = h[:amount] ? h[:amount][supplier.supplier_name] : "N/A"
               notes = h[:notes] ? h[:notes][supplier.supplier_name] : ""
-              row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
+              
+              if supplier.supplier_evaluation_type == "TechnicalOnly"
+                # For TechnicalOnly suppliers, hide the unit rate and amount
+                row += [val.to_s, "", "", notes.to_s]
+              else
+                row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
+              end
             end
             sheet.add_row row, style: [cell_style] * row.size
           end
@@ -300,12 +306,10 @@ class ReportsController < ApplicationController
         end
       end
     end
-  
     send_data p.to_stream.read,
               filename: 'Apple_to_Apple_Comparison.xlsx',
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
-  
   def show_comparison_report
     selected_ids = params[:selected_suppliers]
     subsystem_id = params[:subsystem_id]
@@ -475,7 +479,13 @@ class ReportsController < ApplicationController
     else
       @subsystem_id = params[:subsystem_id].presence
       # Use the actual association for subsystems if "approved_subsystems" doesn't exist
-      @suppliers_with_subsystems = Supplier.includes(:subsystems)
+      evaluation_type = params[:evaluation_type]
+if evaluation_type.present?
+  @suppliers_with_subsystems = Supplier.where(supplier_evaluation_type: evaluation_type).includes(:subsystems)
+else
+  @suppliers_with_subsystems = Supplier.includes(:subsystems)
+end
+
     end
   end
   

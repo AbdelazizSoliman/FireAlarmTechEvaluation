@@ -24,6 +24,17 @@
       </button>
     </div>
 
+    <!-- Evaluation Type Filter -->
+<div class="mb-4 flex items-center space-x-2">
+  <label for="evaluation_type" class="block font-semibold mb-1">
+    Evaluation Type:
+  </label>
+  <%= select_tag :evaluation_type,
+      options_for_select([["All", ""], ["TechnicalOnly", "TechnicalOnly"], ["Technical&Evaluation", "Technical&Evaluation"]], params[:evaluation_type]),
+      class: "border rounded px-2 py-1" %>
+</div>
+
+
     <div class="overflow-x-auto">
       <table class="min-w-full table-auto bg-white rounded-lg shadow-md">
         <thead class="bg-gray-200">

@@ -212,7 +212,6 @@ class ReportsController < ApplicationController
       comparison_data[section_name] = section_hash
     end
   
-    # Log the comparison data for inspection.
     Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
   
     # Generate the Excel workbook.
@@ -240,7 +239,6 @@ class ReportsController < ApplicationController
     )
   
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
-      # Updated grouping: Merge attributes that have trailing keywords.
       comparison_data.each do |section_name, attributes_hash|
         sheet.add_row [section_name], style: section_title_style
   
@@ -249,7 +247,7 @@ class ReportsController < ApplicationController
         attributes_hash.each do |attr, supplier_values|
           if attr =~ /(.+?)\s+(value|unit rate|amount|notes)$/i
             base = $1.strip
-            suffix = $2.downcase.gsub(" ", "_").to_sym  # converts "unit rate" to :unit_rate, etc.
+            suffix = $2.downcase.gsub(" ", "_").to_sym
           else
             base = attr.strip
             suffix = :value
@@ -258,7 +256,6 @@ class ReportsController < ApplicationController
           grouped[base][suffix] = supplier_values
         end
   
-        # Separate into simple attributes and cost attributes.
         simple_groups = grouped.select { |_, h| h.keys.sort == [:value] }
         cost_groups = grouped.select { |_, h| h.keys.sort != [:value] }
   
@@ -278,13 +275,17 @@ class ReportsController < ApplicationController
   
         # Output cost groups.
         unless cost_groups.empty?
-          # For each supplier, we want 4 columns: Value, Unit Rate, Amount, Notes.
+          # Build header row based on each supplier's evaluation type.
           cost_header = ['Attribute']
-          suppliers.each do |_supplier|
-            cost_header += ["Value", "Unit Rate", "Amount", "Notes"]
+          suppliers.each do |supplier|
+            if supplier.evaluation_type == "TechnicalOnly"
+              cost_header += ["Value", "Notes"]
+            else
+              cost_header += ["Value", "Unit Rate", "Amount", "Notes"]
+            end
           end
           sheet.add_row cost_header, style: header_style
-
+  
           cost_groups.each do |base, h|
             row = [base]
             suppliers.each do |supplier|
@@ -293,8 +294,8 @@ class ReportsController < ApplicationController
               amount = h[:amount] ? h[:amount][supplier.supplier_name] : "N/A"
               notes = h[:notes] ? h[:notes][supplier.supplier_name] : ""
               if supplier.evaluation_type == "TechnicalOnly"
-                # For TechnicalOnly suppliers, hide the unit rate and amount
-                row += [val.to_s, "", "", notes.to_s]
+                # For TechnicalOnly suppliers, only include Value and Notes.
+                row += [val.to_s, notes.to_s]
               else
                 row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
               end
@@ -305,10 +306,12 @@ class ReportsController < ApplicationController
         end
       end
     end
+  
     send_data p.to_stream.read,
               filename: 'Apple_to_Apple_Comparison.xlsx',
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+  
   def show_comparison_report
     selected_ids = params[:selected_suppliers]
     subsystem_id = params[:subsystem_id]

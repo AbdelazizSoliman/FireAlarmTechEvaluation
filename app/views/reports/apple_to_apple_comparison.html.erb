@@ -80,18 +80,27 @@
       </table>
     </div>
 
-    <div class="mt-6 flex justify-center space-x-4">
-      <!-- 'Generate Comparison' => commit=generate -->
-      <button type="submit" name="commit" value="generate"
-              class="p-3 bg-red-600 rounded-md text-white hover:bg-red-700">
-        Generate Comparison
-      </button>
+<div class="mt-6 flex justify-center space-x-4">
+  <!-- 'Generate Comparison' => commit=generate -->
+  <button type="submit" name="commit" value="generate"
+          class="p-3 bg-red-600 rounded-md text-white hover:bg-red-700">
+    <% evaluation = params[:evaluation_type] %>
+    <% if evaluation == "TechnicalOnly" %>
+      <% generate_text = "Generate Apple to Apple TechnicalOnly" %>
+    <% elsif evaluation == "Technical&Evaluation" %>
+      <% generate_text = "Generate Apple to Apple TechnicalCommercial" %>
+    <% else %>
+      <% generate_text = "Generate Comparison" %>
+    <% end %>
+    <%= generate_text %>
+  </button>
 
-      <!-- 'Show Comparison' => commit=show -->
-      <button type="submit" name="commit" value="show"
-              class="p-3 bg-blue-600 rounded-md text-white hover:bg-blue-700">
-        Show Comparison
-      </button>
-    </div>
+  <!-- 'Show Comparison' => commit=show -->
+  <button type="submit" name="commit" value="show"
+          class="p-3 bg-blue-600 rounded-md text-white hover:bg-blue-700">
+    Show Comparison
+  </button>
+</div>
+
   </form>
 </div>

@@ -217,14 +217,15 @@ class ReportsController < ApplicationController
     Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
 
     # Determine file name based on evaluation_type parameter.
-  case params[:evaluation_type]
-  when "TechnicalOnly"
-    file_name = "Apple_to_Apple_TechnicalOnly.xlsx"
-  when "Technical&Evaluation"
-    file_name = "Apple_to_Apple_TechnicalCommertial.xlsx"
-  else
-    file_name = "Apple_to_Apple_Comparison.xlsx"
-  end
+    evaluation = params[:evaluation_type].to_s.strip
+    file_name = case evaluation
+                when 'TechnicalOnly'
+                  'Apple_to_Apple_TechnicalOnly.xlsx'
+                when 'Technical&Evaluation'
+                  'Apple_to_Apple_TechnicalCommertial.xlsx'
+                else
+                  'Apple_to_Apple_Comparison.xlsx'
+                end
 
     # Generate the Excel workbook.
     p = Axlsx::Package.new

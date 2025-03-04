@@ -495,7 +495,7 @@ class ReportsController < ApplicationController
       end
       redirect_to generate_comparison_report_reports_path(
         selected_suppliers: params[:selected_suppliers],
-        subsystem_id: params[:subsystem_id]
+        subsystem_id: params[:subsystem_id],
         evaluation_type: params[:evaluation_type]
       ) and return
 

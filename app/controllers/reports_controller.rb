@@ -165,16 +165,16 @@ class ReportsController < ApplicationController
   def generate_comparison_report
     selected_ids = params[:selected_suppliers]
     subsystem_id = params[:subsystem_id]
-
+  
     if selected_ids.blank? || subsystem_id.blank?
       flash[:alert] = 'Please select at least one supplier and a subsystem.'
       redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
     end
-
+  
     # Get the selected suppliers.
     suppliers = Supplier.where(id: selected_ids)
     chosen_subsystem_id = subsystem_id.to_i
-
+  
     # Define the sections for comparison.
     sections = {
       'Supplier Data' => ->(supplier, subsystem) { supplier_data(supplier, subsystem) },
@@ -189,19 +189,20 @@ class ReportsController < ApplicationController
       'Connection Between FACPs' => ->(supplier, subsystem) { connection_betweens(supplier, subsystem) },
       'Interface with Other Systems' => ->(supplier, subsystem) { interface_with_other_systems(supplier, subsystem) },
       'Evacuation Systems' => ->(supplier, subsystem) { evacuation_systems(supplier, subsystem) },
-      'Prerecorded Messages/Audio Module' => lambda { |supplier, subsystem|
-        prerecorded_message_audio_modules(supplier, subsystem)
-      },
+      'Prerecorded Messages/Audio Module' => ->(supplier, subsystem) { prerecorded_message_audio_modules(supplier, subsystem) },
       'Telephone System' => ->(supplier, subsystem) { telephone_systems(supplier, subsystem) },
       'Spare Parts' => ->(supplier, subsystem) { spare_parts(supplier, subsystem) },
       'Scope of Work (SOW)' => ->(supplier, subsystem) { scope_of_works(supplier, subsystem) },
       'Material & Delivery' => ->(supplier, subsystem) { material_and_deliveries(supplier, subsystem) },
       'General & Commercial Data' => ->(supplier, subsystem) { general_commercial_data(supplier, subsystem) }
     }
-
+  
     # Build the comparison data for each section.
     comparison_data = {}
     sections.each do |section_name, fetch_proc|
+      # Skip "Supplier Data" and "Product Data" (and any others you consider 'info-only')
+      next if %w[Supplier\ Data Product\ Data].include?(section_name)
+  
       section_hash = {}
       suppliers.each do |supplier|
         chosen_subsystem = supplier.approved_subsystems.find_by(id: chosen_subsystem_id)
@@ -211,11 +212,11 @@ class ReportsController < ApplicationController
           section_hash[attr][supplier.supplier_name] = value.present? ? value : 'N/A'
         end
       end
-      comparison_data[section_name] = section_hash
+      comparison_data[section_name] = section_hash unless section_hash.empty?
     end
-
+  
     Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
-
+  
     # Determine file name based on evaluation_type parameter.
     evaluation = params[:evaluation_type].to_s.strip
     file_name = case evaluation
@@ -226,11 +227,11 @@ class ReportsController < ApplicationController
                 else
                   'Apple_to_Apple_Comparison.xlsx'
                 end
-
+  
     # Generate the Excel workbook.
     p = Axlsx::Package.new
     wb = p.workbook
-
+  
     styles = wb.styles
     header_style = styles.add_style(
       bg_color: '4472C4',
@@ -250,17 +251,25 @@ class ReportsController < ApplicationController
       border: { style: :thin, color: '000000' },
       alignment: { horizontal: :left }
     )
-
+  
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
+      # 1) Add a row listing the selected suppliers at the top
+      # e.g. "Selected Suppliers: Supplier A, Supplier B, Supplier C"
+      supplier_names = suppliers.map(&:supplier_name)
+      sheet.add_row ["Selected Suppliers:", supplier_names.join(", ")],
+                    style: header_style
+      sheet.add_row []  # blank row for spacing
+  
       comparison_data.each do |section_name, attributes_hash|
+        # Section title row
         sheet.add_row [section_name], style: section_title_style
-
-        # Group attributes by base name.
+  
+        # Group attributes by base name (value/unit rate/amount/notes)
         grouped = {}
         attributes_hash.each do |attr, supplier_values|
           if attr =~ /(.+?)\s+(value|unit rate|amount|notes)$/i
-            base = ::Regexp.last_match(1).strip
-            suffix = ::Regexp.last_match(2).downcase.gsub(' ', '_').to_sym # e.g. "unit rate" => :unit_rate
+            base = Regexp.last_match(1).strip
+            suffix = Regexp.last_match(2).downcase.gsub(' ', '_').to_sym
           else
             base = attr.strip
             suffix = :value
@@ -268,17 +277,15 @@ class ReportsController < ApplicationController
           grouped[base] ||= {}
           grouped[base][suffix] = supplier_values
         end
-
-        # Separate into simple attributes and cost attributes.
+  
         simple_groups = grouped.select { |_, h| h.keys.sort == [:value] }
-        cost_groups = grouped.select { |_, h| h.keys.sort != [:value] }
-
-        # Check if suppliers are Technical&Evaluation (assume all are the same)
-        if suppliers.first.evaluation_type == 'Technical&Evaluation'
-          # For Technical&Evaluation, we do not output simple (info) groups.
-        else
-          # Output simple groups for all other evaluation types.
+        cost_groups   = grouped.select { |_, h| h.keys.sort != [:value] }
+  
+        # For "Technical&Evaluation," we skip simple groups entirely.
+        # For others, we show them unless you want to skip them as well.
+        if suppliers.first.evaluation_type != 'Technical&Evaluation'
           unless simple_groups.empty?
+            # Output simple groups
             simple_header = ['Attribute'] + suppliers.map(&:supplier_name)
             sheet.add_row simple_header, style: header_style
             simple_groups.each do |base, h|
@@ -291,42 +298,44 @@ class ReportsController < ApplicationController
             sheet.add_row [] # blank row for spacing
           end
         end
-
-        # Output cost groups.
+  
+        # Now output cost groups if any
         next if cost_groups.empty?
-
+  
         cost_header = ['Attribute']
         suppliers.each do |supplier|
-          cost_header += if supplier.evaluation_type == 'TechnicalOnly'
-                           # For TechnicalOnly, display "Value" and "Notes"
-                           %w[Value Notes]
-                         elsif supplier.evaluation_type == 'Technical&Evaluation'
-                           # For Technical&Evaluation, display only "Unit Rate", "Amount", "Notes" (skip Value)
-                           ['Unit Rate', 'Amount', 'Notes']
-                         else
-                           # Fallback: display all columns.
-                           ['Value', 'Unit Rate', 'Amount', 'Notes']
-                         end
+          case supplier.evaluation_type
+          when 'TechnicalOnly'
+            # For TechnicalOnly, display "Value" and "Notes"
+            cost_header += %w[Value Notes]
+          when 'Technical&Evaluation'
+            # For Technical&Evaluation, display only "Unit Rate", "Amount", "Notes" (skip Value)
+            cost_header += ['Unit Rate', 'Amount', 'Notes']
+          else
+            # Fallback: display all columns
+            cost_header += ['Value', 'Unit Rate', 'Amount', 'Notes']
+          end
         end
         sheet.add_row cost_header, style: header_style
-
+  
         cost_groups.each do |base, h|
           row = [base]
           suppliers.each do |supplier|
-            if supplier.evaluation_type == 'TechnicalOnly'
+            case supplier.evaluation_type
+            when 'TechnicalOnly'
               val = h[:value] ? h[:value][supplier.supplier_name] : 'N/A'
               notes = h[:notes] ? h[:notes][supplier.supplier_name] : ''
               row += [val.to_s, notes.to_s]
-            elsif supplier.evaluation_type == 'Technical&Evaluation'
+            when 'Technical&Evaluation'
               unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : 'N/A'
-              amount = h[:amount] ? h[:amount][supplier.supplier_name] : 'N/A'
-              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ''
+              amount    = h[:amount]    ? h[:amount][supplier.supplier_name]    : 'N/A'
+              notes     = h[:notes]     ? h[:notes][supplier.supplier_name]     : ''
               row += [unit_rate.to_s, amount.to_s, notes.to_s]
             else
-              val = h[:value] ? h[:value][supplier.supplier_name] : 'N/A'
+              val       = h[:value]     ? h[:value][supplier.supplier_name]     : 'N/A'
               unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : 'N/A'
-              amount = h[:amount] ? h[:amount][supplier.supplier_name] : 'N/A'
-              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ''
+              amount    = h[:amount]    ? h[:amount][supplier.supplier_name]    : 'N/A'
+              notes     = h[:notes]     ? h[:notes][supplier.supplier_name]     : ''
               row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
             end
           end
@@ -335,11 +344,12 @@ class ReportsController < ApplicationController
         sheet.add_row [] # blank row for spacing
       end
     end
-
+  
     send_data p.to_stream.read,
               filename: file_name,
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+  
 
   def show_comparison_report
     selected_ids = params[:selected_suppliers]

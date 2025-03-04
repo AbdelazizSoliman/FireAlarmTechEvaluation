@@ -336,7 +336,7 @@ class ReportsController < ApplicationController
     end
 
     send_data p.to_stream.read,
-              filename: 'file_name',
+              filename: file_name,
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 

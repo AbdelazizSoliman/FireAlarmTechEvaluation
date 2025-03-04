@@ -165,16 +165,16 @@ class ReportsController < ApplicationController
   def generate_comparison_report
     selected_ids = params[:selected_suppliers]
     subsystem_id = params[:subsystem_id]
-  
+
     if selected_ids.blank? || subsystem_id.blank?
-      flash[:alert] = "Please select at least one supplier and a subsystem."
+      flash[:alert] = 'Please select at least one supplier and a subsystem.'
       redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
     end
-  
+
     # Get the selected suppliers.
     suppliers = Supplier.where(id: selected_ids)
     chosen_subsystem_id = subsystem_id.to_i
-  
+
     # Define the sections for comparison.
     sections = {
       'Supplier Data' => ->(supplier, subsystem) { supplier_data(supplier, subsystem) },
@@ -189,14 +189,16 @@ class ReportsController < ApplicationController
       'Connection Between FACPs' => ->(supplier, subsystem) { connection_betweens(supplier, subsystem) },
       'Interface with Other Systems' => ->(supplier, subsystem) { interface_with_other_systems(supplier, subsystem) },
       'Evacuation Systems' => ->(supplier, subsystem) { evacuation_systems(supplier, subsystem) },
-      'Prerecorded Messages/Audio Module' => ->(supplier, subsystem) { prerecorded_message_audio_modules(supplier, subsystem) },
+      'Prerecorded Messages/Audio Module' => lambda { |supplier, subsystem|
+        prerecorded_message_audio_modules(supplier, subsystem)
+      },
       'Telephone System' => ->(supplier, subsystem) { telephone_systems(supplier, subsystem) },
       'Spare Parts' => ->(supplier, subsystem) { spare_parts(supplier, subsystem) },
       'Scope of Work (SOW)' => ->(supplier, subsystem) { scope_of_works(supplier, subsystem) },
       'Material & Delivery' => ->(supplier, subsystem) { material_and_deliveries(supplier, subsystem) },
       'General & Commercial Data' => ->(supplier, subsystem) { general_commercial_data(supplier, subsystem) }
     }
-  
+
     # Build the comparison data for each section.
     comparison_data = {}
     sections.each do |section_name, fetch_proc|
@@ -206,18 +208,18 @@ class ReportsController < ApplicationController
         data = chosen_subsystem ? fetch_proc.call(supplier, chosen_subsystem) : {}
         data.each do |attr, value|
           section_hash[attr] ||= {}
-          section_hash[attr][supplier.supplier_name] = value.present? ? value : "N/A"
+          section_hash[attr][supplier.supplier_name] = value.present? ? value : 'N/A'
         end
       end
       comparison_data[section_name] = section_hash
     end
-  
+
     Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
-  
+
     # Generate the Excel workbook.
     p = Axlsx::Package.new
     wb = p.workbook
-  
+
     styles = wb.styles
     header_style = styles.add_style(
       bg_color: '4472C4',
@@ -237,17 +239,17 @@ class ReportsController < ApplicationController
       border: { style: :thin, color: '000000' },
       alignment: { horizontal: :left }
     )
-  
+
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
       comparison_data.each do |section_name, attributes_hash|
         sheet.add_row [section_name], style: section_title_style
-  
+
         # Group attributes by base name.
         grouped = {}
         attributes_hash.each do |attr, supplier_values|
           if attr =~ /(.+?)\s+(value|unit rate|amount|notes)$/i
-            base = $1.strip
-            suffix = $2.downcase.gsub(" ", "_").to_sym
+            base = ::Regexp.last_match(1).strip
+            suffix = ::Regexp.last_match(2).downcase.gsub(' ', '_').to_sym # e.g. "unit rate" => :unit_rate
           else
             base = attr.strip
             suffix = :value
@@ -255,69 +257,85 @@ class ReportsController < ApplicationController
           grouped[base] ||= {}
           grouped[base][suffix] = supplier_values
         end
-  
+
+        # Separate into simple attributes and cost attributes.
         simple_groups = grouped.select { |_, h| h.keys.sort == [:value] }
         cost_groups = grouped.select { |_, h| h.keys.sort != [:value] }
-  
-        # Output simple groups.
-        unless simple_groups.empty?
-          simple_header = ['Attribute'] + suppliers.map(&:supplier_name)
-          sheet.add_row simple_header, style: header_style
-          simple_groups.each do |base, h|
-            row = [base]
-            suppliers.each do |supplier|
-              row << h[:value][supplier.supplier_name].to_s
-            end
-            sheet.add_row row, style: [cell_style] * row.size
-          end
-          sheet.add_row [] # blank row for spacing
-        end
-  
-        # Output cost groups.
-        unless cost_groups.empty?
-          # Build header row based on each supplier's evaluation type.
-          cost_header = ['Attribute']
-          suppliers.each do |supplier|
-            if supplier.evaluation_type == "TechnicalOnly"
-              cost_header += ["Value", "Notes"]
-            else
-              cost_header += ["Value", "Unit Rate", "Amount", "Notes"]
-            end
-          end
-          sheet.add_row cost_header, style: header_style
-  
-          cost_groups.each do |base, h|
-            row = [base]
-            suppliers.each do |supplier|
-              val = h[:value] ? h[:value][supplier.supplier_name] : "N/A"
-              unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : "N/A"
-              amount = h[:amount] ? h[:amount][supplier.supplier_name] : "N/A"
-              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ""
-              if supplier.evaluation_type == "TechnicalOnly"
-                # For TechnicalOnly suppliers, only include Value and Notes.
-                row += [val.to_s, notes.to_s]
-              else
-                row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
+
+        # Check if suppliers are Technical&Evaluation (assume all are the same)
+        if suppliers.first.evaluation_type == 'Technical&Evaluation'
+          # For Technical&Evaluation, we do not output simple (info) groups.
+        else
+          # Output simple groups for all other evaluation types.
+          unless simple_groups.empty?
+            simple_header = ['Attribute'] + suppliers.map(&:supplier_name)
+            sheet.add_row simple_header, style: header_style
+            simple_groups.each do |base, h|
+              row = [base]
+              suppliers.each do |supplier|
+                row << h[:value][supplier.supplier_name].to_s
               end
+              sheet.add_row row, style: [cell_style] * row.size
             end
-            sheet.add_row row, style: [cell_style] * row.size
+            sheet.add_row [] # blank row for spacing
           end
-          sheet.add_row [] # blank row for spacing
         end
+
+        # Output cost groups.
+        next if cost_groups.empty?
+
+        cost_header = ['Attribute']
+        suppliers.each do |supplier|
+          cost_header += if supplier.evaluation_type == 'TechnicalOnly'
+                           # For TechnicalOnly, display "Value" and "Notes"
+                           %w[Value Notes]
+                         elsif supplier.evaluation_type == 'Technical&Evaluation'
+                           # For Technical&Evaluation, display only "Unit Rate", "Amount", "Notes" (skip Value)
+                           ['Unit Rate', 'Amount', 'Notes']
+                         else
+                           # Fallback: display all columns.
+                           ['Value', 'Unit Rate', 'Amount', 'Notes']
+                         end
+        end
+        sheet.add_row cost_header, style: header_style
+
+        cost_groups.each do |base, h|
+          row = [base]
+          suppliers.each do |supplier|
+            if supplier.evaluation_type == 'TechnicalOnly'
+              val = h[:value] ? h[:value][supplier.supplier_name] : 'N/A'
+              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ''
+              row += [val.to_s, notes.to_s]
+            elsif supplier.evaluation_type == 'Technical&Evaluation'
+              unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : 'N/A'
+              amount = h[:amount] ? h[:amount][supplier.supplier_name] : 'N/A'
+              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ''
+              row += [unit_rate.to_s, amount.to_s, notes.to_s]
+            else
+              val = h[:value] ? h[:value][supplier.supplier_name] : 'N/A'
+              unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : 'N/A'
+              amount = h[:amount] ? h[:amount][supplier.supplier_name] : 'N/A'
+              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ''
+              row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
+            end
+          end
+          sheet.add_row row, style: [cell_style] * row.size
+        end
+        sheet.add_row [] # blank row for spacing
       end
     end
-  
+
     send_data p.to_stream.read,
               filename: 'Apple_to_Apple_Comparison.xlsx',
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
-  
+
   def show_comparison_report
     selected_ids = params[:selected_suppliers]
     subsystem_id = params[:subsystem_id]
 
     if selected_ids.blank? || subsystem_id.blank?
-      flash[:alert] = "Please select at least one supplier and a subsystem."
+      flash[:alert] = 'Please select at least one supplier and a subsystem.'
       redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
     end
 
@@ -339,7 +357,9 @@ class ReportsController < ApplicationController
       'Connection Between FACPs' => ->(supplier, subsystem) { connection_betweens(supplier, subsystem) },
       'Interface with Other Systems' => ->(supplier, subsystem) { interface_with_other_systems(supplier, subsystem) },
       'Evacuation Systems' => ->(supplier, subsystem) { evacuation_systems(supplier, subsystem) },
-      'Prerecorded Messages/Audio Module' => ->(supplier, subsystem) { prerecorded_message_audio_modules(supplier, subsystem) },
+      'Prerecorded Messages/Audio Module' => lambda { |supplier, subsystem|
+        prerecorded_message_audio_modules(supplier, subsystem)
+      },
       'Telephone System' => ->(supplier, subsystem) { telephone_systems(supplier, subsystem) },
       'Spare Parts' => ->(supplier, subsystem) { spare_parts(supplier, subsystem) },
       'Scope of Work (SOW)' => ->(supplier, subsystem) { scope_of_works(supplier, subsystem) },
@@ -356,7 +376,7 @@ class ReportsController < ApplicationController
         data = chosen_subsystem ? fetch_proc.call(supplier, chosen_subsystem) : {}
         data.each do |attr, value|
           section_hash[attr] ||= {}
-          section_hash[attr][supplier.supplier_name] = value.present? ? value : "N/A"
+          section_hash[attr][supplier.supplier_name] = value.present? ? value : 'N/A'
         end
       end
       comparison_data[section_name] = section_hash
@@ -457,40 +477,39 @@ class ReportsController < ApplicationController
 
   def apple_to_apple_comparison
     case params[:commit]
-    when "generate"
+    when 'generate'
       if params[:selected_suppliers].blank? || params[:subsystem_id].blank?
-        flash[:alert] = "Please select at least one supplier and a subsystem."
+        flash[:alert] = 'Please select at least one supplier and a subsystem.'
         redirect_to apple_to_apple_comparison_reports_path and return
       end
       redirect_to generate_comparison_report_reports_path(
         selected_suppliers: params[:selected_suppliers],
         subsystem_id: params[:subsystem_id]
       ) and return
-  
-    when "show"
+
+    when 'show'
       if params[:selected_suppliers].blank? || params[:subsystem_id].blank?
-        flash[:alert] = "Please select at least one supplier and a subsystem."
+        flash[:alert] = 'Please select at least one supplier and a subsystem.'
         redirect_to apple_to_apple_comparison_reports_path and return
       end
       redirect_to show_comparison_report_reports_path(
         selected_suppliers: params[:selected_suppliers],
         subsystem_id: params[:subsystem_id]
       ) and return
-  
+
     # If user clicked the new "Filter" button, or is just loading the page
     else
       @subsystem_id = params[:subsystem_id].presence
       # Use the actual association for subsystems if "approved_subsystems" doesn't exist
       evaluation_type = params[:evaluation_type]
-if evaluation_type.present?
-  @suppliers_with_subsystems = Supplier.where(evaluation_type: evaluation_type).includes(:subsystems)
-else
-  @suppliers_with_subsystems = Supplier.includes(:subsystems)
-end
+      @suppliers_with_subsystems = if evaluation_type.present?
+                                     Supplier.where(evaluation_type: evaluation_type).includes(:subsystems)
+                                   else
+                                     Supplier.includes(:subsystems)
+                                   end
 
     end
   end
-  
 
   #----------------------------------------------------------------
   # Private Helper Methods

@@ -200,7 +200,7 @@ class ReportsController < ApplicationController
     # Build the comparison data for each section.
     comparison_data = {}
     sections.each do |section_name, fetch_proc|
-      # Skip "Supplier Data" and "Product Data" (and any others you consider 'info-only')
+      # Example: skip these two if you don’t want them in the output
       next if %w[Supplier\ Data Product\ Data].include?(section_name)
   
       section_hash = {}
@@ -209,7 +209,8 @@ class ReportsController < ApplicationController
         data = chosen_subsystem ? fetch_proc.call(supplier, chosen_subsystem) : {}
         data.each do |attr, value|
           section_hash[attr] ||= {}
-          section_hash[attr][supplier.supplier_name] = value.present? ? value : 'N/A'
+          # Replace nil/empty with '' instead of 'N/A'
+          section_hash[attr][supplier.supplier_name] = value.present? ? value : ''
         end
       end
       comparison_data[section_name] = section_hash unless section_hash.empty?
@@ -217,7 +218,7 @@ class ReportsController < ApplicationController
   
     Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
   
-    # Determine file name based on evaluation_type parameter.
+    # Determine file name based on evaluation_type parameter (if still needed).
     evaluation = params[:evaluation_type].to_s.strip
     file_name = case evaluation
                 when 'TechnicalOnly'
@@ -232,6 +233,7 @@ class ReportsController < ApplicationController
     p = Axlsx::Package.new
     wb = p.workbook
   
+    # --- STYLES ---
     styles = wb.styles
     header_style = styles.add_style(
       bg_color: '4472C4',
@@ -251,26 +253,80 @@ class ReportsController < ApplicationController
       border: { style: :thin, color: '000000' },
       alignment: { horizontal: :left }
     )
+    supplier_name_style = styles.add_style(
+      border: { style: :thin, color: '000000' },
+      alignment: { horizontal: :center, vertical: :center },
+      b: true
+    )
   
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
-      # 1) Add a row listing the selected suppliers at the top
-      # e.g. "Selected Suppliers: Supplier A, Supplier B, Supplier C"
-      supplier_names = suppliers.map(&:supplier_name)
-      sheet.add_row ["Selected Suppliers:", supplier_names.join(", ")],
-                    style: header_style
-      sheet.add_row []  # blank row for spacing
+      # Optional: Show a top row with selected suppliers (all in one cell or not)
+      # Here, we’ll just skip it or show them in one cell if you like:
+      supplier_names = suppliers.map(&:supplier_name).join(', ')
+      sheet.add_row ["Selected Suppliers:", supplier_names], style: header_style
+      sheet.add_row []  # blank row
   
+      # Iterate over each section
       comparison_data.each do |section_name, attributes_hash|
         # Section title row
         sheet.add_row [section_name], style: section_title_style
   
-        # Group attributes by base name (value/unit rate/amount/notes)
+        # 1) We will produce a two-row header:
+        #    - First row: "Attribute" in the first column, then each supplier name merged over 3 columns
+        #    - Second row: blank cell under "Attribute", then "Unit Rate", "Amount", "Notes" for each supplier
+  
+        # --- Build the first header row ---
+        # "Attribute" goes in column A
+        first_header_row = ['Attribute']
+  
+        # Keep track of merges. For each supplier, we add 3 columns, but
+        # the supplier name will be merged across those 3 columns.
+        suppliers.each do |supplier|
+          first_header_row << supplier.supplier_name
+          first_header_row << ''
+          first_header_row << ''
+        end
+  
+        # Add the row to the sheet
+        sheet.add_row first_header_row, style: header_style
+  
+        # Merge the supplier name cells (3 columns per supplier)
+        # We already have the row object from `sheet.rows.last`
+        current_row_idx = sheet.rows.size - 1
+        col_start = 1  # since col 0 is "Attribute"
+        suppliers.each do |_supplier|
+          # Merge cells from col_start to col_start+2 in this row
+          sheet.merge_cells(current_row_idx, col_start, current_row_idx, col_start + 2)
+          col_start += 3
+        end
+  
+        # --- Build the second header row ---
+        # "Attribute" again in the first column (we can leave it blank or not)
+        second_header_row = ['']
+  
+        suppliers.each do |_supplier|
+          second_header_row << 'Unit Rate'
+          second_header_row << 'Amount'
+          second_header_row << 'Notes'
+        end
+  
+        sheet.add_row second_header_row, style: header_style
+  
+        # 2) Separate the attributes into "cost groups" only (we’ll treat everything as cost-based):
+        #    We look for possible suffixes: :unit_rate, :amount, :notes. If not found, we treat them as blank.
+        #    We’ll just gather everything that might match those suffixes or a leftover :value.
+  
+        # Group attributes by their base name (the portion before "value"/"unit rate"/"amount"/"notes")
         grouped = {}
         attributes_hash.each do |attr, supplier_values|
+          # Example attribute naming logic:
+          # If attr is "Panel - total # of panels value", we consider "Panel - total # of panels" as the base
+          # and "value" as the suffix. Adjust your naming detection as needed:
           if attr =~ /(.+?)\s+(value|unit rate|amount|notes)$/i
             base = Regexp.last_match(1).strip
             suffix = Regexp.last_match(2).downcase.gsub(' ', '_').to_sym
           else
+            # If it doesn't match, treat the entire attr as a base with suffix :value
             base = attr.strip
             suffix = :value
           end
@@ -278,70 +334,32 @@ class ReportsController < ApplicationController
           grouped[base][suffix] = supplier_values
         end
   
-        simple_groups = grouped.select { |_, h| h.keys.sort == [:value] }
-        cost_groups   = grouped.select { |_, h| h.keys.sort != [:value] }
+        # Now output each base row with 3 columns per supplier
+        grouped.each do |base, hash_by_suffix|
+          row = [base]  # first cell is the attribute name
   
-        # For "Technical&Evaluation," we skip simple groups entirely.
-        # For others, we show them unless you want to skip them as well.
-        if suppliers.first.evaluation_type != 'Technical&Evaluation'
-          unless simple_groups.empty?
-            # Output simple groups
-            simple_header = ['Attribute'] + suppliers.map(&:supplier_name)
-            sheet.add_row simple_header, style: header_style
-            simple_groups.each do |base, h|
-              row = [base]
-              suppliers.each do |supplier|
-                row << h[:value][supplier.supplier_name].to_s
-              end
-              sheet.add_row row, style: [cell_style] * row.size
-            end
-            sheet.add_row [] # blank row for spacing
-          end
-        end
-  
-        # Now output cost groups if any
-        next if cost_groups.empty?
-  
-        cost_header = ['Attribute']
-        suppliers.each do |supplier|
-          case supplier.evaluation_type
-          when 'TechnicalOnly'
-            # For TechnicalOnly, display "Value" and "Notes"
-            cost_header += %w[Value Notes]
-          when 'Technical&Evaluation'
-            # For Technical&Evaluation, display only "Unit Rate", "Amount", "Notes" (skip Value)
-            cost_header += ['Unit Rate', 'Amount', 'Notes']
-          else
-            # Fallback: display all columns
-            cost_header += ['Value', 'Unit Rate', 'Amount', 'Notes']
-          end
-        end
-        sheet.add_row cost_header, style: header_style
-  
-        cost_groups.each do |base, h|
-          row = [base]
           suppliers.each do |supplier|
-            case supplier.evaluation_type
-            when 'TechnicalOnly'
-              val = h[:value] ? h[:value][supplier.supplier_name] : 'N/A'
-              notes = h[:notes] ? h[:notes][supplier.supplier_name] : ''
-              row += [val.to_s, notes.to_s]
-            when 'Technical&Evaluation'
-              unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : 'N/A'
-              amount    = h[:amount]    ? h[:amount][supplier.supplier_name]    : 'N/A'
-              notes     = h[:notes]     ? h[:notes][supplier.supplier_name]     : ''
-              row += [unit_rate.to_s, amount.to_s, notes.to_s]
-            else
-              val       = h[:value]     ? h[:value][supplier.supplier_name]     : 'N/A'
-              unit_rate = h[:unit_rate] ? h[:unit_rate][supplier.supplier_name] : 'N/A'
-              amount    = h[:amount]    ? h[:amount][supplier.supplier_name]    : 'N/A'
-              notes     = h[:notes]     ? h[:notes][supplier.supplier_name]     : ''
-              row += [val.to_s, unit_rate.to_s, amount.to_s, notes.to_s]
-            end
+            # For each supplier, pick out the data from :unit_rate, :amount, :notes
+            # If missing, use '' instead of 'N/A'.
+            unit_rate = hash_by_suffix[:unit_rate]&.dig(supplier.supplier_name) || ''
+            amount    = hash_by_suffix[:amount]&.dig(supplier.supplier_name)    || ''
+            notes     = hash_by_suffix[:notes]&.dig(supplier.supplier_name)     || ''
+  
+            # Some data might only be in :value if you are using that key.
+            # If you still want to handle a :value key, you can do so. Otherwise ignore it.
+            # For example, if your old data is in :value, you can place it in "Unit Rate" column or skip it.
+            #   value     = hash_by_suffix[:value]&.dig(supplier.supplier_name)     || ''
+            #   unit_rate = value if unit_rate.blank? && value.present?
+  
+            row << unit_rate.to_s
+            row << amount.to_s
+            row << notes.to_s
           end
+  
           sheet.add_row row, style: [cell_style] * row.size
         end
-        sheet.add_row [] # blank row for spacing
+  
+        sheet.add_row [] # blank row for spacing after each section
       end
     end
   
@@ -349,6 +367,7 @@ class ReportsController < ApplicationController
               filename: file_name,
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+  
   
 
   def show_comparison_report

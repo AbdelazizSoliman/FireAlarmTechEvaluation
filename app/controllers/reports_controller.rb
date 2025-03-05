@@ -177,19 +177,12 @@ class ReportsController < ApplicationController
   
     # Define the sections for comparison
     sections = {
-      'Supplier Data' => ->(supplier, subsystem) { supplier_data(supplier, subsystem) },
-      'Product Data' => ->(supplier, subsystem) { product_data(supplier, subsystem) },
-      'Fire Alarm Control Panel' => ->(supplier, subsystem) { fire_alarm_control_panel(supplier, subsystem) },
-      'Graphic Systems' => ->(supplier, subsystem) { graphic_system(supplier, subsystem) },
       'Detectors Field Devices' => ->(supplier, subsystem) { detectors_field_device(supplier, subsystem) },
-      'Manual Pull Station' => ->(supplier, subsystem) { manual_pull_station(supplier, subsystem) },
       'Door Holders' => ->(supplier, subsystem) { door_holder(supplier, subsystem) },
       'Notification Devices' => ->(supplier, subsystem) { notification_devices(supplier, subsystem) },
       'Isolation Data' => ->(supplier, subsystem) { isolations(supplier, subsystem) },
-      'Connection Between FACPs' => ->(supplier, subsystem) { connection_betweens(supplier, subsystem) },
       'Interface with Other Systems' => ->(supplier, subsystem) { interface_with_other_systems(supplier, subsystem) },
       'Evacuation Systems' => ->(supplier, subsystem) { evacuation_systems(supplier, subsystem) },
-      'Prerecorded Messages/Audio Module' => ->(supplier, subsystem) { prerecorded_message_audio_modules(supplier, subsystem) },
       'Telephone System' => ->(supplier, subsystem) { telephone_systems(supplier, subsystem) },
       'Spare Parts' => ->(supplier, subsystem) { spare_parts(supplier, subsystem) },
       'Scope of Work (SOW)' => ->(supplier, subsystem) { scope_of_works(supplier, subsystem) },

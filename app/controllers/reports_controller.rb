@@ -171,11 +171,11 @@ class ReportsController < ApplicationController
       redirect_back(fallback_location: apple_to_apple_comparison_reports_path) and return
     end
   
-    # Get the selected suppliers.
+    # Get the selected suppliers
     suppliers = Supplier.where(id: selected_ids)
     chosen_subsystem_id = subsystem_id.to_i
   
-    # Define the sections for comparison.
+    # Define the sections for comparison
     sections = {
       'Supplier Data' => ->(supplier, subsystem) { supplier_data(supplier, subsystem) },
       'Product Data' => ->(supplier, subsystem) { product_data(supplier, subsystem) },
@@ -197,10 +197,10 @@ class ReportsController < ApplicationController
       'General & Commercial Data' => ->(supplier, subsystem) { general_commercial_data(supplier, subsystem) }
     }
   
-    # Build the comparison data for each section.
+    # Build the comparison data for each section
     comparison_data = {}
     sections.each do |section_name, fetch_proc|
-      # Example: skip these two if you don’t want them in the output
+      # Skip these if you don't want them included
       next if %w[Supplier\ Data Product\ Data].include?(section_name)
   
       section_hash = {}
@@ -209,16 +209,17 @@ class ReportsController < ApplicationController
         data = chosen_subsystem ? fetch_proc.call(supplier, chosen_subsystem) : {}
         data.each do |attr, value|
           section_hash[attr] ||= {}
-          # Replace nil/empty with '' instead of 'N/A'
+          # Use empty string instead of 'N/A'
           section_hash[attr][supplier.supplier_name] = value.present? ? value : ''
         end
       end
+  
       comparison_data[section_name] = section_hash unless section_hash.empty?
     end
   
     Rails.logger.info "Comparison Data: #{comparison_data.inspect}"
   
-    # Determine file name based on evaluation_type parameter (if still needed).
+    # Determine file name based on evaluation_type
     evaluation = params[:evaluation_type].to_s.strip
     file_name = case evaluation
                 when 'TechnicalOnly'
@@ -229,11 +230,11 @@ class ReportsController < ApplicationController
                   'Apple_to_Apple_Comparison.xlsx'
                 end
   
-    # Generate the Excel workbook.
+    # Create the Excel workbook
     p = Axlsx::Package.new
     wb = p.workbook
   
-    # --- STYLES ---
+    # Define styles
     styles = wb.styles
     header_style = styles.add_style(
       bg_color: '4472C4',
@@ -253,23 +254,19 @@ class ReportsController < ApplicationController
       border: { style: :thin, color: '000000' },
       alignment: { horizontal: :left }
     )
-    supplier_name_style = styles.add_style(
-      border: { style: :thin, color: '000000' },
-      alignment: { horizontal: :center, vertical: :center },
-      b: true
-    )
   
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
-      # Example top row for selected suppliers
-      supplier_names = suppliers.map(&:supplier_name).join(', ')
-      sheet.add_row ["Selected Suppliers:", supplier_names], style: header_style
-      sheet.add_row []  # blank row
-    
+      # (Optional) Show a top row with selected suppliers
+      supplier_names_str = suppliers.map(&:supplier_name).join(', ')
+      sheet.add_row ["Selected Suppliers:", supplier_names_str], style: header_style
+      sheet.add_row [] # blank row
+  
+      # Loop over each section
       comparison_data.each do |section_name, attributes_hash|
         # Section title row
         sheet.add_row [section_name], style: section_title_style
-    
-        # First header row: "Attribute" + each supplier name across 3 merged columns
+  
+        # 1) First header row: "Attribute" + each supplier name merged across 3 columns
         first_header_row = ['Attribute']
         suppliers.each do |supplier|
           first_header_row << supplier.supplier_name
@@ -277,20 +274,18 @@ class ReportsController < ApplicationController
           first_header_row << ''
         end
         sheet.add_row first_header_row, style: header_style
-    
-        # ---- Fix the merge_cells usage here ----
-        current_row_idx = sheet.rows.size - 1  # the index of the row we just added
-        col_start = 1  # we start from column 1 since col 0 is "Attribute"
+  
+        # Merge the supplier name cells (3 columns per supplier)
+        current_row_idx = sheet.rows.size - 1  # index of the row we just added
+        col_start = 1  # first column (0-based) after "Attribute"
         suppliers.each do |_supplier|
-          # Convert row/col to references like "B2", "D2"
           start_cell_ref = Axlsx::cell_r(current_row_idx, col_start)
           end_cell_ref   = Axlsx::cell_r(current_row_idx, col_start + 2)
-          # Merge them
           sheet.merge_cells("#{start_cell_ref}:#{end_cell_ref}")
           col_start += 3
         end
-    
-        # Second header row: blank under "Attribute" + "Unit Rate", "Amount", "Notes"
+  
+        # 2) Second header row: blank + "Unit Rate", "Amount", "Notes" per supplier
         second_header_row = ['']
         suppliers.each do |_supplier|
           second_header_row << 'Unit Rate'
@@ -298,19 +293,54 @@ class ReportsController < ApplicationController
           second_header_row << 'Notes'
         end
         sheet.add_row second_header_row, style: header_style
-    
-        # ... rest of your grouping/row writing logic ...
+  
+        # 3) Group attributes by base name (e.g. "Xxx value", "Xxx unit rate", etc.)
+        grouped = {}
+        attributes_hash.each do |attr, supplier_values|
+          # Try to split out "value/unit rate/amount/notes" from the end of attr
+          if attr =~ /(.+?)\s+(value|unit rate|amount|notes)$/i
+            base = Regexp.last_match(1).strip
+            suffix = Regexp.last_match(2).downcase.gsub(' ', '_').to_sym
+          else
+            # If we don't match, treat entire attr as base, suffix = :value
+            base = attr.strip
+            suffix = :value
+          end
+          grouped[base] ||= {}
+          grouped[base][suffix] = supplier_values
+        end
+  
+        # 4) Output each base row with 3 columns per supplier
+        grouped.each do |base, hash_by_suffix|
+          row = [base]
+          suppliers.each do |supplier|
+            # Pull out the data (blank if missing)
+            unit_rate = hash_by_suffix[:unit_rate]&.dig(supplier.supplier_name) || ''
+            amount    = hash_by_suffix[:amount]&.dig(supplier.supplier_name)    || ''
+            notes     = hash_by_suffix[:notes]&.dig(supplier.supplier_name)     || ''
+  
+            # If you have a :value key, decide if/where to put it:
+            # For instance, if the attribute is purely "value", you could store it in "Unit Rate":
+            # value = hash_by_suffix[:value]&.dig(supplier.supplier_name) || ''
+            # unit_rate = value if unit_rate.blank? && value.present?
+  
+            row << unit_rate.to_s
+            row << amount.to_s
+            row << notes.to_s
+          end
+          sheet.add_row row, style: [cell_style] * row.size
+        end
+  
+        sheet.add_row [] # blank row after each section
       end
     end
-    
   
+    # Send the file
     send_data p.to_stream.read,
               filename: file_name,
               type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
   
-  
-
   def show_comparison_report
     selected_ids = params[:selected_suppliers]
     subsystem_id = params[:subsystem_id]

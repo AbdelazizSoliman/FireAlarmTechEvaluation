@@ -260,108 +260,49 @@ class ReportsController < ApplicationController
     )
   
     wb.add_worksheet(name: 'Apple to Apple Comparison') do |sheet|
-      # Optional: Show a top row with selected suppliers (all in one cell or not)
-      # Here, we’ll just skip it or show them in one cell if you like:
+      # Example top row for selected suppliers
       supplier_names = suppliers.map(&:supplier_name).join(', ')
       sheet.add_row ["Selected Suppliers:", supplier_names], style: header_style
       sheet.add_row []  # blank row
-  
-      # Iterate over each section
+    
       comparison_data.each do |section_name, attributes_hash|
         # Section title row
         sheet.add_row [section_name], style: section_title_style
-  
-        # 1) We will produce a two-row header:
-        #    - First row: "Attribute" in the first column, then each supplier name merged over 3 columns
-        #    - Second row: blank cell under "Attribute", then "Unit Rate", "Amount", "Notes" for each supplier
-  
-        # --- Build the first header row ---
-        # "Attribute" goes in column A
+    
+        # First header row: "Attribute" + each supplier name across 3 merged columns
         first_header_row = ['Attribute']
-  
-        # Keep track of merges. For each supplier, we add 3 columns, but
-        # the supplier name will be merged across those 3 columns.
         suppliers.each do |supplier|
           first_header_row << supplier.supplier_name
           first_header_row << ''
           first_header_row << ''
         end
-  
-        # Add the row to the sheet
         sheet.add_row first_header_row, style: header_style
-  
-        # Merge the supplier name cells (3 columns per supplier)
-        # We already have the row object from `sheet.rows.last`
-        current_row_idx = sheet.rows.size - 1
-        col_start = 1  # since col 0 is "Attribute"
+    
+        # ---- Fix the merge_cells usage here ----
+        current_row_idx = sheet.rows.size - 1  # the index of the row we just added
+        col_start = 1  # we start from column 1 since col 0 is "Attribute"
         suppliers.each do |_supplier|
-          # Merge cells from col_start to col_start+2 in this row
-          sheet.merge_cells(current_row_idx, col_start, current_row_idx, col_start + 2)
+          # Convert row/col to references like "B2", "D2"
+          start_cell_ref = Axlsx::cell_r(current_row_idx, col_start)
+          end_cell_ref   = Axlsx::cell_r(current_row_idx, col_start + 2)
+          # Merge them
+          sheet.merge_cells("#{start_cell_ref}:#{end_cell_ref}")
           col_start += 3
         end
-  
-        # --- Build the second header row ---
-        # "Attribute" again in the first column (we can leave it blank or not)
+    
+        # Second header row: blank under "Attribute" + "Unit Rate", "Amount", "Notes"
         second_header_row = ['']
-  
         suppliers.each do |_supplier|
           second_header_row << 'Unit Rate'
           second_header_row << 'Amount'
           second_header_row << 'Notes'
         end
-  
         sheet.add_row second_header_row, style: header_style
-  
-        # 2) Separate the attributes into "cost groups" only (we’ll treat everything as cost-based):
-        #    We look for possible suffixes: :unit_rate, :amount, :notes. If not found, we treat them as blank.
-        #    We’ll just gather everything that might match those suffixes or a leftover :value.
-  
-        # Group attributes by their base name (the portion before "value"/"unit rate"/"amount"/"notes")
-        grouped = {}
-        attributes_hash.each do |attr, supplier_values|
-          # Example attribute naming logic:
-          # If attr is "Panel - total # of panels value", we consider "Panel - total # of panels" as the base
-          # and "value" as the suffix. Adjust your naming detection as needed:
-          if attr =~ /(.+?)\s+(value|unit rate|amount|notes)$/i
-            base = Regexp.last_match(1).strip
-            suffix = Regexp.last_match(2).downcase.gsub(' ', '_').to_sym
-          else
-            # If it doesn't match, treat the entire attr as a base with suffix :value
-            base = attr.strip
-            suffix = :value
-          end
-          grouped[base] ||= {}
-          grouped[base][suffix] = supplier_values
-        end
-  
-        # Now output each base row with 3 columns per supplier
-        grouped.each do |base, hash_by_suffix|
-          row = [base]  # first cell is the attribute name
-  
-          suppliers.each do |supplier|
-            # For each supplier, pick out the data from :unit_rate, :amount, :notes
-            # If missing, use '' instead of 'N/A'.
-            unit_rate = hash_by_suffix[:unit_rate]&.dig(supplier.supplier_name) || ''
-            amount    = hash_by_suffix[:amount]&.dig(supplier.supplier_name)    || ''
-            notes     = hash_by_suffix[:notes]&.dig(supplier.supplier_name)     || ''
-  
-            # Some data might only be in :value if you are using that key.
-            # If you still want to handle a :value key, you can do so. Otherwise ignore it.
-            # For example, if your old data is in :value, you can place it in "Unit Rate" column or skip it.
-            #   value     = hash_by_suffix[:value]&.dig(supplier.supplier_name)     || ''
-            #   unit_rate = value if unit_rate.blank? && value.present?
-  
-            row << unit_rate.to_s
-            row << amount.to_s
-            row << notes.to_s
-          end
-  
-          sheet.add_row row, style: [cell_style] * row.size
-        end
-  
-        sheet.add_row [] # blank row for spacing after each section
+    
+        # ... rest of your grouping/row writing logic ...
       end
     end
+    
   
     send_data p.to_stream.read,
               filename: file_name,

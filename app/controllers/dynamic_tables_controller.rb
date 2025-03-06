@@ -26,10 +26,8 @@ class DynamicTablesController < ApplicationController
   end
 
   def admin
-    # Fetch existing columns if a table is selected
-    return unless params[:table_name].present?
-
-    @existing_columns = ActiveRecord::Base.connection.columns(params[:table_name]).map(&:name)
+    @table_name = params[:table_name] || ''
+    @existing_columns = @table_name.present? ? ActiveRecord::Base.connection.columns(@table_name).map(&:name) : []
   end
 
   def add_column
@@ -59,7 +57,7 @@ class DynamicTablesController < ApplicationController
     system('rails db:migrate')
 
     flash[:success] = "Column #{column_name} added successfully!"
-    redirect_to admin_path
+    redirect_to admin_path(table_name: table_name) # Reload with selected table
   end
 
   private

@@ -1,0 +1,47 @@
+<h1>Admin Panel - Manage Database Tables</h1>
+
+<% if flash[:success] %>
+  <p style="color: green;"><%= flash[:success] %></p>
+<% elsif flash[:error] %>
+  <p style="color: red;"><%= flash[:error] %></p>
+<% end %>
+
+<h3>Add a New Column</h3>
+<form action="/admin/add_column" method="post">
+  <label for="table_name">Select Table:</label>
+  <select id="table_name" name="table_name">
+    <% ["connection_betweens", "detectors_field_devices", "door_holders", 
+        "evacuation_systems", "fire_alarm_control_panels", "general_commercial_data", 
+        "graphic_systems", "interface_with_other_systems", "isolations", "manual_pull_stations", 
+        "material_and_deliveries", "notification_devices", "product_data", "scope_of_works", 
+        "spare_parts", "telephone_systems", "prerecorded_message_audio_modules", "supplier_data"].each do |table| %>
+      <option value="<%= table %>"><%= table %></option>
+    <% end %>
+  </select>
+
+  <label for="column_name">Column Name:</label>
+  <input type="text" id="column_name" name="column_name" required>
+
+  <label for="column_type">Column Type:</label>
+  <select id="column_type" name="column_type">
+    <option value="integer">Integer</option>
+    <option value="string">String</option>
+    <option value="boolean">Boolean</option>
+    <option value="decimal">Decimal</option>
+    <option value="text">Text</option>
+    <option value="date">Date</option>
+  </select>
+
+  <button type="submit">Add Column</button>
+</form>
+
+<h3>Existing Columns in Selected Table</h3>
+<ul>
+  <% if @existing_columns %>
+    <% @existing_columns.each do |col| %>
+      <li><%= col %></li>
+    <% end %>
+  <% else %>
+    <p>Select a table to view its columns.</p>
+  <% end %>
+</ul>

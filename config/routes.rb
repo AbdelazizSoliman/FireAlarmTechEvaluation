@@ -85,25 +85,24 @@ Rails.application.routes.draw do
     end
   end
 
-  # ✅ Reports Routes
  # Reports Routes
- resources :reports, only: [:index] do
-  collection do
-    get :evaluation_tech_report
-    get :evaluation_data # Show evaluation data for a supplier and subsystem
-    get :generate_evaluation_report # Generate and download the evaluation report
-    get :evaluation_report  # Generate Evaluation/Tech Report
-    get :evaluation_result
-    get :recommendation  # Generate Recommendation
-    get :apple_to_apple_comparison  # Generate Apple to Apple Comparison
-    get :show_comparison_report
-    get :generate_comparison_report
-    get :sow  # Generate/Determine SOW between Suppliers & Installation Contractor
-    get :missing_items  # Generate Missing Items
-    get :differences  # Generate Differences between Bidders
-    get :interfaces  # Generate Interfaces among Systems
+  resources :reports, only: [:index] do
+    collection do
+      get :evaluation_tech_report
+      get :evaluation_data # Show evaluation data for a supplier and subsystem
+      get :generate_evaluation_report # Generate and download the evaluation report
+      get :evaluation_report  # Generate Evaluation/Tech Report
+      get :evaluation_result
+      get :recommendation  # Generate Recommendation
+      get :apple_to_apple_comparison  # Generate Apple to Apple Comparison
+      get :show_comparison_report
+      get :generate_comparison_report
+      get :sow  # Generate/Determine SOW between Suppliers & Installation Contractor
+      get :missing_items  # Generate Missing Items
+      get :differences  # Generate Differences between Bidders
+      get :interfaces  # Generate Interfaces among Systems
+    end
   end
-end
 
   # ✅ Standalone Routes for Systems and Subsystems
   resources :project_scopes, only: [:index, :show, :new, :create]
@@ -129,5 +128,12 @@ end
   devise_scope :user do
     root to: "devise/sessions#new", as: :unauthenticated_root
   end
+
+  get "/admin", to: "dynamic_tables#admin"
+  post "/admin/add_column", to: "dynamic_tables#add_column"
+
+  # Dynamic Table API Routes
+  get "/dynamic_tables/:table_name", to: "dynamic_tables#index"
+  patch "/dynamic_tables/:table_name/:id", to: "dynamic_tables#update"
 
 end

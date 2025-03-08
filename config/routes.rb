@@ -36,6 +36,10 @@ Rails.application.routes.draw do
         post :reject_supplier
       end
     end
+
+     # Dynamic Table API Routes
+      get "/dynamic_tables/:table_name", to: "dynamic_tables#index"
+      patch "/dynamic_tables/:table_name/:id", to: "dynamic_tables#update"
   end
 
   # ✅ RESTORE EVALUATION SYSTEM & STANDALONE ROUTES
@@ -131,9 +135,5 @@ Rails.application.routes.draw do
 
   get "/admin", to: "dynamic_tables#admin"
   post "/admin/add_column", to: "dynamic_tables#add_column"
-
-  # Dynamic Table API Routes
-  get "/dynamic_tables/:table_name", to: "dynamic_tables#index"
-  patch "/dynamic_tables/:table_name/:id", to: "dynamic_tables#update"
 
 end

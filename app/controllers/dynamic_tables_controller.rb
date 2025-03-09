@@ -2,10 +2,23 @@ class DynamicTablesController < ApplicationController
   before_action :set_table_name, only: %i[index update]
 
   def admin
-    @subsystems = Subsystem.all.pluck(:name, :id) # Fetch subsystems for dropdown
+    @subsystems = Subsystem.all.pluck(:name, :id)
     @table_name = params[:table_name] || ''
     @existing_columns = @table_name.present? ? ActiveRecord::Base.connection.columns(@table_name).map(&:name) : []
-    @existing_tables = ActiveRecord::Base.connection.tables - %w[schema_migrations ar_internal_metadata] # List all tables except Rails internals
+
+    # Filter tables by selected subsystem
+    if params[:subsystem_filter].present?
+      subsystem_id = params[:subsystem_filter]
+      @subsystem_tables = ActiveRecord::Base.connection.tables.select do |table|
+        next false if %w[schema_migrations ar_internal_metadata subsystems systems projects users].include?(table)
+
+        columns = ActiveRecord::Base.connection.columns(table)
+        columns.any? { |col| col.name == 'subsystem_id' } &&
+          columns.any? { |col| col.name == 'created_at' } # Assuming subsystem tables have these
+      end
+    else
+      @subsystem_tables = []
+    end
   end
 
   def add_column

@@ -1,70 +1,89 @@
-<aside class="h-screen md:flex flex-col w-64 bg-gray-800 text-white shadow-lg">
-  <nav class="h-full flex flex-col border-r border-gray-700 shadow-sm">
+<aside class="h-screen md:flex flex-col w-64 bg-gray-800 text-white shadow-xl">
+  <nav class="h-full flex flex-col border-r border-gray-700">
 
     <!-- Logo Section -->
-    <div class="p-4 pb-2 flex justify-center items-center h-16">
+    <div class="p-4 flex justify-center items-center h-16 bg-gray-900">
       <%= link_to authenticated_root_path do %>
-        <%= image_tag 'fat-logo.png', alt: 'FAT Logo', class: 'h-12' %>
+        <%= image_tag 'fat-logo.png', alt: 'FAT Logo', class: 'h-12 w-auto' %>
       <% end %>
     </div>
 
-    <hr class="border-t border-gray-700 mx-2">
+    <hr class="border-t border-gray-600 mx-2">
 
+    <!-- Navigation Links -->
     <div class="flex flex-col flex-1 overflow-y-auto">
-      <nav class="flex-1 px-2 py-4 space-y-2">
-
+      <nav class="flex-1 px-2 py-4 space-y-1">
         <!-- Dashboard -->
-        <%= link_to "/", class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/')}" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <%= link_to "/", class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/')}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
           Dashboard
         <% end %>
 
         <!-- Suppliers -->
-        <%= link_to "/suppliers", class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/suppliers')}" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493" />
+        <%= link_to "/suppliers", class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/suppliers')}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493" />
           </svg>
           Suppliers
         <% end %>
 
         <!-- Projects -->
-        <%= link_to "/projects", class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/projects')}" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32" />
+        <%= link_to "/projects", class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/projects')}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32" />
           </svg>
           Projects
         <% end %>
 
         <!-- Project Scopes -->
-        <%= link_to "/project_scopes", class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/project_scopes')}" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.75V19.25M4.75 12H19.25" />
+        <%= link_to "/project_scopes", class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/project_scopes')}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.75V19.25M4.75 12H19.25" />
           </svg>
           Project Scopes
         <% end %>
 
         <!-- Systems -->
-        <%= link_to "/systems", class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/systems')}" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5h7.5M8.25 9h7.5M8.25 13.5h4.5m4.5 4.5H8.25" />
+        <%= link_to "/systems", class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/systems')}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 4.5h7.5M8.25 9h7.5M8.25 13.5h4.5m4.5 4.5H8.25" />
           </svg>
           Systems
         <% end %>
 
         <!-- Subsystems -->
-        <%= link_to "/subsystems", class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/subsystems')}" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 5h14M5 12h9m-9 7h14" />
+        <%= link_to "/subsystems", class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/subsystems')}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5h14M5 12h9m-9 7h14" />
           </svg>
           Subsystems
         <% end %>
 
-        <!-- Additional Links -->
-        <%= link_to "Manage Requirements", requirements_data_path, class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700" %>
-        <%= link_to "Reports", reports_path, class: "flex items-center px-4 py-2 rounded-md transition duration-200 hover:bg-gray-700" %>
+        <!-- Manage Database -->
+        <%= link_to "/admin", class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class('/admin')}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7-7v14" />
+          </svg>
+          Manage Database
+        <% end %>
 
+        <!-- Manage Requirements -->
+        <%= link_to requirements_data_path, class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class(requirements_data_path)}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Manage Requirements
+        <% end %>
+
+        <!-- Reports -->
+        <%= link_to reports_path, class: "flex items-center px-4 py-2 text-sm font-medium rounded-md transition duration-200 hover:bg-gray-700 #{active_class(reports_path)}" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-4v4m-4-8v12" />
+          </svg>
+          Reports
+        <% end %>
       </nav>
     </div>
   </nav>

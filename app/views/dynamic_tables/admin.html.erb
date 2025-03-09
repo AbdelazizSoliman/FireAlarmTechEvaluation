@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Database Management</title>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans antialiased">
+
+  <div class="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-gray-900">Database Management - Admin Panel</h1>
+      <p class="mt-2 text-sm text-gray-600">Dynamically manage tables and columns</p>
+    </header>
+
+    <!-- Success & Error Messages -->
+    <% if flash[:success] %>
+      <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-lg">
+        <%= flash[:success] %>
+      </div>
+    <% elsif flash[:error] %>
+      <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
+        <%= flash[:error] %>
+      </div>
+    <% end %>
+
+    <!-- Create New Table Section -->
+    <section class="mb-4">
+      <h2 class="text-xl font-semibold text-gray-800 bg-white p-4 rounded-md shadow-md cursor-pointer hover:bg-gray-100 transition duration-150" onclick="toggleSection('create-table-form')">
+        Create New Table
+      </h2>
+      <div id="create-table-form" class="hidden mt-2 bg-white shadow-md rounded-lg p-6">
+        <form action="/admin/create_table" method="post" class="space-y-6">
+          <div>
+            <label for="subsystem_id" class="block text-sm font-medium text-gray-700">Subsystem</label>
+            <select id="subsystem_id" name="subsystem_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <option value="">-- Select a Subsystem --</option>
+              <% @subsystems.each do |name, id| %>
+                <option value="<%= id %>"><%= name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div>
+            <label for="table_name" class="block text-sm font-medium text-gray-700">Table Name</label>
+            <input type="text" id="table_name" name="table_name" required placeholder="e.g., new_table_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+
+          <div id="columns-container">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Columns</label>
+            <div class="column-row flex gap-4 mb-2">
+              <input type="text" name="columns[][name]" placeholder="Column Name" required class="w-1/2 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <select name="columns[][type]" required class="w-1/2 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="integer">Integer</option>
+                <option value="string">String</option>
+                <option value="boolean">Boolean</option>
+                <option value="decimal">Decimal</option>
+                <option value="text">Text</option>
+                <option value="date">Date</option>
+              </select>
+            </div>
+          </div>
+          <button type="button" id="add-column" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">+ Add Another Column</button>
+
+          <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">Create Table</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Manage Existing Tables Section -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold text-gray-800 bg-white p-4 rounded-md shadow-md cursor-pointer hover:bg-gray-100 transition duration-150" onclick="toggleSection('manage-tables-form')">
+        Manage Existing Tables
+      </h2>
+      <div id="manage-tables-form" class="hidden mt-2 bg-white shadow-md rounded-lg p-6">
+        <form action="/admin" method="get" class="space-y-6">
+          <div>
+            <label for="subsystem_filter" class="block text-sm font-medium text-gray-700">Select Subsystem</label>
+            <select id="subsystem_filter" name="subsystem_filter" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <option value="">-- Select a Subsystem --</option>
+              <% @subsystems.each do |name, id| %>
+                <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <% if params[:subsystem_filter].present? %>
+            <div>
+              <label for="table_name" class="block text-sm font-medium text-gray-700">Select Table</label>
+              <select id="table_name" name="table_name" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="">-- Select a Table --</option>
+                <% @subsystem_tables.each do |table| %>
+                  <option value="<%= table %>" <%= "selected" if @table_name == table %>><%= table %></option>
+                <% end %>
+              </select>
+            </div>
+          <% end %>
+        </form>
+
+        <% if @table_name.present? %>
+          <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Add Column to <%= @table_name.humanize %></h3>
+            <form action="/admin/add_column" method="post" class="space-y-6">
+              <input type="hidden" name="table_name" value="<%= @table_name %>">
+              <div>
+                <label for="column_name" class="block text-sm font-medium text-gray-700">Column Name</label>
+                <input type="text" id="column_name" name="column_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              </div>
+              <div>
+                <label for="column_type" class="block text-sm font-medium text-gray-700">Column Type</label>
+                <select id="column_type" name="column_type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <option value="integer">Integer</option>
+                  <option value="string">String</option>
+                  <option value="boolean">Boolean</option>
+                  <option value="decimal">Decimal</option>
+                  <option value="text">Text</option>
+                  <option value="date">Date</option>
+                </select>
+              </div>
+              <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">Add Column</button>
+            </form>
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Columns in <%= @table_name.humanize %></h3>
+            <% if @existing_columns.any? %>
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-indigo-600">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Column Name</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <% @existing_columns.each do |col| %>
+                      <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= col %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% else %>
+              <p class="text-sm text-gray-500">No columns found in this table.</p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  </div>
+
+  <!-- JavaScript for Toggling Sections and Adding Columns -->
+  <script>
+    function toggleSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('hidden');
+    }
+
+    document.getElementById('add-column').addEventListener('click', function() {
+      const container = document.getElementById('columns-container');
+      const newRow = document.createElement('div');
+      newRow.className = 'column-row flex gap-4 mb-2';
+      newRow.innerHTML = `
+        <input type="text" name="columns[][name]" placeholder="Column Name" required class="w-1/2 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <select name="columns[][type]" required class="w-1/2 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          <option value="integer">Integer</option>
+          <option value="string">String</option>
+          <option value="boolean">Boolean</option>
+          <option value="decimal">Decimal</option>
+          <option value="text">Text</option>
+          <option value="date">Date</option>
+        </select>
+      `;
+      container.appendChild(newRow);
+    });
+  </script>
+</body>
+</html>

@@ -22,33 +22,74 @@
       </p>
     <% end %>
 
-    <!-- Select Table -->
+    <!-- Select Subsystem and Existing Table -->
     <form action="/admin" method="get" class="mt-6">
-      <label for="table_name" class="block text-lg font-semibold text-gray-700">Select Table:</label>
+      <label for="table_name" class="block text-lg font-semibold text-gray-700">Select Existing Table:</label>
       <select id="table_name" name="table_name" onchange="this.form.submit()" 
         class="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
         <option value="">-- Select a Table --</option>
-        <% ["connection_betweens", "detectors_field_devices", "door_holders", 
-            "evacuation_systems", "fire_alarm_control_panels", "general_commercial_data", 
-            "graphic_systems", "interface_with_other_systems", "isolations", "manual_pull_stations", 
-            "material_and_deliveries", "notification_devices", "product_data", "scope_of_works", 
-            "spare_parts", "telephone_systems", "prerecorded_message_audio_modules", "supplier_data"].each do |table| %>
+        <% @existing_tables.each do |table| %>
           <option value="<%= table %>" <%= "selected" if @table_name == table %>><%= table %></option>
         <% end %>
       </select>
     </form>
 
-    <!-- Add Column Form -->
+    <!-- Create New Table Form -->
+    <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <h2 class="text-xl font-semibold text-gray-700">Create New Table</h2>
+      <form action="/admin/create_table" method="post" class="mt-4">
+        <div class="mb-4">
+          <label for="subsystem_id" class="block text-lg font-semibold text-gray-700">Subsystem:</label>
+          <select id="subsystem_id" name="subsystem_id" required
+            class="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            <option value="">-- Select a Subsystem --</option>
+            <% @subsystems.each do |name, id| %>
+              <option value="<%= id %>"><%= name %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="table_name" class="block text-lg font-semibold text-gray-700">Table Name:</label>
+          <input type="text" id="table_name" name="table_name" required placeholder="e.g., new_table_name"
+            class="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+        </div>
+
+        <!-- Dynamic Column Fields -->
+        <div id="columns-container" class="mb-4">
+          <label class="block text-lg font-semibold text-gray-700">Columns:</label>
+          <div class="column-row mt-2 flex space-x-2">
+            <input type="text" name="columns[][name]" placeholder="Column Name" required
+              class="w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            <select name="columns[][type]" required
+              class="w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+              <option value="integer">Integer</option>
+              <option value="string">String</option>
+              <option value="boolean">Boolean</option>
+              <option value="decimal">Decimal</option>
+              <option value="text">Text</option>
+              <option value="date">Date</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" id="add-column" class="text-blue-600 hover:underline">Add Another Column</button>
+
+        <button type="submit" 
+          class="w-full mt-4 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition">
+          Create Table
+        </button>
+      </form>
+    </div>
+
+    <!-- Add Column Form (Existing) -->
     <% if @table_name.present? %>
       <form action="/admin/add_column" method="post" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
         <input type="hidden" name="table_name" value="<%= @table_name %>">
-
         <div class="mb-4">
           <label for="column_name" class="block text-lg font-semibold text-gray-700">Column Name:</label>
           <input type="text" id="column_name" name="column_name" required
             class="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
         </div>
-
         <div class="mb-4">
           <label for="column_type" class="block text-lg font-semibold text-gray-700">Column Type:</label>
           <select id="column_type" name="column_type" 
@@ -61,7 +102,6 @@
             <option value="date">Date</option>
           </select>
         </div>
-
         <button type="submit" 
           class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition">
           Add Column
@@ -74,7 +114,6 @@
       <h3 class="text-xl font-bold text-gray-700">
         Existing Columns in <%= @table_name.capitalize if @table_name.present? %>
       </h3>
-
       <% if @existing_columns.any? %>
         <div class="overflow-x-auto mt-4">
           <table class="w-full border border-gray-300 rounded-lg shadow-md">
@@ -96,8 +135,29 @@
         <p class="mt-4 text-gray-600">Select a table to view its columns.</p>
       <% end %>
     </div>
-
   </div>
-  
+
+  <!-- JavaScript for Adding Columns Dynamically -->
+  <script>
+    document.getElementById('add-column').addEventListener('click', function() {
+      const container = document.getElementById('columns-container');
+      const newRow = document.createElement('div');
+      newRow.className = 'column-row mt-2 flex space-x-2';
+      newRow.innerHTML = `
+        <input type="text" name="columns[][name]" placeholder="Column Name" required
+          class="w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+        <select name="columns[][type]" required
+          class="w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <option value="integer">Integer</option>
+          <option value="string">String</option>
+          <option value="boolean">Boolean</option>
+          <option value="decimal">Decimal</option>
+          <option value="text">Text</option>
+          <option value="date">Date</option>
+        </select>
+      `;
+      container.appendChild(newRow);
+    });
+  </script>
 </body>
 </html>

@@ -135,5 +135,5 @@ Rails.application.routes.draw do
 
   get "/admin", to: "dynamic_tables#admin"
   post "/admin/add_column", to: "dynamic_tables#add_column"
-
+  post '/admin/create_table', to: 'dynamic_tables#create_table'
 end

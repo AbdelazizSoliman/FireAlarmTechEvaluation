@@ -73,12 +73,12 @@
       <h2 class="text-xl font-semibold text-gray-800 bg-white p-4 rounded-md shadow-md cursor-pointer hover:bg-gray-100 transition duration-150" onclick="toggleSection('manage-tables-form')">
         Manage Existing Tables
       </h2>
-      <div id="manage-tables-form" class="hidden mt-2 bg-white shadow-md rounded-lg p-6">
+      <div id="manage-tables-form" class="<%= 'mt-2 bg-white shadow-md rounded-lg p-6' %> <%= params[:subsystem_filter].present? || @table_name.present? ? '' : 'hidden' %>">
         <form action="/admin" method="get" class="space-y-6">
           <div>
-            <label for="subsystem_filter" class="block text-sm font-medium text-gray-700">Select Subsystem</label>
+            <label for="subsystem_filter" class="block text-sm font-medium text-gray-700">Step 1: Select Subsystem</label>
             <select id="subsystem_filter" name="subsystem_filter" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <option value="">-- Select a Subsystem --</option>
+              <option value="">-- Choose a Subsystem --</option>
               <% @subsystems.each do |name, id| %>
                 <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
               <% end %>
@@ -87,11 +87,11 @@
 
           <% if params[:subsystem_filter].present? %>
             <div>
-              <label for="table_name" class="block text-sm font-medium text-gray-700">Select Table</label>
+              <label for="table_name" class="block text-sm font-medium text-gray-700">Step 2: Select Table</label>
               <select id="table_name" name="table_name" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                <option value="">-- Select a Table --</option>
+                <option value="">-- Choose a Table --</option>
                 <% @subsystem_tables.each do |table| %>
-                  <option value="<%= table %>" <%= "selected" if @table_name == table %>><%= table %></option>
+                  <option value="<%= table %>" <%= "selected" if @table_name == table %>><%= table.humanize %></option>
                 <% end %>
               </select>
             </div>
@@ -99,7 +99,7 @@
         </form>
 
         <% if @table_name.present? %>
-          <div class="mt-6">
+          <div class="mt-6 border-t border-gray-200 pt-6">
             <h3 class="text-lg font-semibold text-gray-700 mb-4">Add Column to <%= @table_name.humanize %></h3>
             <form action="/admin/add_column" method="post" class="space-y-6">
               <input type="hidden" name="table_name" value="<%= @table_name %>">
@@ -173,6 +173,13 @@
         </select>
       `;
       container.appendChild(newRow);
+    });
+
+    // Auto-expand "Manage Existing Tables" if subsystem_filter or table_name is present
+    document.addEventListener('DOMContentLoaded', function() {
+      <% if params[:subsystem_filter].present? || @table_name.present? %>
+        document.getElementById('manage-tables-form').classList.remove('hidden');
+      <% end %>
     });
   </script>
 </body>

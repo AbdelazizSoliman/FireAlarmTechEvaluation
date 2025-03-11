@@ -180,6 +180,9 @@
       <% if params[:subsystem_filter].present? || @table_name.present? %>
         document.getElementById('manage-tables-form').classList.remove('hidden');
       <% end %>
+      <% if params[:subsystem_filter].present? && @subsystem_tables.empty? %>
+  <p class="text-sm text-gray-500">No tables found for this subsystem.</p>
+<% end %>
     });
   </script>
 </body>

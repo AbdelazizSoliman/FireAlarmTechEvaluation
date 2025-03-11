@@ -1,0 +1,2 @@
+class ColumnMetadata < ApplicationRecord
+end

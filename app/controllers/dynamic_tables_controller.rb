@@ -1,35 +1,76 @@
 class DynamicTablesController < ApplicationController
-  before_action :set_table_name, only: %i[index update]
+  before_action :set_table_name, only: [:add_column]
 
   def admin
-    @subsystems = Subsystem.all.pluck(:name, :id)
-    @table_name = params[:table_name] || ''
-    @existing_columns = @table_name.present? ? ActiveRecord::Base.connection.columns(@table_name).map(&:name) : []
+    @subsystems = Subsystem.pluck(:name, :id) # Adjust based on your Subsystem model
+    @subsystem_filter = params[:subsystem_filter]
+    @subsystem_tables = if @subsystem_filter.present?
+                          ActiveRecord::Base.connection.tables.select do |table|
+                            ActiveRecord::Base.connection.columns(table).any? { |col| col.name == 'subsystem_id' }
+                          end
+                        else
+                          []
+                        end
+    @table_name = params[:table_name]
+    @existing_columns = if @table_name.present? && ActiveRecord::Base.connection.table_exists?(@table_name)
+                          ActiveRecord::Base.connection.columns(@table_name).map(&:name)
+                        else
+                          []
+                        end
+  end
 
-    # Filter tables by selected subsystem
-    if params[:subsystem_filter].present?
-      subsystem_id = params[:subsystem_filter]
-      @subsystem_tables = ActiveRecord::Base.connection.tables.select do |table|
-        next false if %w[schema_migrations ar_internal_metadata subsystems systems projects users].include?(table)
+  def create_table
+    subsystem_id = params[:subsystem_id]
+    table_name = params[:table_name].strip.downcase
+    columns = params[:columns].map { |col| { 'name' => col['name'].strip.downcase, 'type' => col['type'], 'array_default_empty' => col['array_default_empty'] } }
 
-        columns = ActiveRecord::Base.connection.columns(table)
-        columns.any? { |col| col.name == 'subsystem_id' } &&
-          columns.any? { |col| col.name == 'created_at' } # Assuming subsystem tables have these
+    migration_name = "Create#{table_name.camelcase}"
+    timestamp = Time.now.strftime('%Y%m%d%H%M%S')
+    migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
+
+    migration_content = <<-RUBY
+      class #{migration_name} < ActiveRecord::Migration[7.1]
+        def change
+          create_table :#{table_name}, force: :cascade do |t|
+            #{columns.map do |col|
+              if col['type'] == 'text[]'
+                "t.text :#{col['name']}, array: true, default: #{col['array_default_empty'] == '1' ? '[]' : 'nil'}"
+              else
+                "t.#{col['type']} :#{col['name']}"
+              end
+            end.join("\n            ")}
+            t.bigint :subsystem_id, null: false
+            t.bigint :supplier_id, null: false
+            t.datetime :created_at, null: false
+            t.datetime :updated_at, null: false
+            t.index [:subsystem_id], name: "index_#{table_name}_on_subsystem_id"
+            t.index [:supplier_id, :subsystem_id], name: "idx_#{table_name}_sup_sub", unique: true
+            t.index [:supplier_id], name: "index_#{table_name}_on_supplier_id"
+          end
+        end
       end
-    else
-      @subsystem_tables = []
-    end
+    RUBY
+
+    File.write(migration_file, migration_content)
+    system('rails db:migrate')
+
+    flash[:success] = "Table #{table_name} created successfully!"
+    redirect_to admin_path
   end
 
   def add_column
     table_name = params[:table_name]
     column_name = params[:column_name].strip.downcase
     column_type = params[:column_type]
+    feature = params[:feature].presence
+    combobox_values = params[:combobox_values].split(',').map(&:strip) if feature == 'combobox'
+    checkboxes_values = params[:combobox_values].split(',').map(&:strip) if feature == 'checkboxes'
+    array_default_empty = params[:array_default_empty] == '1'
 
-    allowed_types = %w[string integer boolean decimal text date]
+    allowed_types = %w[string integer boolean decimal text text[] date]
     unless allowed_types.include?(column_type)
       flash[:error] = 'Invalid column type!'
-      redirect_to admin_path and return
+      redirect_to admin_path(table_name: table_name) and return
     end
 
     migration_name = "Add#{column_name.camelcase}To#{table_name.camelcase}"
@@ -37,83 +78,45 @@ class DynamicTablesController < ApplicationController
     migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
 
     migration_content = <<-RUBY
-      class #{migration_name} < ActiveRecord::Migration[7.0]
+      class #{migration_name} < ActiveRecord::Migration[7.1]
         def change
-          add_column :#{table_name}, :#{column_name}, :#{column_type}
+          add_column :#{table_name}, :#{column_name}, :#{column_type == 'text[]' ? 'text' : column_type}#{column_type == 'text[]' ? ', array: true, default: ' + (array_default_empty ? '[]' : 'nil') : ''}
         end
       end
     RUBY
 
     File.write(migration_file, migration_content)
     system('rails db:migrate')
+
+    if feature.present?
+      ColumnMetadata.create!(
+        table_name: table_name,
+        column_name: column_name,
+        feature: feature,
+        options: case feature
+                 when 'combobox' then { values: combobox_values }
+                 when 'checkboxes' then { values: checkboxes_values }
+                 else {}
+                 end
+      )
+    end
 
     flash[:success] = "Column #{column_name} added successfully!"
     redirect_to admin_path(table_name: table_name)
   end
 
-  def create_table
-    subsystem_id = params[:subsystem_id]
-    table_name = params[:table_name].strip.downcase
-    columns = params[:columns] || [] # Expecting an array of {name: "col_name", type: "col_type"}
-
-    # Validate table name
-    if table_name.blank? || !table_name.match(/^[a-z_]+$/)
-      flash[:error] = 'Invalid table name! Use lowercase letters and underscores only.'
-      redirect_to admin_path and return
-    end
-
-    # Check if table already exists
-    if ActiveRecord::Base.connection.table_exists?(table_name)
-      flash[:error] = "Table '#{table_name}' already exists!"
-      redirect_to admin_path and return
-    end
-
-    # Validate columns
-    allowed_types = %w[string integer boolean decimal text date]
-    columns.each do |col|
-      unless allowed_types.include?(col[:type])
-        flash[:error] = "Invalid column type '#{col[:type]}' for '#{col[:name]}'!"
-        redirect_to admin_path and return
-      end
-    end
-
-    # Generate migration
-    migration_name = "Create#{table_name.camelcase}"
-    timestamp = Time.now.strftime('%Y%m%d%H%M%S')
-    migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
-
-    migration_content = <<-RUBY
-      class #{migration_name} < ActiveRecord::Migration[7.0]
-        def change
-          create_table :#{table_name} do |t|
-            #{columns.map { |col| "t.#{col[:type]} :#{col[:name]}" }.join("\n            ")}
-            t.bigint :subsystem_id, null: false
-            t.datetime :created_at, null: false
-            t.datetime :updated_at, null: false
-
-            t.index [:subsystem_id], name: "index_#{table_name}_on_subsystem_id"
-          end
-
-          add_foreign_key :#{table_name}, :subsystems
-        end
-      end
-    RUBY
-
-    File.write(migration_file, migration_content)
-    system('rails db:migrate')
-
-    flash[:success] = "Table '#{table_name}' created successfully!"
-    redirect_to admin_path
+  def show
+    @table_name = params[:table_name]
+    render 'show'
   end
 
   private
 
   def set_table_name
-    allowed_tables = ActiveRecord::Base.connection.tables - %w[schema_migrations ar_internal_metadata]
     @table_name = params[:table_name]
-
-    return if allowed_tables.include?(@table_name)
-
-    render json: { error: 'Invalid table name' }, status: :unprocessable_entity
+    unless ActiveRecord::Base.connection.table_exists?(@table_name)
+      flash[:error] = "Table #{@table_name} does not exist!"
+      redirect_to admin_path and return
+    end
   end
 end

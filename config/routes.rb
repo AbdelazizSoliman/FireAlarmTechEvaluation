@@ -40,6 +40,8 @@ Rails.application.routes.draw do
      # Dynamic Table API Routes
       get "/dynamic_tables/:table_name", to: "dynamic_tables#index"
       patch "/dynamic_tables/:table_name/:id", to: "dynamic_tables#update"
+      get '/table_metadata/:table_name', to: 'dynamic_tables#table_metadata'
+      post '/save_data/:table_name', to: 'dynamic_tables#save_data'
   end
 
   # ✅ RESTORE EVALUATION SYSTEM & STANDALONE ROUTES
@@ -136,4 +138,5 @@ Rails.application.routes.draw do
   get "/admin", to: "dynamic_tables#admin"
   post "/admin/add_column", to: "dynamic_tables#add_column"
   post '/admin/create_table', to: 'dynamic_tables#create_table'
+  get '/subsystems/:subsystem_id/:table_name', to: 'dynamic_tables#show', as: 'dynamic_table'
 end

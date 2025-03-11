@@ -1,24 +1,19 @@
 module Api
   class DynamicTablesController < ApplicationController
-    before_action :set_table_name, only: %i[index update]
+    before_action :set_table_name, only: %i[index update table_metadata save_data]
 
-    # GET /dynamic_tables/:table_name
+    # GET /api/dynamic_tables/:table_name
     def index
-      # Fetch column names dynamically
       columns = ActiveRecord::Base.connection.columns(@table_name).map(&:name)
-
-      # Fetch all records from the table
       records = ActiveRecord::Base.connection.execute("SELECT * FROM #{@table_name}").to_a
-
       render json: { columns: columns, data: records }
     end
 
-    # PATCH /dynamic_tables/:table_name/:id
+    # PATCH /api/dynamic_tables/:table_name/:id
     def update
       record_id = params[:id]
       update_params = params.except(:table_name, :id, :controller, :action)
 
-      # Generate dynamic SQL for updating the record
       set_clause = update_params.map do |key, value|
         "#{key} = #{ActiveRecord::Base.connection.quote(value)}"
       end.join(', ')
@@ -28,57 +23,38 @@ module Api
       render json: { message: 'Record updated successfully!' }
     end
 
-    def admin
-      @table_name = params[:table_name] || ''
-      @existing_columns = @table_name.present? ? ActiveRecord::Base.connection.columns(@table_name).map(&:name) : []
+    # GET /api/table_metadata/:table_name
+    def table_metadata
+      columns = ActiveRecord::Base.connection.columns(@table_name).map(&:name)
+      metadata = ColumnMetadata.where(table_name: @table_name).pluck(:column_name, :feature, :options).to_h do |col_name, feat, opts|
+        [col_name, { feature: feat, options: opts }]
+      end
+      render json: { columns: columns, metadata: metadata }
     end
 
-    def add_column
-      table_name = params[:table_name]
-      column_name = params[:column_name].strip.downcase
-      column_type = params[:column_type]
-
-      allowed_types = %w[string integer boolean decimal text date]
-      unless allowed_types.include?(column_type)
-        flash[:error] = 'Invalid column type!'
-        redirect_to admin_path and return
+    # POST /api/save_data/:table_name
+    def save_data
+      data = params[:data].permit!.to_h # Permit all for dynamic columns, adjust as needed
+      model_class = @table_name.classify.constantize rescue nil
+      unless model_class
+        render json: { error: "Table #{@table_name} not found" }, status: :not_found and return
       end
 
-      migration_name = "Add#{column_name.camelcase}To#{table_name.camelcase}"
-      timestamp = Time.now.strftime('%Y%m%d%H%M%S')
-      migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
-
-      migration_content = <<-RUBY
-      class #{migration_name} < ActiveRecord::Migration[7.0]
-        def change
-          add_column :#{table_name}, :#{column_name}, :#{column_type}
-        end
+      record = model_class.new(data)
+      if record.save
+        render json: { success: true, record: record.as_json }, status: :created
+      else
+        render json: { error: record.errors.full_messages }, status: :unprocessable_entity
       end
-      RUBY
-
-      File.write(migration_file, migration_content)
-      system('rails db:migrate')
-
-      flash[:success] = "Column #{column_name} added successfully!"
-      redirect_to admin_path(table_name: table_name) # Reload with selected table
     end
 
     private
 
     def set_table_name
-      allowed_tables = %w[
-        connection_betweens detectors_field_devices door_holders evacuation_systems
-        fire_alarm_control_panels general_commercial_data graphic_systems
-        interface_with_other_systems isolations manual_pull_stations material_and_deliveries
-        notification_devices product_data scope_of_works spare_parts telephone_systems
-        prerecorded_message_audio_modules supplier_data
-      ]
-
       @table_name = params[:table_name]
-
-      return if allowed_tables.include?(@table_name)
-
-      render json: { error: 'Invalid table name' }, status: :unprocessable_entity
+      unless ActiveRecord::Base.connection.table_exists?(@table_name)
+        render json: { error: "Table #{@table_name} not found" }, status: :not_found and return
+      end
     end
   end
 end

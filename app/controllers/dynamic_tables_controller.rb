@@ -11,9 +11,7 @@ class DynamicTablesController < ApplicationController
                         else
                           []
                         end
-    if params[:table_name].present? && ActiveRecord::Base.connection.table_exists?(params[:table_name])
-      @table_name = params[:table_name]
-    end
+    @table_name = params[:table_name] if params[:table_name].present? && ActiveRecord::Base.connection.table_exists?(params[:table_name])
     @existing_columns = if @table_name.present? && ActiveRecord::Base.connection.table_exists?(@table_name)
                           ActiveRecord::Base.connection.columns(@table_name).map(&:name)
                         else
@@ -101,6 +99,11 @@ class DynamicTablesController < ApplicationController
 
     File.write(migration_file, migration_content)
     system('rails db:migrate')
+
+    if feature == 'combobox' && params[:has_sub_options].present? && params[:sub_options].blank?
+      flash[:error] = "Sub-options cannot be empty for a parent combobox!"
+      redirect_to admin_path(table_name: table_name) and return
+    end
 
     if feature.present?
       ColumnMetadata.create!(

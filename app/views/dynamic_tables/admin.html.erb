@@ -106,7 +106,7 @@
 <% if @table_name.present? %>
   <div class="mt-6 border-t border-gray-200 pt-6">
     <h3 class="text-lg font-semibold text-gray-700 mb-4">Add Column to <%= @table_name.humanize %></h3>
-    <form action="/admin/add_column" method="post" id="add-column-form" class="space-y-6">
+   <form action="/admin/add_column" method="post" id="add-column-form" class="space-y-6">
       <input type="hidden" name="table_name" value="<%= @table_name %>">
       
       <!-- Column Name -->

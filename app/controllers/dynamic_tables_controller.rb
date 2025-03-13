@@ -2,7 +2,7 @@ class DynamicTablesController < ApplicationController
   before_action :set_table_name, only: [:add_column]
 
   def admin
-    @subsystems = Subsystem.pluck(:name, :id) # Adjust based on your Subsystem model
+    @subsystems = Subsystem.pluck(:name, :id)
     @subsystem_filter = params[:subsystem_filter]
     @subsystem_tables = if @subsystem_filter.present?
                           ActiveRecord::Base.connection.tables.select do |table|
@@ -11,9 +11,7 @@ class DynamicTablesController < ApplicationController
                         else
                           []
                         end
-    if params[:table_name].present? && ActiveRecord::Base.connection.table_exists?(params[:table_name])
-      @table_name = params[:table_name]
-    end
+    @table_name = params[:table_name] if params[:table_name].present? && ActiveRecord::Base.connection.table_exists?(params[:table_name])
     @existing_columns = if @table_name.present? && ActiveRecord::Base.connection.table_exists?(@table_name)
                           ActiveRecord::Base.connection.columns(@table_name).map(&:name)
                         else

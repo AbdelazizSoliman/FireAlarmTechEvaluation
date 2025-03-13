@@ -11,7 +11,9 @@ class DynamicTablesController < ApplicationController
                         else
                           []
                         end
-    @table_name = params[:table_name]
+    if params[:table_name].present? && ActiveRecord::Base.connection.table_exists?(params[:table_name])
+      @table_name = params[:table_name]
+    end
     @existing_columns = if @table_name.present? && ActiveRecord::Base.connection.table_exists?(@table_name)
                           ActiveRecord::Base.connection.columns(@table_name).map(&:name)
                         else

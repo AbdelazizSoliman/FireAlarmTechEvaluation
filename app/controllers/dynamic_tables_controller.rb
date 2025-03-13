@@ -22,7 +22,10 @@ class DynamicTablesController < ApplicationController
   def create_table
     subsystem_id = params[:subsystem_id]
     table_name = params[:table_name].strip.downcase
-    columns = params[:columns].map { |col| { 'name' => col['name'].strip.downcase, 'type' => col['type'], 'array_default_empty' => col['array_default_empty'] } }
+    columns = params[:columns].map do |col|
+      { 'name' => col['name'].strip.downcase, 'type' => col['type'],
+        'array_default_empty' => col['array_default_empty'] }
+    end
 
     migration_name = "Create#{table_name.camelcase}"
     timestamp = Time.now.strftime('%Y%m%d%H%M%S')
@@ -63,8 +66,13 @@ class DynamicTablesController < ApplicationController
     column_name = params[:column_name].strip.downcase
     column_type = params[:column_type]
     feature = params[:feature].presence
-    combobox_values = params[:combobox_values].split(',').map(&:strip) if feature == 'combobox'
-    checkboxes_values = params[:combobox_values].split(',').map(&:strip) if feature == 'checkboxes'
+    combobox_values = params[:combobox_values].split(',').map(&:strip) if %w[combobox checkboxes].include?(feature)
+    sub_options = JSON.parse(params[:sub_options]) if params[:sub_options].present?
+    sub_field = params[:sub_field].presence
+    has_cost = params[:has_cost].present?
+    rate_key = params[:rate_key].presence
+    amount_key = params[:amount_key].presence
+    notes_key = params[:notes_key].presence
     array_default_empty = params[:array_default_empty] == '1'
 
     allowed_types = %w[string integer boolean decimal text text[] date]
@@ -77,10 +85,14 @@ class DynamicTablesController < ApplicationController
     timestamp = Time.now.strftime('%Y%m%d%H%M%S')
     migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
 
-    migration_content = <<-RUBY
+    migration_content = <<~RUBY
       class #{migration_name} < ActiveRecord::Migration[7.1]
         def change
-          add_column :#{table_name}, :#{column_name}, :#{column_type == 'text[]' ? 'text' : column_type}#{column_type == 'text[]' ? ', array: true, default: ' + (array_default_empty ? '[]' : 'nil') : ''}
+          add_column :#{table_name}, :#{column_name}, :#{column_type == 'text[]' ? 'text' : column_type}#{if column_type == 'text[]'
+                                                                                                            ', array: true, default: ' + (array_default_empty ? '[]' : 'nil')
+                                                                                                          else
+                                                                                                            ''
+                                                                                                          end}
         end
       end
     RUBY
@@ -93,10 +105,18 @@ class DynamicTablesController < ApplicationController
         table_name: table_name,
         column_name: column_name,
         feature: feature,
+        has_cost: has_cost,
+        sub_field: sub_field,
+        rate_key: rate_key,
+        amount_key: amount_key,
+        notes_key: notes_key,
         options: case feature
-                 when 'combobox' then { values: combobox_values }
-                 when 'checkboxes' then { values: checkboxes_values }
-                 else {}
+                 when 'combobox'
+                   { values: combobox_values, sub_options: sub_options }.compact
+                 when 'checkboxes'
+                   { values: combobox_values }
+                 else
+                   {}
                  end
       )
     end
@@ -114,9 +134,9 @@ class DynamicTablesController < ApplicationController
 
   def set_table_name
     @table_name = params[:table_name]
-    unless ActiveRecord::Base.connection.table_exists?(@table_name)
-      flash[:error] = "Table #{@table_name} does not exist!"
-      redirect_to admin_path and return
-    end
+    return if ActiveRecord::Base.connection.table_exists?(@table_name)
+
+    flash[:error] = "Table #{@table_name} does not exist!"
+    redirect_to admin_path and return
   end
 end

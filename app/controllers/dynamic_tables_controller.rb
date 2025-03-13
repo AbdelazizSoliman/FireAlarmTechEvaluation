@@ -62,73 +62,93 @@ class DynamicTablesController < ApplicationController
   end
 
   def add_column
-    table_name = params[:table_name]
-    column_name = params[:column_name].strip.downcase
-    column_type = params[:column_type]
-    feature = params[:feature].presence
-    combobox_values = params[:combobox_values].split(',').map(&:strip) if %w[combobox checkboxes].include?(feature)
-    sub_options = JSON.parse(params[:sub_options]) if params[:sub_options].present?
-    sub_field = params[:sub_field].presence
-    has_cost = params[:has_cost].present?
-    rate_key = params[:rate_key].presence
-    amount_key = params[:amount_key].presence
-    notes_key = params[:notes_key].presence
+    # Basic parameters
+    table_name        = params[:table_name]
+    column_name       = params[:column_name].to_s.strip.downcase
+    column_type       = params[:column_type]
+    feature           = params[:feature].presence
+    sub_field         = params[:sub_field].presence
+    has_cost          = params[:has_cost].present?
+    rate_key          = params[:rate_key].presence
+    amount_key        = params[:amount_key].presence
+    notes_key         = params[:notes_key].presence
     array_default_empty = params[:array_default_empty] == '1'
-
+  
+    # Validate column type
     allowed_types = %w[string integer boolean decimal text text[] date]
     unless allowed_types.include?(column_type)
       flash[:error] = 'Invalid column type!'
       redirect_to admin_path(table_name: table_name) and return
     end
-
+  
+    # Prepare combobox/checkboxes values if applicable
+    if %w[combobox checkboxes].include?(feature) && params[:combobox_values].present?
+      combobox_values = params[:combobox_values].split(',').map(&:strip)
+    else
+      combobox_values = []
+    end
+  
+    # Build a multiple_sub_options hash from parent_sub array
+    # This allows you to define multiple parent values, each with its own sub-options
+    multiple_sub_options = {}
+    if params[:has_sub_options].present? && params[:parent_sub].present?
+      params[:parent_sub].each do |pair|
+        parent = pair["parent_value"]&.strip
+        subs   = pair["sub_options"]&.split(",")&.map(&:strip) || []
+        next if parent.blank? || subs.empty?
+  
+        multiple_sub_options[parent] = subs
+      end
+    end
+  
+    # Create a new migration to add the column
     migration_name = "Add#{column_name.camelcase}To#{table_name.camelcase}"
     timestamp = Time.now.strftime('%Y%m%d%H%M%S')
     migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
-
+  
     migration_content = <<~RUBY
       class #{migration_name} < ActiveRecord::Migration[7.1]
         def change
           add_column :#{table_name}, :#{column_name}, :#{column_type == 'text[]' ? 'text' : column_type}#{if column_type == 'text[]'
-                                                                                                            ', array: true, default: ' + (array_default_empty ? '[]' : 'nil')
-                                                                                                          else
-                                                                                                            ''
-                                                                                                          end}
+                                                                                                              ', array: true, default: ' + (array_default_empty ? '[]' : 'nil')
+                                                                                                            else
+                                                                                                              ''
+                                                                                                            end}
         end
       end
     RUBY
-
+  
     File.write(migration_file, migration_content)
     system('rails db:migrate')
-
-    if feature == 'combobox' && params[:has_sub_options].present? && params[:sub_options].blank?
-      flash[:error] = "Sub-options cannot be empty for a parent combobox!"
+  
+    # If this is a combobox and sub-options are required but missing, handle it
+    if feature == 'combobox' && params[:has_sub_options].present? && multiple_sub_options.empty?
+      flash[:error] = "You selected sub-options, but none were provided!"
       redirect_to admin_path(table_name: table_name) and return
     end
-
+  
+    # Store metadata if a front-end feature is selected
     if feature.present?
       ColumnMetadata.create!(
-        table_name: table_name,
+        table_name:  table_name,
         column_name: column_name,
-        feature: feature,
-        has_cost: has_cost,
-        sub_field: sub_field,
-        rate_key: rate_key,
-        amount_key: amount_key,
-        notes_key: notes_key,
-        options: case feature
-                 when 'combobox'
-                   { values: combobox_values, sub_options: sub_options }.compact
-                 when 'checkboxes'
-                   { values: combobox_values }
-                 else
-                   {}
-                 end
+        feature:     feature,
+        has_cost:    has_cost,
+        sub_field:   sub_field,
+        rate_key:    rate_key,
+        amount_key:  amount_key,
+        notes_key:   notes_key,
+        options: {
+          values:      combobox_values.presence,
+          sub_options: multiple_sub_options.presence
+        }.compact
       )
     end
-
+  
     flash[:success] = "Column #{column_name} added successfully!"
     redirect_to admin_path(table_name: table_name)
   end
+  
 
   def show
     @table_name = params[:table_name]

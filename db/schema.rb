@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_13_232812) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_14_005424) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -50,6 +50,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_13_232812) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "has_cost", default: false, null: false
+    t.string "sub_field"
+    t.string "rate_key"
+    t.string "amount_key"
+    t.string "notes_key"
     t.index ["table_name", "column_name"], name: "index_column_metadatas_on_table_name_and_column_name", unique: true
   end
 

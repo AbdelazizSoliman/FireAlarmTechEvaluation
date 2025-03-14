@@ -103,230 +103,260 @@
           <% end %>
         </form>
 
-<% if @table_name.present? %>
-  <div class="mt-6 border-t border-gray-200 pt-6">
-    <h3 class="text-lg font-semibold text-gray-700 mb-4">Add Column to <%= @table_name.humanize %></h3>
-   <form action="/admin/add_column" method="post" id="add-column-form" class="space-y-6">
-      <input type="hidden" name="table_name" value="<%= @table_name %>">
-      
-      <!-- Column Name -->
-      <div>
-        <label for="column_name" class="block text-sm font-medium text-gray-700">Column Name <span class="text-gray-500">(e.g., category)</span></label>
-        <input type="text" id="column_name" name="column_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-      </div>
+        <% if @table_name.present? %>
+          <div class="mt-6 border-t border-gray-200 pt-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Add Column to <%= @table_name.humanize %></h3>
+            <form action="/admin/add_column" method="post" id="add-column-form" class="space-y-6">
+              <input type="hidden" name="table_name" value="<%= @table_name %>">
+              
+              <!-- Column Name -->
+              <div>
+                <label for="column_name" class="block text-sm font-medium text-gray-700">
+                  Column Name <span class="text-gray-500">(e.g., category)</span>
+                </label>
+                <input type="text" id="column_name" name="column_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              </div>
 
-      <!-- Column Type -->
-      <div>
-        <label for="column_type" class="block text-sm font-medium text-gray-700">Column Type</label>
-        <select id="column_type" name="column_type" onchange="toggleArrayOption(this)" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          <option value="string">String</option>
-          <option value="integer">Integer</option>
-          <option value="boolean">Boolean</option>
-          <option value="decimal">Decimal</option>
-          <option value="text">Text</option>
-          <option value="text[]">Text Array</option>
-          <option value="date">Date</option>
-        </select>
-      </div>
-      <div id="array-options" class="hidden mt-2">
-        <input type="checkbox" name="array_default_empty" id="array_default_empty" value="1" checked class="mr-2">
-        <label for="array_default_empty" class="text-sm text-gray-600">Default to empty array ([])</label>
-      </div>
+              <!-- Column Type -->
+              <div>
+                <label for="column_type" class="block text-sm font-medium text-gray-700">Column Type</label>
+                <select id="column_type" name="column_type" onchange="toggleArrayOption(this)" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <option value="string">String</option>
+                  <option value="integer">Integer</option>
+                  <option value="boolean">Boolean</option>
+                  <option value="decimal">Decimal</option>
+                  <option value="text">Text</option>
+                  <option value="text[]">Text Array</option>
+                  <option value="date">Date</option>
+                </select>
+              </div>
+              <div id="array-options" class="hidden mt-2">
+                <input type="checkbox" name="array_default_empty" id="array_default_empty" value="1" checked class="mr-2">
+                <label for="array_default_empty" class="text-sm text-gray-600">Default to empty array ([])</label>
+              </div>
 
-      <!-- Front-end Feature -->
-      <div>
-        <label for="feature" class="block text-sm font-medium text-gray-700">Front-end Feature <span class="text-gray-500">(optional)</span></label>
-        <select id="feature" name="feature" onchange="toggleFeatureOptions(this)" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          <option value="">None</option>
-          <option value="combobox">Combobox</option>
-          <option value="checkboxes">Checkboxes</option>
-        </select>
-      </div>
+              <!-- Front-end Feature -->
+              <div>
+                <label for="feature" class="block text-sm font-medium text-gray-700">
+                  Front-end Feature <span class="text-gray-500">(optional)</span>
+                </label>
+                <select id="feature" name="feature" onchange="toggleFeatureOptions(this)" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <option value="">None</option>
+                  <option value="combobox">Combobox</option>
+                  <option value="checkboxes">Checkboxes</option>
+                </select>
+              </div>
 
-      <!-- Combobox/Checkbox Options (Dynamic) -->
-      <div id="feature-options" class="hidden space-y-4">
-        <!-- Values Input -->
-        <div>
-          <label for="combobox_values" class="block text-sm font-medium text-gray-700">Values (comma-separated, e.g., A, B, C)</label>
-          <input type="text" id="combobox_values" name="combobox_values" placeholder="e.g., A, B, C" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-        </div>
+              <!-- Combobox/Checkbox Options (Dynamic) -->
+              <div id="feature-options" class="hidden space-y-4">
+                <!-- Values Input -->
+                <div>
+                  <label for="combobox_values" class="block text-sm font-medium text-gray-700">
+                    Values (comma-separated, e.g., A, B, C)
+                  </label>
+                  <input type="text" id="combobox_values" name="combobox_values" placeholder="e.g., A, B, C" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
 
-        <!-- Sub-Combobox Option -->
+                <!-- Sub-Combobox Option -->
+                <div id="sub-combobox-section" class="mt-4">
+                  <div class="flex items-center mb-2">
+                    <input type="checkbox" id="has_sub_options" name="has_sub_options" onchange="toggleSubOptions(this)" class="mr-2">
+                    <label for="has_sub_options" class="text-sm font-medium text-gray-700">Is this a parent combobox with sub-options?</label>
+                  </div>
 
-<div id="sub-combobox-section" class="mt-4">
-  <div class="flex items-center mb-2">
-    <input type="checkbox" id="has_sub_options" name="has_sub_options" onchange="toggleSubOptions(this)" class="mr-2">
-    <label for="has_sub_options" class="text-sm font-medium text-gray-700">Is this a parent combobox with sub-options?</label>
-  </div>
+                  <!-- Container for multiple parent-sub rows -->
+                  <div id="parent-sub-container" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Define Multiple Parent/Sub Sets
+                    </label>
 
-  <!-- Container for multiple parent-sub rows -->
-  <div id="parent-sub-container" class="hidden">
-    <label class="block text-sm font-medium text-gray-700 mb-2">Define Multiple Parent/Sub Sets</label>
+                    <div id="parent-sub-rows">
+                      <!-- One row as a template or initial row -->
+                      <div class="parent-sub-row flex gap-4 mb-2">
+                        <input type="text" name="parent_sub[][parent_value]" placeholder="Parent Value (e.g., Aziz)" 
+                               class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
 
-    <div id="parent-sub-rows">
-      <!-- One row as a template or initial row -->
-      <div class="parent-sub-row flex gap-4 mb-2">
-        <input type="text" name="parent_sub[][parent_value]" placeholder="Parent Value (e.g., Aziz)" 
-               class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <input type="text" name="parent_sub[][sub_options]" placeholder="Sub-options (comma-separated, e.g., Phone, Laptop)" 
+                               class="w-2/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                      </div>
+                    </div>
 
-        <input type="text" name="parent_sub[][sub_options]" placeholder="Sub-options (comma-separated, e.g., Phone, Laptop)" 
-               class="w-2/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-      </div>
-    </div>
+                    <button type="button" id="add-parent-sub-row" class="mt-2 text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                      + Add Another Parent-Sub Pair
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-    <button type="button" id="add-parent-sub-row" 
-            class="mt-2 text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-      + Add Another Parent-Sub Pair
-    </button>
-  </div>
-</div>
+              <!-- Cost Options (Dynamic) -->
+              <div id="cost-options" class="hidden">
+                <div class="flex items-center">
+                  <input type="checkbox" id="has_cost" name="has_cost" onchange="toggleCostFields(this)" class="mr-2">
+                  <label for="has_cost" class="text-sm font-medium text-gray-700">Has Cost?</label>
+                </div>
+                <div id="cost-fields" class="hidden mt-2 space-y-4">
+                  <div>
+                    <label for="rate_key" class="block text-sm font-medium text-gray-700">
+                      Rate Key (e.g., total_no_of_panels_unit_rate)
+                    </label>
+                    <input type="text" id="rate_key" name="rate_key" placeholder="e.g., total_no_of_panels_unit_rate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  </div>
+                  <div>
+                    <label for="amount_key" class="block text-sm font-medium text-gray-700">
+                      Amount Key (e.g., total_no_of_panels_amount)
+                    </label>
+                    <input type="text" id="amount_key" name="amount_key" placeholder="e.g., total_no_of_panels_amount" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  </div>
+                  <div>
+                    <label for="notes_key" class="block text-sm font-medium text-gray-700">
+                      Notes Key (e.g., total_no_of_panels_notes)
+                    </label>
+                    <input type="text" id="notes_key" name="notes_key" placeholder="e.g., total_no_of_panels_notes" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  </div>
+                </div>
+              </div>
 
-      </div>
-
-      <!-- Cost Options (Dynamic) -->
-      <div id="cost-options" class="hidden">
-        <div class="flex items-center">
-          <input type="checkbox" id="has_cost" name="has_cost" onchange="toggleCostFields(this)" class="mr-2">
-          <label for="has_cost" class="text-sm font-medium text-gray-700">Has Cost?</label>
-        </div>
-        <div id="cost-fields" class="hidden mt-2 space-y-4">
-          <div>
-            <label for="rate_key" class="block text-sm font-medium text-gray-700">Rate Key (e.g., total_no_of_panels_unit_rate)</label>
-            <input type="text" id="rate_key" name="rate_key" placeholder="e.g., total_no_of_panels_unit_rate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-          <div>
-            <label for="amount_key" class="block text-sm font-medium text-gray-700">Amount Key (e.g., total_no_of_panels_amount)</label>
-            <input type="text" id="amount_key" name="amount_key" placeholder="e.g., total_no_of_panels_amount" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-          <div>
-            <label for="notes_key" class="block text-sm font-medium text-gray-700">Notes Key (e.g., total_no_of_panels_notes)</label>
-            <input type="text" id="notes_key" name="notes_key" placeholder="e.g., total_no_of_panels_notes" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-        </div>
-      </div>
-
-      <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">Add Column</button>
-    </form>
-  </div>
-<% else %>
-  <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 rounded-lg">
-    <p>Please select a subsystem and table to add a column.</p>
-  </div>
-<% end %>
-
-      <div class="mt-6">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">Columns in <%= @table_name.humanize if @table_name.present? %></h3>
-        <% if @existing_columns.any? %>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-indigo-600">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Column Name</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <% @existing_columns.each do |col| %>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= col %></td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
+              <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">
+                Add Column
+              </button>
+            </form>
           </div>
         <% else %>
-          <p class="text-sm text-gray-500">No columns found in this table.</p>
+          <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 rounded-lg">
+            <p>Please select a subsystem and table to add a column.</p>
+          </div>
         <% end %>
+
+        <div class="mt-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-4">
+            Columns in <%= @table_name.humanize if @table_name.present? %>
+          </h3>
+          <% if @existing_columns.any? %>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-indigo-600">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Column Name</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <% @existing_columns.each do |col| %>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= col %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <p class="text-sm text-gray-500">No columns found in this table.</p>
+          <% end %>
+        </div>
       </div>
-    </div>
-  </section>
-</div>
+    </section>
+  </div>
 
-<!-- JavaScript for Toggling Sections and Adding Columns -->
-<script>
-  function toggleSection(sectionId) {
-    const section = document.getElementById(sectionId);
-    section.classList.toggle('hidden');
-  }
+  <!-- JavaScript for Toggling Sections and Adding Columns -->
+  <script>
+    function toggleSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('hidden');
+    }
 
-  function toggleArrayOption(select) {
-    const arrayOptions = select.closest('.column-row')?.querySelector('#array-options') || document.getElementById('array-options');
-    arrayOptions.classList.toggle('hidden', select.value !== 'text[]');
-  }
+    function toggleArrayOption(select) {
+      // If we're in the "Create Table" form, find the #array-options in the same row
+      const arrayOptions =
+        select.closest('.column-row')?.querySelector('#array-options') ||
+        document.getElementById('array-options');
+      arrayOptions.classList.toggle('hidden', select.value !== 'text[]');
+    }
 
-  function toggleFeatureOptions(select) {
-    const featureOptions = document.getElementById('feature-options');
-    const costOptions = document.getElementById('cost-options');
-    const shouldShow = select.value === 'combobox' || select.value === 'checkboxes';
-    featureOptions.classList.toggle('hidden', !shouldShow);
-    costOptions.classList.toggle('hidden', !shouldShow); // Show cost options for both combobox and checkboxes
-  }
+    function toggleFeatureOptions(select) {
+      const featureOptions = document.getElementById('feature-options');
+      const costOptions = document.getElementById('cost-options');
+      const shouldShow = select.value === 'combobox' || select.value === 'checkboxes';
 
-  function toggleSubOptions(checkbox) {
-  const subOptionsContainer = document.getElementById('sub-combobox-section');
-  const parentSubContainer = document.getElementById('parent-sub-container');
-  
-  // Show/hide the entire sub-combobox section
-  subOptionsContainer.classList.toggle('hidden', !checkbox.checked);
-  
-  // Show/hide the multiple parent-sub container
-  parentSubContainer.classList.toggle('hidden', !checkbox.checked);
-}
+      // Show/hide main feature options
+      featureOptions.classList.toggle('hidden', !shouldShow);
+      // Show/hide cost options for both combobox and checkboxes
+      costOptions.classList.toggle('hidden', !shouldShow);
+    }
 
-// Add a click listener to "Add Another Parent-Sub Pair" button
-document.addEventListener('DOMContentLoaded', function() {
-  const addRowBtn = document.getElementById('add-parent-sub-row');
-  if (addRowBtn) {
-    addRowBtn.addEventListener('click', function() {
-      const parentSubRows = document.getElementById('parent-sub-rows');
-      if (!parentSubRows) return;
+    function toggleSubOptions(checkbox) {
+      // The entire sub-combobox section
+      const subOptionsContainer = document.getElementById('sub-combobox-section');
+      // The container for multiple parent-sub rows
+      const parentSubContainer = document.getElementById('parent-sub-container');
 
-      // Clone the first row or create a new one
-      const firstRow = parentSubRows.querySelector('.parent-sub-row');
-      const newRow = firstRow.cloneNode(true);
+      // Show/hide sub-combobox container
+      // (If you want it hidden by default until the user checks the box)
+      subOptionsContainer.classList.toggle('hidden', !checkbox.checked);
 
-      // Clear out the input values in the clone
-      newRow.querySelectorAll('input').forEach(input => {
-        input.value = '';
-      });
+      // Show/hide the multiple parent-sub container
+      parentSubContainer.classList.toggle('hidden', !checkbox.checked);
+    }
 
-      // Append the new row
-      parentSubRows.appendChild(newRow);
+    function toggleCostFields(checkbox) {
+      const costFields = document.getElementById('cost-fields');
+      costFields.classList.toggle('hidden', !checkbox.checked);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle "Add Another Column" in "Create New Table" form
+      const addColumnBtn = document.getElementById('add-column');
+      if (addColumnBtn) {
+        addColumnBtn.addEventListener('click', function() {
+          const container = document.getElementById('columns-container');
+          const newRow = document.createElement('div');
+          newRow.className = 'column-row flex gap-4 mb-2 items-center';
+          newRow.innerHTML = `
+            <input type="text" name="columns[][name]" placeholder="Column Name" required
+                   class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <select name="columns[][type]" onchange="toggleArrayOption(this)" required
+                    class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <option value="string">String</option>
+              <option value="integer">Integer</option>
+              <option value="boolean">Boolean</option>
+              <option value="decimal">Decimal</option>
+              <option value="text">Text</option>
+              <option value="text[]">Text Array</option>
+              <option value="date">Date</option>
+            </select>
+            <div id="array-options" class="w-1/3 hidden">
+              <input type="checkbox" name="columns[][array_default_empty]" value="1" checked class="mr-2">
+              <label class="text-sm text-gray-600">Default []</label>
+            </div>
+          `;
+          container.appendChild(newRow);
+        });
+      }
+
+      // Handle "Add Another Parent-Sub Pair" in sub-combobox
+      const addRowBtn = document.getElementById('add-parent-sub-row');
+      if (addRowBtn) {
+        addRowBtn.addEventListener('click', function() {
+          const parentSubRows = document.getElementById('parent-sub-rows');
+          if (!parentSubRows) return;
+
+          // Clone the first row
+          const firstRow = parentSubRows.querySelector('.parent-sub-row');
+          const newRow = firstRow.cloneNode(true);
+
+          // Clear out the input values in the clone
+          newRow.querySelectorAll('input').forEach(input => {
+            input.value = '';
+          });
+
+          // Append the new row
+          parentSubRows.appendChild(newRow);
+        });
+      }
+
+      // If we navigated here with a chosen subsystem/table, unhide the manage form
+      <% if params[:subsystem_filter].present? || @table_name.present? %>
+        document.getElementById('manage-tables-form').classList.remove('hidden');
+      <% end %>
     });
-  }
-});
-
-
-  function toggleCostFields(checkbox) {
-    const costFields = document.getElementById('cost-fields');
-    costFields.classList.toggle('hidden', !checkbox.checked);
-  }
-
-  document.getElementById('add-column').addEventListener('click', function() {
-    const container = document.getElementById('columns-container');
-    const newRow = document.createElement('div');
-    newRow.className = 'column-row flex gap-4 mb-2 items-center';
-    newRow.innerHTML = `
-      <input type="text" name="columns[][name]" placeholder="Column Name" required class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-      <select name="columns[][type]" onchange="toggleArrayOption(this)" required class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-        <option value="string">String</option>
-        <option value="integer">Integer</option>
-        <option value="boolean">Boolean</option>
-        <option value="decimal">Decimal</option>
-        <option value="text">Text</option>
-        <option value="text[]">Text Array</option>
-        <option value="date">Date</option>
-      </select>
-      <div id="array-options" class="w-1/3 hidden">
-        <input type="checkbox" name="columns[][array_default_empty]" value="1" checked class="mr-2">
-        <label class="text-sm text-gray-600">Default []</label>
-      </div>
-    `;
-    container.appendChild(newRow);
-  });
-
-  document.addEventListener('DOMContentLoaded', function() {
-    <% if params[:subsystem_filter].present? || @table_name.present? %>
-      document.getElementById('manage-tables-form').classList.remove('hidden');
-    <% end %>
-  });
-</script>
+  </script>
+</body>
+</html>

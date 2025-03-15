@@ -1,11 +1,13 @@
-<h1 class="text-xl font-bold">Add Project Scope for <%= @project.name %></h1>
-
-<%= form_with model: @project_scope, url: project_project_scopes_path(@project), local: true do |form| %>
+<h1 class="text-xl font-bold">Add Project Scope</h1>
+<%= form_with model: @project_scope do |form| %>
   <div class="mb-4">
     <%= form.label :name, "Scope Name", class: "block font-medium text-gray-700" %>
     <%= form.text_field :name, class: "form-input w-full" %>
   </div>
-
+  <div class="mb-4">
+    <%= form.label :project_id, "Select Project" %>
+    <%= form.collection_select :project_id, @projects, :id, :name %>
+  </div>
   <div class="mt-4">
     <%= form.submit "Create Scope", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
   </div>

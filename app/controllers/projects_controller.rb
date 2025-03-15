@@ -6,7 +6,7 @@ class ProjectsController < ApplicationController
 
   def show
     @project = Project.find(params[:id])
-    @project_scopes = @project.project_scopes
+    @project_scopes = @project.project_scopes.includes(:systems)
   end
 
   def new

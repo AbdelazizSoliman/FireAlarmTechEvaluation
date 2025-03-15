@@ -1,13 +1,18 @@
-<h1 class="text-xl font-bold">Systems in Scope: <%= @project_scope.name %></h1>
-
-<div class="mb-4">
+<% if @project_scope %>
+  <h1 class="text-xl font-bold">Systems in Scope: <%= @project_scope.name %></h1>
   <%= link_to "Add New System", new_project_scope_system_path(@project_scope), class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
-</div>
-
+<% else %>
+  <h1 class="text-xl font-bold">All Systems</h1>
+  <%= link_to "Add New System", new_system_path, class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+<% end %>
 <ul>
   <% @systems.each do |system| %>
     <li>
-      <%= link_to system.name, project_scope_system_path(@project_scope, system), class: "text-blue-500 hover:underline" %>
+      <% if @project_scope %>
+        <%= link_to system.name, project_scope_system_path(@project_scope, system), class: "text-blue-500 hover:underline" %>
+      <% else %>
+        <%= link_to "#{system.name} (Project Scope: #{system.project_scope.name})", system_path(system), class: "text-blue-500 hover:underline" %>
+      <% end %>
     </li>
   <% end %>
 </ul>

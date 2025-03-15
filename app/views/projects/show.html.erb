@@ -1,11 +1,22 @@
 <h1 class="text-xl font-bold">Project: <%= @project.name %></h1>
 
+<h2 class="text-lg font-semibold mt-6">Project Scopes</h2>
+<ul>
+  <% @project.project_scopes.each do |project_scope| %>
+    <li>
+      <%= link_to project_scope.name, project_project_scope_path(@project, project_scope), class: "text-blue-500 hover:underline" %>
+    </li>
+  <% end %>
+</ul>
+
 <h2 class="text-lg font-semibold mt-6">Systems</h2>
 <div>
-  <% @project.project_scope.systems.each do |system| %>
-    <div class="mb-4">
-      <h3 class="text-md font-semibold"><%= system.name %></h3>
-<%= link_to "View #{system.name}", project_project_scopes_system_path(@project.id, system.id), class: "bg-blue-500 text-white py-2 px-4 rounded" %>
-    </div>
+  <% @project.project_scopes.each do |project_scope| %>
+    <% project_scope.systems.each do |system| %>
+      <div class="mb-4">
+        <h3 class="text-md font-semibold"><%= system.name %></h3>
+        <%= link_to "View #{system.name}", project_project_scope_system_path(@project, project_scope, system), class: "bg-blue-500 text-white py-2 px-4 rounded" %>
+      </div>
+    <% end %>
   <% end %>
 </div>

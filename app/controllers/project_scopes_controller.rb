@@ -11,7 +11,7 @@ class ProjectScopesController < ApplicationController
 
   def new
     @project_scope = ProjectScope.new
-    @projects = Project.all
+    @projects = Project.all # For standalone creation
   end
 
   def create
@@ -30,7 +30,7 @@ class ProjectScopesController < ApplicationController
   private
 
   def set_project
-    @project = Project.find(params[:project_id]) if params[:project_id]
+    @project = Project.find(params[:project_id]) if params[:project_id].present?
   end
 
   def project_scope_params

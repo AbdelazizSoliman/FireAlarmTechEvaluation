@@ -7,6 +7,10 @@ class ProjectScopesController < ApplicationController
     else
       @project_scopes = ProjectScope.all
     end
+    respond_to do |format|
+      format.html
+      format.json { render json: @project_scopes }
+    end
   end
 
   def new

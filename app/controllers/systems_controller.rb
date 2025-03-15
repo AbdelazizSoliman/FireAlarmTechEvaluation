@@ -1,4 +1,13 @@
 class SystemsController < ApplicationController
+  def index
+    if params[:project_scope_id].present?
+      @project_scope = ProjectScope.find(params[:project_scope_id])
+      @systems = @project_scope.systems
+    else
+      @systems = System.all.includes(:project_scope)
+    end
+  end
+
   def new
     @system = System.new
     @projects = Project.all # Load all projects for the dropdown

@@ -1,16 +1,18 @@
 class ProjectScopesController < ApplicationController
-  before_action :set_project, only: [:index, :new, :create]
+  before_action :set_project_scope, only: [:show]
 
   def index
-    if @project
+    if params[:project_id].present?
+      @project = Project.find(params[:project_id])
       @project_scopes = @project.project_scopes
     else
       @project_scopes = ProjectScope.all
     end
-    respond_to do |format|
-      format.html
-      format.json { render json: @project_scopes }
-    end
+  end
+
+  def show
+    # Ensure @project_scope is set and includes associated systems
+    @project_scope = ProjectScope.includes(:systems).find(params[:id])
   end
 
   def new
@@ -19,7 +21,8 @@ class ProjectScopesController < ApplicationController
   end
 
   def create
-    if @project
+    if params[:project_id].present?
+      @project = Project.find(params[:project_id])
       @project_scope = @project.project_scopes.build(project_scope_params)
     else
       @project_scope = ProjectScope.new(project_scope_params)
@@ -33,8 +36,10 @@ class ProjectScopesController < ApplicationController
 
   private
 
-  def set_project
-    @project = Project.find(params[:project_id]) if params[:project_id].present?
+  def set_project_scope
+    @project_scope = ProjectScope.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to project_scopes_path, alert: 'Project scope not found.'
   end
 
   def project_scope_params

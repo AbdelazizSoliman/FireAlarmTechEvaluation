@@ -1,18 +1,37 @@
-<% if @project_scope %>
-  <h1 class="text-xl font-bold">Systems in Scope: <%= @project_scope.name %></h1>
-  <%= link_to "Add New System", new_project_scope_system_path(@project_scope), class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
-<% else %>
-  <h1 class="text-xl font-bold">All Systems</h1>
-  <%= link_to "Add New System", new_system_path, class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+<h1 class="text-xl font-bold">Systems</h1>
+
+<% if params[:project_scope_id].present? %>
+  <p class="mt-2">
+    <strong>Project Scope:</strong>
+    <%= @project_scope.name %> (Project: <%= link_to @project_scope.project.name, project_path(@project_scope.project), class: "text-blue-500 hover:underline" %>)
+  </p>
 <% end %>
-<ul>
-  <% @systems.each do |system| %>
-    <li>
-      <% if @project_scope %>
-        <%= link_to system.name, project_scope_system_path(@project_scope, system), class: "text-blue-500 hover:underline" %>
-      <% else %>
-        <%= link_to "#{system.name} (Project Scope: #{system.project_scope.name})", system_path(system), class: "text-blue-500 hover:underline" %>
+
+<div class="mb-4">
+  <%= link_to "Add New System", new_system_path, class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
+</div>
+
+<% if @systems.any? %>
+  <table class="min-w-full bg-white border mt-4">
+    <thead>
+      <tr class="bg-gray-200">
+        <th class="py-2 px-4 border">Name</th>
+        <th class="py-2 px-4 border">Project Scope</th>
+        <th class="py-2 px-4 border">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @systems.each do |system| %>
+        <tr>
+          <td class="py-2 px-4 border"><%= link_to system.name, project_project_scope_system_path(system.project_scope.project, system.project_scope, system), class: "text-blue-500 hover:underline" %></td>
+          <td class="py-2 px-4 border"><%= system.project_scope.name %></td>
+          <td class="py-2 px-4 border">
+            <%= link_to "View", project_project_scope_system_path(system.project_scope.project, system.project_scope, system), class: "bg-blue-500 text-white py-1 px-2 rounded" %>
+          </td>
+        </tr>
       <% end %>
-    </li>
-  <% end %>
-</ul>
+    </tbody>
+  </table>
+<% else %>
+  <p class="mt-2 text-gray-600">No systems found.</p>
+<% end %>

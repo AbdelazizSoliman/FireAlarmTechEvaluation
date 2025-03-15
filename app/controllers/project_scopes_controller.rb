@@ -8,16 +8,19 @@ class ProjectScopesController < ApplicationController
     else
       @project_scopes = ProjectScope.all
     end
+    respond_to do |format|
+      format.html
+      format.json { render json: @project_scopes, only: [:id, :name] }
+    end
   end
 
   def show
-    # Ensure @project_scope is set and includes associated systems
     @project_scope = ProjectScope.includes(:systems).find(params[:id])
   end
 
   def new
     @project_scope = ProjectScope.new
-    @projects = Project.all # For standalone creation
+    @projects = Project.all
   end
 
   def create

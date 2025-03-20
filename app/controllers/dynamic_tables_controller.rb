@@ -29,13 +29,14 @@ class DynamicTablesController < ApplicationController
 
   def create_table
     subsystem_id = params[:subsystem_id]
-    # Downcase + strip the table name so we don't get spaces or uppercase
-    table_name = params[:table_name].to_s.strip.downcase
+    # Convert table name to a valid database name
+    table_name = to_db_name(params[:table_name])
 
+    # Convert column names to valid database names
     columns = params[:columns].map do |col|
       {
-        'name'               => col['name'].to_s.strip.downcase,
-        'type'               => col['type'],
+        'name' => to_db_name(col['name']),
+        'type' => col['type'],
         'array_default_empty' => col['array_default_empty']
       }
     end
@@ -75,43 +76,45 @@ class DynamicTablesController < ApplicationController
   end
 
   def add_column
-    table_name          = params[:table_name]
-    column_name         = params[:column_name].to_s.strip.downcase
-    column_type         = params[:column_type]
-    feature             = params[:feature].presence
-    has_cost            = params[:has_cost].present?
-    sub_field           = params[:sub_field].presence
-    rate_key            = params[:rate_key].presence
-    amount_key          = params[:amount_key].presence
-    notes_key           = params[:notes_key].presence
+    table_name = params[:table_name]
+    # Convert column name to a valid database name
+    column_name = to_db_name(params[:column_name])
+    column_type = params[:column_type]
+    feature = params[:feature].presence
+    has_cost = params[:has_cost].present?
+    sub_field = params[:sub_field].presence
+    rate_key = params[:rate_key].presence
+    amount_key = params[:amount_key].presence
+    notes_key = params[:notes_key].presence
     array_default_empty = params[:array_default_empty] == '1'
-  
+
     allowed_types = %w[string integer boolean decimal text text[] date]
     unless allowed_types.include?(column_type)
       flash[:error] = 'Invalid column type!'
       redirect_to admin_path(table_name: table_name) and return
     end
-  
-    if %w[combobox checkboxes].include?(feature) && params[:combobox_values].present?
-      combobox_values = params[:combobox_values].split(',').map(&:strip)
-    else
-      combobox_values = []
-    end
-  
+
+    combobox_values = if %w[combobox checkboxes].include?(feature) && params[:combobox_values].present?
+                        params[:combobox_values].split(',').map(&:strip)
+                      else
+                        []
+                      end
+
     multiple_sub_options = {}
     if params[:has_sub_options].present? && params[:parent_sub].present?
       params[:parent_sub].each do |pair|
-        parent = pair["parent_value"]&.strip
-        subs   = pair["sub_options"]&.split(",")&.map(&:strip) || []
+        parent = pair['parent_value']&.strip
+        subs = pair['sub_options']&.split(',')&.map(&:strip) || []
         next if parent.blank? || subs.empty?
+
         multiple_sub_options[parent] = subs
       end
     end
-  
+
     migration_name = "Add#{column_name.camelcase}To#{table_name.camelcase}"
     timestamp = Time.now.strftime('%Y%m%d%H%M%S')
     migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
-  
+
     migration_content = <<~RUBY
       class #{migration_name} < ActiveRecord::Migration[7.1]
         def change
@@ -125,30 +128,29 @@ class DynamicTablesController < ApplicationController
         end
       end
     RUBY
-  
+
     File.write(migration_file, migration_content)
     system('rails db:migrate')
-  
+
     # Always create a metadata record regardless of feature or cost requirement.
     ColumnMetadata.create!(
-      table_name:  table_name,
+      table_name: table_name,
       column_name: column_name,
-      feature:     feature,
-      has_cost:    has_cost,
-      sub_field:   sub_field,
-      rate_key:    rate_key,
-      amount_key:  amount_key,
-      notes_key:   notes_key,
+      feature: feature,
+      has_cost: has_cost,
+      sub_field: sub_field,
+      rate_key: rate_key,
+      amount_key: amount_key,
+      notes_key: notes_key,
       options: {
-        values:      combobox_values.presence,
+        values: combobox_values.presence,
         sub_options: multiple_sub_options.presence
       }.compact
     )
-  
+
     flash[:success] = "Column #{column_name} added successfully!"
     redirect_to admin_path(table_name: table_name)
   end
-  
 
   def show
     @table_name = params[:table_name]
@@ -163,5 +165,10 @@ class DynamicTablesController < ApplicationController
 
     flash[:error] = "Table #{@table_name} does not exist!"
     redirect_to admin_path and return
+  end
+
+  # Helper method to convert names to valid database-friendly format
+  def to_db_name(name)
+    name.to_s.gsub(/[^0-9A-Za-z\s]/, '').strip.downcase.gsub(/\s+/, '_')
   end
 end

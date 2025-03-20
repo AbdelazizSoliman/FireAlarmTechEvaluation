@@ -1,22 +1,13 @@
-<h1><%= @subsystem.name %> Subsystem Evaluation Data</h1>
+<h1 class="text-xl font-bold">Subsystem: <%= @subsystem.name %> in System: <%= @subsystem.system.name %></h1>
 
-<% if @subsystem.evaluations.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Evaluation Attribute</th>
-        <th>Value</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @subsystem.evaluations.each do |evaluation| %>
-        <tr>
-          <td><%= evaluation.attribute_name %></td>
-          <td><%= evaluation.value %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+<% if @subsystem.name == "FIRE ALARM" %>
+  <p class="mt-4">
+    <%= link_to "View Fire Alarm Requirements", requirements_data_path, class: "text-blue-500 hover:underline" %>
+  </p>
 <% else %>
-  <p>No evaluations have been submitted for this subsystem yet.</p>
+  <p class="mt-4">No additional resources available for this subsystem.</p>
 <% end %>
+
+<p class="mt-4">
+  <%= link_to "Back to Subsystems", subsystems_path, class: "bg-gray-500 text-white py-2 px-4 rounded" %>
+</p>

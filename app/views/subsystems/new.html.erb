@@ -1,17 +1,137 @@
 <h1 class="text-xl font-bold">Add New Subsystem</h1>
+<%= form_with model: @subsystem, local: true do |form| %>
+  <% if @project %>
+    <div class="mb-4">
+      <%= form.label :project_id, "Selected Project", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.hidden_field :project_id, value: @project.id %>
+      <p class="mt-1"><%= @project.name %></p>
+    </div>
+  <% else %>
+    <div class="mb-4">
+      <%= form.label :project_id, "Select Project", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.collection_select :project_id, Project.all, :id, :name, { prompt: "Choose a Project" }, { id: "project-select", class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm", required: true } %>
+    </div>
+  <% end %>
 
-<%= form_with model: @subsystem, url: subsystems_path, local: true do |form| %>
-  <div class="mb-4">
-    <%= form.label :name, "Subsystem Name", class: "block font-medium text-gray-700" %>
-    <%= form.text_field :name, class: "form-input w-full" %>
-  </div>
+  <% if @project_scope %>
+    <div class="mb-4">
+      <%= form.label :project_scope_id, "Selected Project Scope", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.hidden_field :project_scope_id, value: @project_scope.id %>
+      <p class="mt-1"><%= @project_scope.name %></p>
+    </div>
+  <% else %>
+    <div class="mb-4">
+      <%= form.label :project_scope_id, "Select Project Scope", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.collection_select :project_scope_id, @project&.project_scopes || [], :id, :name, { prompt: "Select a Project First" }, { id: "project-scope-select", class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm", disabled: true, required: true } %>
+    </div>
+  <% end %>
+
+  <% if @system %>
+    <div class="mb-4">
+      <%= form.label :system_id, "Selected System", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.hidden_field :system_id, value: @system.id %>
+      <p class="mt-1"><%= @system.name %></p>
+    </div>
+  <% else %>
+    <div class="mb-4">
+      <%= form.label :system_id, "Select System", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.collection_select :system_id, @systems || [], :id, :name, { prompt: "Select a Project Scope First" }, { id: "system-select", class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm", disabled: true, required: true } %>
+    </div>
+  <% end %>
 
   <div class="mb-4">
-    <%= form.label :system_id, "Select System", class: "block font-medium text-gray-700" %>
-    <%= form.collection_select :system_id, System.all, :id, :name, { prompt: "Select a System" }, class: "form-select w-full" %>
+    <%= form.label :name, "Subsystem Name", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :name, class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm", required: true %>
   </div>
 
   <div class="mt-4">
     <%= form.submit "Create Subsystem", class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
   </div>
 <% end %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const projectSelect = document.getElementById('project-select');
+    const scopeSelect = document.getElementById('project-scope-select');
+    const systemSelect = document.getElementById('system-select');
+
+    if (!projectSelect || !scopeSelect || !systemSelect) {
+      console.error('Dropdown elements not found:', { projectSelect, scopeSelect, systemSelect });
+      return;
+    }
+
+    projectSelect.addEventListener('change', function() {
+      const projectId = this.value;
+      console.log('Selected project ID:', projectId);
+      scopeSelect.innerHTML = '<option value="">Select a Project First</option>';
+      systemSelect.innerHTML = '<option value="">Select a Project Scope First</option>';
+      scopeSelect.disabled = !projectId;
+      systemSelect.disabled = true;
+
+      if (projectId) {
+        fetch(`/project_scopes.json?project_id=${projectId}`)
+          .then(response => {
+            console.log('Fetch response status:', response.status);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
+          .then(data => {
+            console.log('Project scopes data:', data);
+            scopeSelect.innerHTML = '<option value="">Choose a Project Scope</option>';
+            if (data.length === 0) {
+              scopeSelect.innerHTML = '<option value="">No Project Scopes Available</option>';
+            } else {
+              data.forEach(scope => {
+                const option = document.createElement('option');
+                option.value = scope.id;
+                option.text = scope.name;
+                scopeSelect.appendChild(option);
+              });
+            }
+            scopeSelect.disabled = false;
+          })
+          .catch(error => {
+            console.error('Error fetching project scopes:', error);
+            scopeSelect.innerHTML = '<option value="">Error loading scopes</option>';
+            scopeSelect.disabled = true;
+          });
+      }
+    });
+
+    scopeSelect.addEventListener('change', function() {
+      const scopeId = this.value;
+      console.log('Selected project scope ID:', scopeId);
+      systemSelect.innerHTML = '<option value="">Select a Project Scope First</option>';
+      systemSelect.disabled = !scopeId;
+
+      if (scopeId) {
+        fetch(`/project_scopes/${scopeId}/systems.json`)
+          .then(response => {
+            console.log('Fetch response status:', response.status);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
+          .then(data => {
+            console.log('Systems data:', data);
+            systemSelect.innerHTML = '<option value="">Choose a System</option>';
+            if (data.length === 0) {
+              systemSelect.innerHTML = '<option value="">No Systems Available</option>';
+            } else {
+              data.forEach(system => {
+                const option = document.createElement('option');
+                option.value = system.id;
+                option.text = system.name;
+                systemSelect.appendChild(option);
+              });
+            }
+            systemSelect.disabled = false;
+          })
+          .catch(error => {
+            console.error('Error fetching systems:', error);
+            systemSelect.innerHTML = '<option value="">Error loading systems</option>';
+            systemSelect.disabled = true;
+          });
+      }
+    });
+  });
+</script>

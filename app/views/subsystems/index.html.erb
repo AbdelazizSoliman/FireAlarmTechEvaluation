@@ -1,12 +1,38 @@
 <h1 class="text-xl font-bold">Subsystems</h1>
+
 <div class="mb-4">
   <%= link_to "Add New Subsystem", new_subsystem_path, class: "bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded" %>
 </div>
 
-<ul>
-  <% @subsystems.each do |subsystem| %>
-    <li>
-      <%= link_to subsystem.name, subsystem_path(subsystem), class: "text-blue-500 hover:underline" %>
-    </li>
-  <% end %>
-</ul>
+<% if @subsystems&.any? %>
+  <table class="min-w-full bg-white border mt-4">
+    <thead>
+      <tr class="bg-gray-200">
+        <th class="py-2 px-4 border">Name</th>
+        <th class="py-2 px-4 border">System</th>
+        <th class="py-2 px-4 border">Project Scope</th>
+        <th class="py-2 px-4 border">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @subsystems.each do |subsystem| %>
+        <tr>
+          <td class="py-2 px-4 border"><%= subsystem.name || 'N/A' %></td>
+          <td class="py-2 px-4 border">
+            <% if subsystem.system %>
+              <%= link_to subsystem.system.name, project_project_scope_system_path(subsystem.system.project_scope&.project, subsystem.system.project_scope, subsystem.system), class: "text-blue-500 hover:underline" %>
+            <% else %>
+              N/A
+            <% end %>
+          </td>
+          <td class="py-2 px-4 border"><%= subsystem.system&.project_scope&.name || 'N/A' %></td>
+          <td class="py-2 px-4 border">
+            <%= link_to "View", subsystem_path(subsystem), class: "bg-blue-500 text-white py-1 px-2 rounded" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="mt-2 text-gray-600">No subsystems found.</p>
+<% end %>

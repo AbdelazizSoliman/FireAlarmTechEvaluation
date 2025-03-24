@@ -1,13 +1,22 @@
+# app/controllers/project_scopes_controller.rb
 class ProjectScopesController < ApplicationController
   before_action :set_project_scope, only: [:show]
 
   def index
-    project_scopes = params[:project_id].present? ? Project.find(params[:project_id]).project_scopes : ProjectScope.all
+    if params[:project_id].present?
+      @project = Project.find(params[:project_id])
+      @project_scopes = @project.project_scopes
+    else
+      @project_scopes = ProjectScope.all
+    end
+
     respond_to do |format|
-      format.json { render json: project_scopes }
+      format.html # Renders index.html.erb by default
+      format.json { render json: @project_scopes }
     end
   end
 
+  # Rest of the controller remains unchanged
   def show
     @project_scope = ProjectScope.includes(:systems).find(params[:id])
   end

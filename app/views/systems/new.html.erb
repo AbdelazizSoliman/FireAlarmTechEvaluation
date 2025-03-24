@@ -21,53 +21,43 @@
 <% end %>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const projectSelect = document.getElementById('project-select');
-    const scopeSelect = document.getElementById('project-scope-select');
+ document.addEventListener('turbo:load', function() {
+  const projectSelect = document.getElementById('project-select');
+  const scopeSelect = document.getElementById('project-scope-select');
 
-    if (!projectSelect || !scopeSelect) {
-      console.error('Dropdown elements not found:', { projectSelect, scopeSelect });
-      return;
-    }
-
+  if (projectSelect && scopeSelect) {
     projectSelect.addEventListener('change', function() {
       const projectId = this.value;
-      console.log('Selected project ID:', projectId);
+      scopeSelect.innerHTML = '<option value="">Select a Project First</option>';
+      scopeSelect.disabled = true;
 
       if (projectId) {
         fetch(`/project_scopes.json?project_id=${projectId}`)
           .then(response => {
-            console.log('Fetch response status:', response.status);
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
+            if (!response.ok) throw new Error('Network response was not ok');
             return response.json();
           })
           .then(data => {
-            console.log('Project Disciplines data:', data);
-            scopeSelect.innerHTML = '<option value="">Choose a Project Discipline</option>';
-            if (data.length === 0) {
-              scopeSelect.innerHTML = '<option value="">No Project Disciplines Available</option>';
-              scopeSelect.disabled = true;
-            } else {
-              data.forEach(scope => {
-                const option = document.createElement('option');
-                option.value = scope.id;
-                option.text = scope.name;
-                scopeSelect.appendChild(option);
-              });
-              scopeSelect.disabled = false;
-            }
+            scopeSelect.innerHTML = '<option value="">Choose a Project Scope</option>';
+            data.forEach(scope => {
+              const option = document.createElement('option');
+              option.value = scope.id;
+              option.text = scope.name;
+              scopeSelect.appendChild(option);
+            });
+            scopeSelect.disabled = false;
           })
           .catch(error => {
-            console.error('Error fetching Project Disciplines:', error);
-            scopeSelect.innerHTML = '<option value="">Error loading Project Disciplines</option>';
-            scopeSelect.disabled = true;
+            console.error('Error fetching project scopes:', error);
+            scopeSelect.innerHTML = '<option value="">Error loading scopes</option>';
           });
-      } else {
-        scopeSelect.innerHTML = '<option value="">Select a Project First</option>';
-        scopeSelect.disabled = true;
       }
     });
-  });
+
+    // Trigger the change event if a project is already selected
+    if (projectSelect.value) {
+      projectSelect.dispatchEvent(new Event('change'));
+    }
+  }
+});
 </script>

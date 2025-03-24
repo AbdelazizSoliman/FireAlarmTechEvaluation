@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_20_175459) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_20_192216) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -712,6 +712,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_20_175459) do
     t.index ["subsystem_id"], name: "index_test_test_test_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_test_test_test_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_test_test_test_on_supplier_id"
+  end
+
+  create_table "test_testwe", force: :cascade do |t|
+    t.string "testuo_yet"
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_test_testwe_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_test_testwe_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_test_testwe_on_supplier_id"
   end
 
   create_table "users", force: :cascade do |t|

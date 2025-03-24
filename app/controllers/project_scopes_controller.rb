@@ -2,15 +2,9 @@ class ProjectScopesController < ApplicationController
   before_action :set_project_scope, only: [:show]
 
   def index
-    if params[:project_id].present?
-      @project = Project.find(params[:project_id])
-      @project_scopes = @project.project_scopes
-    else
-      @project_scopes = ProjectScope.all
-    end
+    project_scopes = params[:project_id].present? ? Project.find(params[:project_id]).project_scopes : ProjectScope.all
     respond_to do |format|
-      format.html
-      format.json { render json: @project_scopes, only: [:id, :name] }
+      format.json { render json: project_scopes }
     end
   end
 

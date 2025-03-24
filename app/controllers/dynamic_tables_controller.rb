@@ -2,10 +2,35 @@ class DynamicTablesController < ApplicationController
   before_action :set_table_name, only: [:add_column]
 
   def admin
-    @subsystems = Subsystem.pluck(:name, :id)
+    # Fetch all projects for initial dropdown
+    @projects = Project.all.pluck(:name, :id)
+    @project_filter = params[:project_filter]
+    @project_scope_filter = params[:project_scope_filter]
+    @system_filter = params[:system_filter]
     @subsystem_filter = params[:subsystem_filter]
 
-    # Only list tables that have a 'subsystem_id' column
+    # Filter project scopes based on selected project
+    @project_scopes = if @project_filter.present?
+                        Project.find(@project_filter).project_scopes.pluck(:name, :id)
+                      else
+                        []
+                      end
+
+    # Filter systems based on selected project scope
+    @systems = if @project_scope_filter.present?
+                 ProjectScope.find(@project_scope_filter).systems.pluck(:name, :id)
+               else
+                 []
+               end
+
+    # Filter subsystems based on selected system
+    @subsystems = if @system_filter.present?
+                    System.find(@system_filter).subsystems.pluck(:name, :id)
+                  else
+                    []
+                  end
+
+    # Only list tables that have a 'subsystem_id' column and match the selected subsystem
     @subsystem_tables = if @subsystem_filter.present?
                           ActiveRecord::Base.connection.tables.select do |table|
                             ActiveRecord::Base.connection.columns(table).any? { |col| col.name == 'subsystem_id' }
@@ -14,13 +39,12 @@ class DynamicTablesController < ApplicationController
                           []
                         end
 
-    # Set @table_name if it actually exists in the DB
+    # Set @table_name if it exists in the DB
     @table_name = params[:table_name] if params[:table_name].present? &&
                                          ActiveRecord::Base.connection.table_exists?(params[:table_name])
 
     # List existing columns for the chosen table
-    @existing_columns = if @table_name.present? &&
-                           ActiveRecord::Base.connection.table_exists?(@table_name)
+    @existing_columns = if @table_name.present? && ActiveRecord::Base.connection.table_exists?(@table_name)
                           ActiveRecord::Base.connection.columns(@table_name).map(&:name)
                         else
                           []
@@ -29,10 +53,8 @@ class DynamicTablesController < ApplicationController
 
   def create_table
     subsystem_id = params[:subsystem_id]
-    # Convert table name to a valid database name
     table_name = to_db_name(params[:table_name])
 
-    # Convert column names to valid database names
     columns = params[:columns].map do |col|
       {
         'name' => to_db_name(col['name']),
@@ -77,7 +99,6 @@ class DynamicTablesController < ApplicationController
 
   def add_column
     table_name = params[:table_name]
-    # Convert column name to a valid database name
     column_name = to_db_name(params[:column_name])
     column_type = params[:column_type]
     feature = params[:feature].presence
@@ -132,7 +153,6 @@ class DynamicTablesController < ApplicationController
     File.write(migration_file, migration_content)
     system('rails db:migrate')
 
-    # Always create a metadata record regardless of feature or cost requirement.
     ColumnMetadata.create!(
       table_name: table_name,
       column_name: column_name,
@@ -167,7 +187,6 @@ class DynamicTablesController < ApplicationController
     redirect_to admin_path and return
   end
 
-  # Helper method to convert names to valid database-friendly format
   def to_db_name(name)
     name.to_s.gsub(/[^0-9A-Za-z\s]/, '').strip.downcase.gsub(/\s+/, '_')
   end

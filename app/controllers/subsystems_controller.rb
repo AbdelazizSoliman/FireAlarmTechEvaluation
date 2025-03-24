@@ -1,6 +1,10 @@
 class SubsystemsController < ApplicationController
   def index
-    @subsystems = Subsystem.all.includes(:system, system: :project_scope)
+    @subsystems = params[:system_id].present? ? System.find(params[:system_id]).subsystems : Subsystem.all.includes(:system, system: :project_scope)
+    respond_to do |format|
+      format.html
+      format.json { render json: @subsystems }
+    end
   end
 
   def new

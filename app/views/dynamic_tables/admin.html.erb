@@ -25,32 +25,57 @@
       </div>
     <% end %>
 
-    <!-- Create New Table Section -->
+    <!-- Create New Group Section -->
     <section class="mb-4">
       <h2 class="text-xl font-semibold text-gray-800 bg-white p-4 rounded-md shadow-md cursor-pointer hover:bg-gray-100 transition duration-150" onclick="toggleSection('create-table-form')">
-        Create New Table
+        Create New Group
       </h2>
       <div id="create-table-form" class="hidden mt-2 bg-white shadow-md rounded-lg p-6">
         <form action="/admin/create_table" method="post" class="space-y-6">
+          <!-- Project Selection -->
           <div>
-            <label for="subsystem_id" class="block text-sm font-medium text-gray-700">Subsystem</label>
-            <select id="subsystem_id" name="subsystem_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <option value="">-- Select a Subsystem --</option>
-              <% @subsystems.each do |name, id| %>
+            <label for="project_id" class="block text-sm font-medium text-gray-700">Project</label>
+            <select id="project_id" name="project_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <option value="">-- Select a Project --</option>
+              <% @projects.each do |name, id| %>
                 <option value="<%= id %>"><%= name %></option>
               <% end %>
             </select>
           </div>
 
+          <!-- Project Discipline Selection -->
           <div>
-            <label for="table_name" class="block text-sm font-medium text-gray-700">Table Name</label>
+            <label for="project_scope_id" class="block text-sm font-medium text-gray-700">Project Discipline</label>
+            <select id="project_scope_id" name="project_scope_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
+              <option value="">-- Select a Project First --</option>
+            </select>
+          </div>
+
+          <!-- System Selection -->
+          <div>
+            <label for="system_id" class="block text-sm font-medium text-gray-700">System</label>
+            <select id="system_id" name="system_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
+              <option value="">-- Select a Project Discipline First --</option>
+            </select>
+          </div>
+
+          <!-- Subsystem Selection -->
+          <div>
+            <label for="subsystem_id" class="block text-sm font-medium text-gray-700">Subsystem</label>
+            <select id="subsystem_id" name="subsystem_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
+              <option value="">-- Select a System First --</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="table_name" class="block text-sm font-medium text-gray-700">Group Name</label>
             <input type="text" id="table_name" name="table_name" required placeholder="e.g., product_data" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
           </div>
 
           <div id="columns-container">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Columns</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Features</label>
             <div class="column-row flex gap-4 mb-2 items-center">
-              <input type="text" name="columns[][name]" placeholder="Column Name" required class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <input type="text" name="columns[][name]" placeholder="Feature Name" required class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
               <select name="columns[][type]" onchange="toggleArrayOption(this)" required class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 <option value="string">String</option>
                 <option value="integer">Integer</option>
@@ -66,35 +91,75 @@
               </div>
             </div>
           </div>
-          <button type="button" id="add-column" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">+ Add Another Column</button>
+          <button type="button" id="add-column" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">+ Add Another Feature</button>
 
-          <button type="submit" class="w-full bg-indigo-600 text-indigo-600 py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">Create Table</button>
+          <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">Create Group</button>
         </form>
       </div>
     </section>
 
-    <!-- Manage Existing Tables Section -->
+    <!-- Manage Existing Groups Section -->
     <section class="mb-8">
       <h2 class="text-xl font-semibold text-gray-800 bg-white p-4 rounded-md shadow-md cursor-pointer hover:bg-gray-100 transition duration-150" onclick="toggleSection('manage-tables-form')">
-        Manage Existing Tables
+        Manage Existing Groups
       </h2>
-      <div id="manage-tables-form" class="<%= 'mt-2 bg-white shadow-md rounded-lg p-6' %> <%= params[:subsystem_filter].present? || @table_name.present? ? '' : 'hidden' %>">
+      <div id="manage-tables-form" class="<%= 'mt-2 bg-white shadow-md rounded-lg p-6' %> <%= params[:project_filter].present? || @table_name.present? ? '' : 'hidden' %>">
         <form action="/admin" method="get" class="space-y-6">
+          <!-- Project Filter -->
           <div>
-            <label for="subsystem_filter" class="block text-sm font-medium text-gray-700">Step 1: Select Subsystem</label>
-            <select id="subsystem_filter" name="subsystem_filter" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <option value="">-- Choose a Subsystem --</option>
-              <% @subsystems.each do |name, id| %>
-                <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
+            <label for="project_filter" class="block text-sm font-medium text-gray-700">Step 1: Select Project</label>
+            <select id="project_filter" name="project_filter" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <option value="">-- Choose a Project --</option>
+              <% @projects.each do |name, id| %>
+                <option value="<%= id %>" <%= "selected" if params[:project_filter] == id.to_s %>><%= name %></option>
               <% end %>
             </select>
           </div>
 
+          <% if params[:project_filter].present? %>
+            <!-- Project Discipline Filter -->
+            <div>
+              <label for="project_scope_filter" class="block text-sm font-medium text-gray-700">Step 2: Select Project Discipline</label>
+              <select id="project_scope_filter" name="project_scope_filter" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="">-- Choose a Project Discipline --</option>
+                <% @project_scopes.each do |name, id| %>
+                  <option value="<%= id %>" <%= "selected" if params[:project_scope_filter] == id.to_s %>><%= name %></option>
+                <% end %>
+              </select>
+            </div>
+          <% end %>
+
+          <% if params[:project_scope_filter].present? %>
+            <!-- System Filter -->
+            <div>
+              <label for="system_filter" class="block text-sm font-medium text-gray-700">Step 3: Select System</label>
+              <select id="system_filter" name="system_filter" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="">-- Choose a System --</option>
+                <% @systems.each do |name, id| %>
+                  <option value="<%= id %>" <%= "selected" if params[:system_filter] == id.to_s %>><%= name %></option>
+                <% end %>
+              </select>
+            </div>
+          <% end %>
+
+          <% if params[:system_filter].present? %>
+            <!-- Subsystem Filter -->
+            <div>
+              <label for="subsystem_filter" class="block text-sm font-medium text-gray-700">Step 4: Select Subsystem</label>
+              <select id="subsystem_filter" name="subsystem_filter" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="">-- Choose a Subsystem --</option>
+                <% @subsystems.each do |name, id| %>
+                  <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
+                <% end %>
+              </select>
+            </div>
+          <% end %>
+
           <% if params[:subsystem_filter].present? %>
             <div>
-              <label for="table_name" class="block text-sm font-medium text-gray-700">Step 2: Select Table</label>
+              <label for="table_name" class="block text-sm font-medium text-gray-700">Step 5: Select Group</label>
               <select id="table_name" name="table_name" onchange="this.form.submit()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                <option value="">-- Choose a Table --</option>
+                <option value="">-- Choose a Group --</option>
                 <% @subsystem_tables.each do |table| %>
                   <option value="<%= table %>" <%= "selected" if @table_name == table %>><%= table.humanize %></option>
                 <% end %>
@@ -105,21 +170,21 @@
 
         <% if @table_name.present? %>
           <div class="mt-6 border-t border-gray-200 pt-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">Add Column to <%= @table_name.humanize %></h3>
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Add Feature to <%= @table_name.humanize %></h3>
             <form action="/admin/add_column" method="post" id="add-column-form" class="space-y-6">
               <input type="hidden" name="table_name" value="<%= @table_name %>">
               
-              <!-- Column Name -->
+              <!-- Feature Name -->
               <div>
                 <label for="column_name" class="block text-sm font-medium text-gray-700">
-                  Column Name <span class="text-gray-500">(e.g., category)</span>
+                  Feature Name <span class="text-gray-500">(e.g., category)</span>
                 </label>
                 <input type="text" id="column_name" name="column_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
               </div>
 
-              <!-- Column Type -->
+              <!-- Feature Type -->
               <div>
-                <label for="column_type" class="block text-sm font-medium text-gray-700">Column Type</label>
+                <label for="column_type" class="block text-sm font-medium text-gray-700">Feature Type</label>
                 <select id="column_type" name="column_type" onchange="toggleArrayOption(this)" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                   <option value="string">String</option>
                   <option value="integer">Integer</option>
@@ -175,7 +240,6 @@
                       <div class="parent-sub-row flex gap-4 mb-2">
                         <input type="text" name="parent_sub[][parent_value]" placeholder="Parent Value (e.g., Aziz)" 
                                class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-
                         <input type="text" name="parent_sub[][sub_options]" placeholder="Sub-options (comma-separated, e.g., Phone, Laptop)" 
                                class="w-2/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                       </div>
@@ -217,26 +281,26 @@
               </div>
 
               <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out">
-                Add Column
+                Add Feature
               </button>
             </form>
           </div>
         <% else %>
           <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 rounded-lg">
-            <p>Please select a subsystem and table to add a column.</p>
+            <p>Please select a project, Project Discipline, system, subsystem, and table to add a column.</p>
           </div>
         <% end %>
 
         <div class="mt-6">
           <h3 class="text-lg font-semibold text-gray-700 mb-4">
-            Columns in <%= @table_name.humanize if @table_name.present? %>
+            Features in <%= @table_name.humanize if @table_name.present? %>
           </h3>
           <% if @existing_columns.any? %>
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-indigo-600">
                   <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Column Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Feature Name</th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -256,7 +320,7 @@
     </section>
   </div>
 
-  <!-- JavaScript for Toggling Sections and Adding Columns -->
+  <!-- JavaScript for Toggling Sections and Dynamic Dropdowns -->
   <script>
     function toggleSection(sectionId) {
       const section = document.getElementById(sectionId);
@@ -264,10 +328,7 @@
     }
 
     function toggleArrayOption(select) {
-      // If we're in the "Create Table" form, find the #array-options in the same row
-      const arrayOptions =
-        select.closest('.column-row')?.querySelector('#array-options') ||
-        document.getElementById('array-options');
+      const arrayOptions = select.closest('.column-row')?.querySelector('#array-options') || document.getElementById('array-options');
       arrayOptions.classList.toggle('hidden', select.value !== 'text[]');
     }
 
@@ -275,24 +336,14 @@
       const featureOptions = document.getElementById('feature-options');
       const costOptions = document.getElementById('cost-options');
       const shouldShow = select.value === 'combobox' || select.value === 'checkboxes';
-
-      // Show/hide main feature options
       featureOptions.classList.toggle('hidden', !shouldShow);
-      // Show/hide cost options for both combobox and checkboxes
       costOptions.classList.toggle('hidden', !shouldShow);
     }
 
     function toggleSubOptions(checkbox) {
-      // The entire sub-combobox section
       const subOptionsContainer = document.getElementById('sub-combobox-section');
-      // The container for multiple parent-sub rows
       const parentSubContainer = document.getElementById('parent-sub-container');
-
-      // Show/hide sub-combobox container
-      // (If you want it hidden by default until the user checks the box)
       subOptionsContainer.classList.toggle('hidden', !checkbox.checked);
-
-      // Show/hide the multiple parent-sub container
       parentSubContainer.classList.toggle('hidden', !checkbox.checked);
     }
 
@@ -302,15 +353,92 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      // Handle "Add Another Column" in "Create New Table" form
-      const addColumnBtn = document.getElementById('add-column');
-      if (addColumnBtn) {
-        addColumnBtn.addEventListener('click', function() {
+      // Create Group Form Dropdowns
+      const createProjectSelect = document.getElementById('project_id');
+      const createScopeSelect = document.getElementById('project_scope_id');
+      const createSystemSelect = document.getElementById('system_id');
+      const createSubsystemSelect = document.getElementById('subsystem_id');
+
+      if (createProjectSelect && createScopeSelect && createSystemSelect && createSubsystemSelect) {
+        createProjectSelect.addEventListener('change', function() {
+          const projectId = this.value;
+          createScopeSelect.innerHTML = '<option value="">Select a Project First</option>';
+          createSystemSelect.innerHTML = '<option value="">Select a Project Discipline First</option>';
+          createSubsystemSelect.innerHTML = '<option value="">Select a System First</option>';
+          createScopeSelect.disabled = !projectId;
+          createSystemSelect.disabled = true;
+          createSubsystemSelect.disabled = true;
+
+          if (projectId) {
+            fetch(`/project_scopes.json?project_id=${projectId}`)
+              .then(response => response.json())
+              .then(data => {
+                createScopeSelect.innerHTML = '<option value="">Choose a Project Discipline</option>';
+                data.forEach(scope => {
+                  const option = document.createElement('option');
+                  option.value = scope.id;
+                  option.text = scope.name;
+                  createScopeSelect.appendChild(option);
+                });
+                createScopeSelect.disabled = false;
+              });
+          }
+        });
+
+        createScopeSelect.addEventListener('change', function() {
+          const scopeId = this.value;
+          createSystemSelect.innerHTML = '<option value="">Select a Project Discipline First</option>';
+          createSubsystemSelect.innerHTML = '<option value="">Select a System First</option>';
+          createSystemSelect.disabled = !scopeId;
+          createSubsystemSelect.disabled = true;
+
+          if (scopeId) {
+            fetch(`/systems.json?project_scope_id=${scopeId}`)
+              .then(response => response.json())
+              .then(data => {
+                createSystemSelect.innerHTML = '<option value="">Choose a System</option>';
+                data.forEach(system => {
+                  const option = document.createElement('option');
+                  option.value = system.id;
+                  option.text = system.name;
+                  createSystemSelect.appendChild(option);
+                });
+                createSystemSelect.disabled = false;
+              });
+          }
+        });
+
+        createSystemSelect.addEventListener('change', function() {
+          const systemId = this.value;
+          createSubsystemSelect.innerHTML = '<option value="">Select a System First</option>';
+          createSubsystemSelect.disabled = !systemId;
+
+          if (systemId) {
+            fetch(`/subsystems.json?system_id=${systemId}`)
+              .then(response => response.json())
+              .then(data => {
+                createSubsystemSelect.innerHTML = '<option value="">Choose a Subsystem</option>';
+                data.forEach(subsystem => {
+                  const option = document.createElement('option');
+                  option.value = subsystem.id;
+                  option.text = subsystem.name;
+                  createSubsystemSelect.appendChild(option);
+                });
+                createSubsystemSelect.disabled = false;
+              });
+          }
+        });
+      }
+
+      // Add Feature functionality
+      const addFeatureBtn = document.getElementById('add-column');
+      if (addFeatureBtn) {
+        addFeatureBtn.addEventListener('click', function() {
           const container = document.getElementById('columns-container');
           const newRow = document.createElement('div');
           newRow.className = 'column-row flex gap-4 mb-2 items-center';
           newRow.innerHTML = `
-            <input type="text" name="columns[][name]" placeholder="Column Name" required
+            <input type="text" name="columns[][name]" placeholder="Feature Name" required
                    class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             <select name="columns[][type]" onchange="toggleArrayOption(this)" required
                     class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
@@ -331,29 +459,20 @@
         });
       }
 
-      // Handle "Add Another Parent-Sub Pair" in sub-combobox
+      // Add Parent-Sub Row functionality
       const addRowBtn = document.getElementById('add-parent-sub-row');
       if (addRowBtn) {
         addRowBtn.addEventListener('click', function() {
           const parentSubRows = document.getElementById('parent-sub-rows');
-          if (!parentSubRows) return;
-
-          // Clone the first row
           const firstRow = parentSubRows.querySelector('.parent-sub-row');
           const newRow = firstRow.cloneNode(true);
-
-          // Clear out the input values in the clone
-          newRow.querySelectorAll('input').forEach(input => {
-            input.value = '';
-          });
-
-          // Append the new row
+          newRow.querySelectorAll('input').forEach(input => input.value = '');
           parentSubRows.appendChild(newRow);
         });
       }
 
-      // If we navigated here with a chosen subsystem/table, unhide the manage form
-      <% if params[:subsystem_filter].present? || @table_name.present? %>
+      // Show manage form if filters are present
+      <% if params[:project_filter].present? || @table_name.present? %>
         document.getElementById('manage-tables-form').classList.remove('hidden');
       <% end %>
     });

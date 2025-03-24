@@ -6,10 +6,9 @@ class SystemsController < ApplicationController
     else
       @systems = System.all.includes(:project_scope)
     end
-
     respond_to do |format|
-      format.html # Default: renders index.html.erb for HTML requests
-      format.json { render json: @systems } # Renders systems as JSON for JSON requests
+      format.html
+      format.json { render json: @systems }
     end
   end
 

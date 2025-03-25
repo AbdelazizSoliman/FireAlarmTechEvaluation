@@ -138,5 +138,8 @@ Rails.application.routes.draw do
   get "/admin", to: "dynamic_tables#admin"
   post "/admin/add_column", to: "dynamic_tables#add_column"
   post '/admin/create_table', to: 'dynamic_tables#create_table'
-  get '/subsystems/:subsystem_id/:table_name', to: 'dynamic_tables#show', as: 'dynamic_table'
+  get '/dynamic_tables/:table_name/columns/:column_name/edit_metadata', to: 'dynamic_tables#edit_metadata', as: 'edit_metadata_dynamic_tables'
+  patch '/dynamic_tables/:table_name/columns/:column_name/update_metadata', to: 'dynamic_tables#update_metadata', as: 'update_metadata_dynamic_tables'
+  get '/dynamic_tables/:table_name', to: 'dynamic_tables#show', as: 'dynamic_table'
+  get '/subsystems/:subsystem_id/:table_name', to: 'dynamic_tables#show_with_subsystem', as: 'subsystem_dynamic_table'
 end

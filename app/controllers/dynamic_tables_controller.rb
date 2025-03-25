@@ -43,9 +43,16 @@ class DynamicTablesController < ApplicationController
     @table_name = params[:table_name] if params[:table_name].present? &&
                                          ActiveRecord::Base.connection.table_exists?(params[:table_name])
 
-    # List existing columns for the chosen table
+    # List existing columns with their metadata for the chosen table
     @existing_columns = if @table_name.present? && ActiveRecord::Base.connection.table_exists?(@table_name)
-                          ActiveRecord::Base.connection.columns(@table_name).map(&:name)
+                          ActiveRecord::Base.connection.columns(@table_name).map do |col|
+                            metadata = ColumnMetadata.find_by(table_name: @table_name, column_name: col.name)
+                            {
+                              name: col.name,
+                              type: col.type,
+                              metadata: metadata
+                            }
+                          end
                         else
                           []
                         end
@@ -174,7 +181,59 @@ class DynamicTablesController < ApplicationController
 
   def show
     @table_name = params[:table_name]
-    render 'show'
+    unless ActiveRecord::Base.connection.table_exists?(@table_name)
+      render json: { error: "Table not found" }, status: :not_found and return
+    end
+    records = ActiveRecord::Base.connection.select_all("SELECT * FROM #{@table_name}")
+    metadata = ColumnMetadata.where(table_name: @table_name).as_json
+    render json: { records: records, metadata: metadata }
+  end
+
+  def show_with_subsystem
+    @subsystem_id = params[:subsystem_id]
+    @table_name = params[:table_name]
+  end
+
+  def edit_metadata
+    @table_name = params[:table_name]
+    @column_name = params[:column_name]
+    unless ActiveRecord::Base.connection.table_exists?(@table_name) &&
+           ActiveRecord::Base.connection.column_exists?(@table_name, @column_name)
+      flash[:error] = "Column #{@column_name} in table #{@table_name} does not exist!"
+      redirect_to admin_path(table_name: @table_name) and return
+    end
+    @metadata = ColumnMetadata.find_by(table_name: @table_name, column_name: @column_name) ||
+                ColumnMetadata.new(table_name: @table_name, column_name: @column_name)
+  end
+
+  def update_metadata
+    @table_name = params[:table_name]
+    @column_name = params[:column_name]
+    unless ActiveRecord::Base.connection.table_exists?(@table_name) &&
+           ActiveRecord::Base.connection.column_exists?(@table_name, @column_name)
+      flash[:error] = "Column #{@column_name} in table #{@table_name} does not exist!"
+      redirect_to admin_path(table_name: @table_name) and return
+    end
+
+    metadata_params = params.require(:column_metadata).permit(
+      :feature, :has_cost, :sub_field, :rate_key, :amount_key, :notes_key,
+      options: [:values, :sub_options]
+    ).to_h.deep_symbolize_keys
+
+    # Process options if present
+    if metadata_params[:options].present?
+      metadata_params[:options][:values] = metadata_params[:options][:values].split(',').map(&:strip) if metadata_params[:options][:values].is_a?(String)
+      metadata_params[:options][:sub_options] = metadata_params[:options][:sub_options].transform_keys(&:to_s) if metadata_params[:options][:sub_options].present?
+    end
+
+    @metadata = ColumnMetadata.find_or_initialize_by(table_name: @table_name, column_name: @column_name)
+    if @metadata.update(metadata_params)
+      flash[:success] = "Metadata for #{@column_name} updated successfully!"
+      redirect_to admin_path(table_name: @table_name)
+    else
+      flash[:error] = "Failed to update metadata: #{@metadata.errors.full_messages.join(', ')}"
+      render :edit_metadata
+    end
   end
 
   private

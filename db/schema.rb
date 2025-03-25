@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_20_192216) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -701,6 +701,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_20_192216) do
     t.index ["subsystem_id"], name: "index_telephone_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_tel_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_telephone_systems_on_supplier_id"
+  end
+
+  create_table "test_dynamically", force: :cascade do |t|
+    t.string "test1"
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "certifications"
+    t.index ["subsystem_id"], name: "index_test_dynamically_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_test_dynamically_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_test_dynamically_on_supplier_id"
   end
 
   create_table "test_test_test", force: :cascade do |t|

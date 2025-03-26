@@ -144,6 +144,12 @@ Rails.application.routes.draw do
   get '/subsystems/:subsystem_id/:table_name', to: 'dynamic_tables#show_with_subsystem', as: 'subsystem_dynamic_table'
   post '/admin/create_sub_table', to: 'dynamic_tables#create_sub_table'
   post '/admin/create_multiple_tables', to: 'dynamic_tables#create_multiple_tables'
+  post '/admin/create_multiple_sub_tables', to: 'dynamic_tables#create_multiple_sub_tables'
+  post '/admin/create_multiple_features', to: 'dynamic_tables#create_multiple_features'
+  get '/admin/sub_tables', to: 'dynamic_tables#sub_tables'
+
+
+
 
 
 end

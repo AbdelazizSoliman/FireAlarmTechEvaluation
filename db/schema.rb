@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_27_002253) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -68,6 +68,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
     t.index ["subsystem_id"], name: "index_connection_betweens_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_connection_betweens_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_connection_betweens_on_supplier_id"
+  end
+
+  create_table "connectivity", force: :cascade do |t|
+    t.bigint "parent_id", null: false
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_connectivity_on_parent_id"
+    t.index ["subsystem_id"], name: "index_connectivity_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_connectivity_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_connectivity_on_supplier_id"
   end
 
   create_table "detectors_field_devices", force: :cascade do |t|
@@ -232,6 +244,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
     t.index ["subsystem_id"], name: "index_evacuation_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_evac_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_evacuation_systems_on_supplier_id"
+  end
+
+  create_table "features", force: :cascade do |t|
+    t.bigint "parent_id", null: false
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_features_on_parent_id"
+    t.index ["subsystem_id"], name: "index_features_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_features_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_features_on_supplier_id"
   end
 
   create_table "field_devices", force: :cascade do |t|
@@ -531,6 +555,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
     t.index ["supplier_id"], name: "index_nurse_station_terminal_on_supplier_id"
   end
 
+  create_table "nurse_station_terminal_module", force: :cascade do |t|
+    t.bigint "parent_id", null: false
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "total_no_of_nurse_station_terminal"
+    t.index ["parent_id"], name: "index_nurse_station_terminal_module_on_parent_id"
+    t.index ["subsystem_id"], name: "index_nurse_station_terminal_module_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_nurse_station_terminal_module_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_nurse_station_terminal_module_on_supplier_id"
+  end
+
   create_table "prerecorded_message_audio_modules", force: :cascade do |t|
     t.string "message_type"
     t.integer "total_time_for_messages"
@@ -675,6 +712,18 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
     t.index ["subsystem_id"], name: "index_spare_parts_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_spare_parts_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_spare_parts_on_supplier_id"
+  end
+
+  create_table "speakers_microphone", force: :cascade do |t|
+    t.bigint "parent_id", null: false
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_speakers_microphone_on_parent_id"
+    t.index ["subsystem_id"], name: "index_speakers_microphone_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_speakers_microphone_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_speakers_microphone_on_supplier_id"
   end
 
   create_table "standard_files", force: :cascade do |t|
@@ -871,12 +920,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "connection_betweens", "subsystems"
   add_foreign_key "connection_betweens", "suppliers"
+  add_foreign_key "connectivity", "nurse_station_terminal", column: "parent_id"
   add_foreign_key "detectors_field_devices", "subsystems"
   add_foreign_key "detectors_field_devices", "suppliers"
   add_foreign_key "door_holders", "subsystems"
   add_foreign_key "door_holders", "suppliers"
   add_foreign_key "evacuation_systems", "subsystems"
   add_foreign_key "evacuation_systems", "suppliers"
+  add_foreign_key "features", "nurse_station_terminal", column: "parent_id"
   add_foreign_key "fire_alarm_control_panels", "subsystems"
   add_foreign_key "fire_alarm_control_panels", "suppliers"
   add_foreign_key "general_commercial_data", "subsystems"
@@ -893,6 +944,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
   add_foreign_key "material_and_deliveries", "suppliers"
   add_foreign_key "notification_devices", "subsystems"
   add_foreign_key "notification_devices", "suppliers"
+  add_foreign_key "nurse_station_terminal_module", "nurse_station_terminal", column: "parent_id"
   add_foreign_key "prerecorded_message_audio_modules", "subsystems"
   add_foreign_key "prerecorded_message_audio_modules", "suppliers"
   add_foreign_key "product_data", "subsystems"
@@ -902,6 +954,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
   add_foreign_key "scope_of_works", "suppliers"
   add_foreign_key "spare_parts", "subsystems"
   add_foreign_key "spare_parts", "suppliers"
+  add_foreign_key "speakers_microphone", "nurse_station_terminal", column: "parent_id"
   add_foreign_key "subsystem_suppliers", "subsystems"
   add_foreign_key "subsystem_suppliers", "suppliers"
   add_foreign_key "subsystems", "systems"

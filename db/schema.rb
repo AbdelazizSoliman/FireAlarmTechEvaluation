@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_26_215411) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -234,6 +234,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.index ["supplier_id"], name: "index_evacuation_systems_on_supplier_id"
   end
 
+  create_table "field_devices", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_field_devices_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_field_devices_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_field_devices_on_supplier_id"
+  end
+
   create_table "fire_alarm_control_panels", force: :cascade do |t|
     t.string "standards"
     t.integer "total_no_of_panels"
@@ -339,6 +349,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.index ["supplier_id"], name: "index_graphic_systems_on_supplier_id"
   end
 
+  create_table "interfac_with_other_systems", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_interfac_with_other_systems_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_interfac_with_other_systems_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_interfac_with_other_systems_on_supplier_id"
+  end
+
   create_table "interface_with_other_systems", force: :cascade do |t|
     t.string "bms_connection"
     t.string "elevator_control_system"
@@ -405,6 +425,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.index ["supplier_id"], name: "index_isolations_on_supplier_id"
   end
 
+  create_table "lifespan", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_lifespan_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_lifespan_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_lifespan_on_supplier_id"
+  end
+
   create_table "manual_pull_stations", force: :cascade do |t|
     t.string "type"
     t.integer "break_glass"
@@ -430,6 +460,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.index ["subsystem_id"], name: "index_material_and_deliveries_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_mat_del_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_material_and_deliveries_on_supplier_id"
+  end
+
+  create_table "material_delivery", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_material_delivery_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_material_delivery_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_material_delivery_on_supplier_id"
   end
 
   create_table "notification_devices", force: :cascade do |t|
@@ -479,6 +519,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.string "notification_type"
     t.text "additional_data"
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+  end
+
+  create_table "nurse_station_terminal", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_nurse_station_terminal_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_nurse_station_terminal_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_nurse_station_terminal_on_supplier_id"
   end
 
   create_table "prerecorded_message_audio_modules", force: :cascade do |t|
@@ -543,6 +593,26 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.index ["supplier_id", "project_id"], name: "index_projects_suppliers_on_supplier_id_and_project_id"
   end
 
+  create_table "quotation_basis", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_quotation_basis_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_quotation_basis_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_quotation_basis_on_supplier_id"
+  end
+
+  create_table "scope_of_work_sow", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_scope_of_work_sow_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_scope_of_work_sow_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_scope_of_work_sow_on_supplier_id"
+  end
+
   create_table "scope_of_works", force: :cascade do |t|
     t.string "supply"
     t.string "install"
@@ -569,6 +639,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.index ["subsystem_id"], name: "index_scope_of_works_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_scope_works_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_scope_of_works_on_supplier_id"
+  end
+
+  create_table "server_licenses", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_server_licenses_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_server_licenses_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_server_licenses_on_supplier_id"
   end
 
   create_table "spare_parts", force: :cascade do |t|
@@ -601,6 +681,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "stuff_terminal_at_patient_room", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_stuff_terminal_at_patient_room_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_stuff_terminal_at_patient_room_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_stuff_terminal_at_patient_room_on_supplier_id"
   end
 
   create_table "subsystem_suppliers", force: :cascade do |t|
@@ -661,6 +751,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.boolean "receive_rfq_mail", default: false, null: false
   end
 
+  create_table "system_information", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_system_information_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_system_information_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_system_information_on_supplier_id"
+  end
+
   create_table "systems", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -675,6 +775,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_24_165435) do
     t.boolean "approved", default: false, null: false
     t.index ["supplier_id", "system_id"], name: "index_systems_suppliers_on_supplier_id_and_system_id"
     t.index ["system_id", "supplier_id"], name: "index_systems_suppliers_on_system_id_and_supplier_id", unique: true
+  end
+
+  create_table "table_definitions", force: :cascade do |t|
+    t.string "table_name", null: false
+    t.integer "subsystem_id", null: false
+    t.string "parent_table"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "telephone_systems", force: :cascade do |t|

@@ -142,4 +142,8 @@ Rails.application.routes.draw do
   patch '/dynamic_tables/:table_name/columns/:column_name/update_metadata', to: 'dynamic_tables#update_metadata', as: 'update_metadata_dynamic_tables'
   get '/dynamic_tables/:table_name', to: 'dynamic_tables#show', as: 'dynamic_table'
   get '/subsystems/:subsystem_id/:table_name', to: 'dynamic_tables#show_with_subsystem', as: 'subsystem_dynamic_table'
+  post '/admin/create_sub_table', to: 'dynamic_tables#create_sub_table'
+  post '/admin/create_multiple_tables', to: 'dynamic_tables#create_multiple_tables'
+
+
 end

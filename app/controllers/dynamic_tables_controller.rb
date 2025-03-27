@@ -226,62 +226,42 @@ Rails.logger.debug "Parent tables: #{parent_tables.inspect}"
 
   # --- (Optional) Single Feature addition remains available ---
   def add_column
-    table_name = params[:table_name]
-    column_name = to_db_name(params[:column_name])
+    table_name  = params[:table_name]
+    column_name = params[:column_name]
     column_type = params[:column_type]
-    feature = params[:feature].presence
-    has_cost = params[:has_cost].present?
-    sub_field = params[:sub_field].presence
-    rate_key = params[:rate_key].presence
-    amount_key = params[:amount_key].presence
-    notes_key = params[:notes_key].presence
-    array_default_empty = params[:array_default_empty] == '1'
+    feature     = params[:feature]  # e.g., "combobox" or "checkboxes"
 
-    allowed_types = %w[string integer boolean decimal text text[] date]
-    unless allowed_types.include?(column_type)
-      flash[:error] = 'Invalid column type!'
-      redirect_to admin_path(table_name: table_name) and return
-    end
+    # Parse the allowed values from the form (if provided)
+    allowed_values = if params[:feature_values].present?
+                       params[:feature_values].split(',')
+                         .map(&:strip)
+                         .reject(&:blank?)
+                         .uniq
+                     else
+                       []
+                     end
 
-    combobox_values = if %w[combobox checkboxes].include?(feature) && params[:combobox_values].present?
-                        params[:combobox_values].split(',').map(&:strip)
-                      else
-                        []
-                      end
+    # Add the column to the table using DynamicTableManager
+    DynamicTableManager.add_column(table_name, column_name, column_type)
 
-    migration_name = "Add#{column_name.camelcase}To#{table_name.camelcase}"
-    timestamp = Time.now.strftime('%Y%m%d%H%M%S')
-    migration_file = Rails.root.join("db/migrate/#{timestamp}_#{migration_name.underscore}.rb")
-    migration_content = <<~RUBY
-      class #{migration_name} < ActiveRecord::Migration[7.1]
-        def change
-          add_column :#{table_name}, :#{column_name}, :#{column_type == 'text[]' ? 'text' : column_type}#{
-            if column_type == 'text[]'
-              ', array: true, default: ' + (array_default_empty ? '[]' : 'nil')
-            else
-              ''
-            end
-          }
-        end
-      end
-    RUBY
-    File.write(migration_file, migration_content)
-    system('rails db:migrate')
-    ColumnMetadata.create!(
-      table_name: table_name,
-      column_name: column_name,
-      feature: feature,
-      has_cost: has_cost,
-      sub_field: sub_field,
-      rate_key: rate_key,
-      amount_key: amount_key,
-      notes_key: notes_key,
-      options: { values: combobox_values.presence }.compact
+    # Find or create the metadata record for this column
+    metadata = ColumnMetadata.find_or_initialize_by(table_name: table_name, column_name: column_name)
+    metadata.feature = feature
+    # Merge new allowed values into the options JSONB column
+    metadata.options = metadata.options.merge("allowed_values" => allowed_values)
+    metadata.save!
+
+    flash[:success] = "Column #{column_name} added to #{table_name}."
+    redirect_to admin_path(
+      project_filter: params[:project_filter],
+      project_scope_filter: params[:project_scope_filter],
+      system_filter: params[:system_filter],
+      subsystem_filter: params[:subsystem_filter],
+      table_name: table_name
     )
-    flash[:success] = "Column #{column_name} added successfully to #{table_name}!"
-    redirect_to admin_path(filter_params.merge(table_name: table_name))
   end
 
+  
   private
 
   def filter_params

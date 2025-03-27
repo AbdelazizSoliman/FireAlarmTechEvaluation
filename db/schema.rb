@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_27_002253) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_27_022614) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -562,6 +562,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_27_002253) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "total_no_of_nurse_station_terminal"
+    t.string "staff_consoles_module_type"
     t.index ["parent_id"], name: "index_nurse_station_terminal_module_on_parent_id"
     t.index ["subsystem_id"], name: "index_nurse_station_terminal_module_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_nurse_station_terminal_module_sup_sub", unique: true

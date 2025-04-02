@@ -1,3 +1,4 @@
+<!-- app/views/dynamic_tables/admin.html.erb -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,7 +78,41 @@
     </section>
 
     <% if @subsystem_filter.present? %>
-      <!-- 2. Create Main Table(s) -->
+      <!-- 2. Order Main Tables (Parent Tables) -->
+      <section class="mb-8">
+        <h2 class="text-xl font-semibold">Order Main Tables</h2>
+        <% if @main_tables.any? %>
+          <ul class="list-disc pl-6">
+            <% @main_tables.each do |table_def| %>
+              <li class="mb-2 flex items-center">
+                <span class="mr-4"><%= table_def.table_name.humanize %></span>
+                <%= link_to "Move Up", move_table_dynamic_tables_path(
+                      id: table_def.id,
+                      direction: 'up',
+                      table_name: @table_name,
+                      project_filter: @project_filter,
+                      project_scope_filter: @project_scope_filter,
+                      system_filter: @system_filter,
+                      subsystem_filter: @subsystem_filter
+                    ), method: :post, class: "text-blue-600 mr-2" %>
+                <%= link_to "Move Down", move_table_dynamic_tables_path(
+                      id: table_def.id,
+                      direction: 'down',
+                      table_name: @table_name,
+                      project_filter: @project_filter,
+                      project_scope_filter: @project_scope_filter,
+                      system_filter: @system_filter,
+                      subsystem_filter: @subsystem_filter
+                    ), method: :post, class: "text-blue-600" %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-gray-500">No main tables available to order.</p>
+        <% end %>
+      </section>
+
+      <!-- 3. Create Main Table(s) -->
       <section class="mb-8">
         <h2 class="text-xl font-semibold cursor-pointer mb-2" onclick="toggleSection('create-main-table-form')">
           Create New Main Table(s)
@@ -284,7 +319,7 @@
             <p class="text-sm mt-4">No columns found for this table.</p>
           <% end %>
         </section>
-      <% end %>
+      <% end %>      
     <% else %>
       <!-- Prompt if no subsystem is selected -->
       <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">

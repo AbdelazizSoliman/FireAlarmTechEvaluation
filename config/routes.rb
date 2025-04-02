@@ -37,7 +37,15 @@ Rails.application.routes.draw do
       end
     end
 
+    resources :subsystems, only: [] do
+      member do
+        get :table_order
+      end
+    end
+
+    resources :sub_tables, only: [:index]
      # Dynamic Table API Routes
+     
       get "/dynamic_tables/:table_name", to: "dynamic_tables#index"
       patch "/dynamic_tables/:table_name/:id", to: "dynamic_tables#update"
       get '/table_metadata/:table_name', to: 'dynamic_tables#table_metadata'
@@ -147,9 +155,8 @@ Rails.application.routes.draw do
   post '/admin/create_multiple_sub_tables', to: 'dynamic_tables#create_multiple_sub_tables'
   post '/admin/create_multiple_features', to: 'dynamic_tables#create_multiple_features'
   get '/admin/sub_tables', to: 'dynamic_tables#sub_tables'
-
-
-
-
+  get '/table_metadata/:table_name', to: 'dynamic_tables#show'
+  post '/admin/move_table', to: 'dynamic_tables#move_table', as: 'move_table_dynamic_tables'
+  get '/subsystems/:subsystem_id/ordered_tables', to: 'dynamic_tables#ordered_tables'
 
 end

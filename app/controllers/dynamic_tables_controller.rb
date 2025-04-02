@@ -16,7 +16,8 @@ class DynamicTablesController < ApplicationController
     # --- Load table definitions if a subsystem is selected ---
     if @subsystem_filter.present?
       table_defs = TableDefinition.where(subsystem_id: @subsystem_filter)
-      @main_tables = table_defs.where(parent_table: nil)
+      # Order main tables by position
+      @main_tables = table_defs.where(parent_table: nil).order(:position)
       @sub_tables  = table_defs.where.not(parent_table: nil)
     else
       @main_tables = []
@@ -36,7 +37,44 @@ class DynamicTablesController < ApplicationController
     end
   end
 
-  # === Create Multiple Main Tables (as before) ===
+  # New action for ordering (moving) main tables up or down
+  def move_table
+   permitted_params = params.permit(:direction, :id, :table_name, :project_filter, :project_scope_filter, :system_filter, :subsystem_filter)
+  table_def = TableDefinition.find(permitted_params[:id])
+  direction = permitted_params[:direction]
+    if direction == 'up'
+      # Find the previous record (within the same subsystem and only parent tables)
+      prev_table = TableDefinition.where(subsystem_id: table_def.subsystem_id, parent_table: nil)
+                                  .where("position < ?", table_def.position)
+                                  .order(position: :desc).first
+      if prev_table
+        table_def.position, prev_table.position = prev_table.position, table_def.position
+        table_def.save!
+        prev_table.save!
+      end
+    elsif direction == 'down'
+      # Find the next record
+      next_table = TableDefinition.where(subsystem_id: table_def.subsystem_id, parent_table: nil)
+                                  .where("position > ?", table_def.position)
+                                  .order(:position).first
+      if next_table
+        table_def.position, next_table.position = next_table.position, table_def.position
+        table_def.save!
+        next_table.save!
+      end
+    end
+
+    redirect_to admin_path(filter_params.merge(table_name: params[:table_name]))
+  end
+
+  def ordered_tables
+    subsystem = Subsystem.find(params[:subsystem_id])
+    main_tables = TableDefinition
+                    .where(subsystem_id: subsystem.id, parent_table: nil)
+                    .order(:position)  # Make sure your TableDefinition has a 'position' column
+    render json: main_tables
+  end
+  
   def create_multiple_tables
     subsystem_id = params[:subsystem_id]
     raw_table_names = params[:table_names] || []
@@ -261,7 +299,28 @@ Rails.logger.debug "Parent tables: #{parent_tables.inspect}"
     )
   end
 
-  
+  def show
+    subsystem_id = params[:subsystemId]
+    table_name = params[:table_name]
+
+    # IMPORTANT: Validate that table_name is allowed to prevent unwanted access
+    allowed_tables = %w[supplier_data product_data fire_alarm_control_panels graphic_systems ...] 
+    unless allowed_tables.include?(table_name)
+      return render json: { error: "Invalid table" }, status: :bad_request
+    end
+
+    # Dynamically determine the model based on the table name
+    model = table_name.classify.constantize
+
+    # Filter records based on the subsystem id
+    records = model.where(subsystem_id: subsystem_id)
+
+    render json: { metadata:, columns: records.first&.attributes&.keys, data: records }
+  rescue NameError => e
+    render json: { error: "Invalid table" }, status: :bad_request
+  end
+
+
   private
 
   def filter_params

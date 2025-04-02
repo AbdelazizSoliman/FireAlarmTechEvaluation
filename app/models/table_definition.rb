@@ -1,4 +1,6 @@
 class TableDefinition < ApplicationRecord
+  before_create :set_position, if: -> { parent_table.nil? }
+
   validates :table_name, presence: true, uniqueness: true
   validates :subsystem_id, presence: true
 
@@ -12,5 +14,13 @@ class TableDefinition < ApplicationRecord
 
   def sub_table?
     parent_table.present?
+  end
+
+  private
+
+  def set_position
+    # Find the current highest position for main tables in the same subsystem.
+    max_position = TableDefinition.where(subsystem_id: subsystem_id, parent_table: nil).maximum(:position) || 0
+    self.position = max_position + 1
   end
 end

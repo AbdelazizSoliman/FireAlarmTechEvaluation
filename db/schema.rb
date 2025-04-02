@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_27_022614) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -563,6 +563,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_27_022614) do
     t.datetime "updated_at", null: false
     t.integer "total_no_of_nurse_station_terminal"
     t.string "staff_consoles_module_type"
+    t.string " Staff Consoles Module Type"
     t.index ["parent_id"], name: "index_nurse_station_terminal_module_on_parent_id"
     t.index ["subsystem_id"], name: "index_nurse_station_terminal_module_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_nurse_station_terminal_module_sup_sub", unique: true
@@ -833,6 +834,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_27_022614) do
     t.string "parent_table"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "position"
   end
 
   create_table "telephone_systems", force: :cascade do |t|
@@ -893,6 +895,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_27_022614) do
     t.index ["subsystem_id"], name: "index_test_testwe_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_test_testwe_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_test_testwe_on_supplier_id"
+  end
+
+  create_table "testtttt", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_testtttt_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_testtttt_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_testtttt_on_supplier_id"
   end
 
   create_table "users", force: :cascade do |t|

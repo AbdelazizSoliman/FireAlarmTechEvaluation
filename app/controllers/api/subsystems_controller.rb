@@ -123,6 +123,16 @@ module Api
       }
     }
 
+    def table_order
+      subsystem = Subsystem.find(params[:id])
+      main_tables = TableDefinition
+                      .where(subsystem_id: subsystem.id, parent_table: nil)
+                      .order(:position)
+    
+      # Return an array of strings instead of objects
+      render json: { order: main_tables.pluck(:table_name) }
+    end
+
     def submit_all
       subsystem = Subsystem.find(params[:id])
       supplier = current_supplier || ::Supplier.find_by(id: params[:supplier_id]) # Ensure supplier exists
@@ -904,7 +914,6 @@ module Api
         :total_no_of_device4_notes
       )
     end
-    
 
     def scope_of_work_params
       params.require(:scope_of_works).permit(

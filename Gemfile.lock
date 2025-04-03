@@ -140,10 +140,6 @@ GEM
       railties (>= 6.1)
     drb (2.2.1)
     erubi (1.13.1)
-    ffi (1.17.1-x64-mingw-ucrt)
-    ffi (1.17.1-x86_64-linux-gnu)
-    ffi-aspell (1.1.0)
-      ffi
     globalid (1.2.1)
       activesupport (>= 6.1)
     htmlentities (4.3.4)
@@ -375,7 +371,6 @@ DEPENDENCIES
   devise
   did_you_mean
   dotenv-rails
-  ffi-aspell
   jsbundling-rails
   jwt
   letter_opener_web

@@ -74,7 +74,7 @@ gem 'rubocop'
 
 # Authentication solution for Rails applications
 gem 'devise'
-gem 'did_you_mean'
+gem 'did_you_mean', '>= 1.6.3'
 # Letter opener web for viewing emails in development
 gem 'letter_opener_web'
 

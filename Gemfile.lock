@@ -369,7 +369,7 @@ DEPENDENCIES
   cssbundling-rails
   debug
   devise
-  did_you_mean
+  did_you_mean (>= 1.6.3)
   dotenv-rails
   jsbundling-rails
   jwt

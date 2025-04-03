@@ -158,5 +158,6 @@ Rails.application.routes.draw do
   get '/table_metadata/:table_name', to: 'dynamic_tables#show'
   post '/admin/move_table', to: 'dynamic_tables#move_table', as: 'move_table_dynamic_tables'
   get '/subsystems/:subsystem_id/ordered_tables', to: 'dynamic_tables#ordered_tables'
+  get '/admin/check_table_name', to: 'dynamic_tables#check_table_name'
 
 end

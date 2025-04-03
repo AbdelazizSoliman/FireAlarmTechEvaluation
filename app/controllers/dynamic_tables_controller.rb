@@ -1,4 +1,6 @@
 class DynamicTablesController < ApplicationController
+  require 'did_you_mean'
+
   before_action :set_table_name, only: [:add_column]
 
   def admin
@@ -67,6 +69,22 @@ class DynamicTablesController < ApplicationController
     redirect_to admin_path(filter_params.merge(table_name: params[:table_name]))
   end
 
+  def check_table_name
+    raw_name = params[:name].to_s
+    table_name = to_db_name(raw_name)
+    exists = ActiveRecord::Base.connection.table_exists?(table_name)
+  
+    # Suggest similar name if table already exists
+    suggested = exists ? "#{table_name}_#{params[:subsystem_name].to_s.parameterize(separator: '_')}" : nil
+  
+    # Spelling suggestion
+    known_words = ActiveRecord::Base.connection.tables.map { |t| t.gsub('_', ' ') }
+    corrector = DidYouMean::SpellChecker.new(dictionary: known_words)
+    spelling_suggestion = corrector.correct(raw_name).first
+  
+    render json: { exists:, suggested:, spelling_suggestion: spelling_suggestion }
+  end
+  
   def ordered_tables
     subsystem = Subsystem.find(params[:subsystem_id])
     main_tables = TableDefinition

@@ -137,18 +137,25 @@
               </select>
             </div>
 
-            <!-- Container for multiple table name inputs -->
-            <div id="main-tables-container" class="space-y-2">
-              <div class="table-row flex flex-col sm:flex-row sm:items-center sm:space-x-4">
-                <label class="block text-sm font-medium text-gray-700 sm:w-1/4">Table Name</label>
-                <input type="text" name="table_names[]" placeholder="e.g. product_data" class="mt-1 sm:mt-0 flex-1 border-gray-300 rounded shadow-sm" required />
-              </div>
-            </div>
+           <!-- Container for multiple table name inputs -->
+<div id="main-tables-container" class="space-y-4">
+  <div class="table-row flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+    <label class="block text-sm font-medium text-gray-700 sm:w-1/4">Table Name</label>
+    <div class="w-full">
+      <input type="text" name="table_names[]" placeholder="e.g. product_data"
+             class="mt-1 sm:mt-0 w-full border-gray-300 rounded shadow-sm"
+             required oninput="checkTableNameAvailability(this, 0)" />
+      <div id="table-suggestions-0" class="text-sm text-red-600 mt-1"></div>
+    </div>
+  </div>
+</div>
+<button type="button"
+        class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+        onclick="addTableRow()">
+  + Add New Table
+</button>
 
-            <!-- Button to add more table rows -->
-            <button type="button" class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200" onclick="addTableRow()">
-              + Add New Table
-            </button>
+
 
             <!-- Submit button -->
             <button type="submit" class="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
@@ -187,10 +194,14 @@
                 <% end %>
               </select>
             </div>
-            <div class="mt-4">
-              <label for="sub_table_name" class="block text-sm font-medium">Sub-Table Name</label>
-              <input type="text" id="sub_table_name" name="sub_table_name" required placeholder="e.g., product_variants" class="mt-1 block w-full">
-            </div>
+           <div class="mt-4">
+  <label for="sub_table_name" class="block text-sm font-medium">Sub-Table Name</label>
+  <input type="text" id="sub_table_name" name="sub_table_name" required placeholder="e.g., product_variants"
+         class="mt-1 block w-full border-gray-300 rounded"
+         oninput="checkSubTableName(this)">
+  <div id="sub-table-suggestions" class="text-sm text-red-600 mt-1"></div>
+</div>
+
             <button type="submit" class="mt-4 w-full bg-indigo-600 text-white py-2 rounded">
               Create Sub Table
             </button>
@@ -392,5 +403,84 @@
       }
     }
   </script>
+ <script>
+let rowIndex = 1;
+
+function addTableRow() {
+  const container = document.getElementById('main-tables-container');
+  const newRow = document.createElement('div');
+  const thisIndex = rowIndex;
+  newRow.className = 'table-row flex flex-col sm:flex-row sm:items-center sm:space-x-4';
+  newRow.innerHTML = `
+    <label class="block text-sm font-medium text-gray-700 sm:w-1/4">Table Name</label>
+    <div class="w-full">
+      <input type="text" name="table_names[]" placeholder="e.g. product_data"
+             class="mt-1 sm:mt-0 w-full border-gray-300 rounded shadow-sm"
+             required oninput="checkTableNameAvailability(this, ${thisIndex})" />
+      <div id="table-suggestions-${thisIndex}" class="text-sm text-red-600 mt-1"></div>
+    </div>
+  `;
+  container.appendChild(newRow);
+  rowIndex++;
+}
+
+function checkTableNameAvailability(input, index = 0) {
+  const name = input.value.trim();
+  const subsystemName = document.getElementById('subsystem_id_main')?.selectedOptions[0]?.text || '';
+  const suggestionEl = document.getElementById(`table-suggestions-${index}`);
+  if (!name) {
+    suggestionEl.innerHTML = '';
+    return;
+  }
+
+  fetch(`/admin/check_table_name?name=${encodeURIComponent(name)}&subsystem_name=${encodeURIComponent(subsystemName)}`)
+    .then(res => res.json())
+    .then(data => {
+      let html = '';
+      if (data.exists) {
+        html += `❗ Table already exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSuggested(this, ${index})">${data.suggested}</span>`;
+      } else if (data.spelling_suggestion && data.spelling_suggestion !== name) {
+        html += `💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSuggested(this, ${index})">${data.spelling_suggestion}</span>?`;
+      }
+      suggestionEl.innerHTML = html;
+    });
+}
+
+function checkSubTableName(input) {
+  const name = input.value.trim();
+  const subsystemName = document.getElementById('subsystem_id_sub')?.selectedOptions[0]?.text || '';
+  const suggestionEl = document.getElementById('sub-table-suggestions');
+  if (!name) {
+    suggestionEl.innerHTML = '';
+    return;
+  }
+
+  fetch(`/admin/check_table_name?name=${encodeURIComponent(name)}&subsystem_name=${encodeURIComponent(subsystemName)}`)
+    .then(res => res.json())
+    .then(data => {
+      let html = '';
+      if (data.exists) {
+        html += `❗ Table already exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion('${data.suggested}')">${data.suggested}</span>`;
+      } else if (data.spelling_suggestion && data.spelling_suggestion !== name) {
+        html += `💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion('${data.spelling_suggestion}')">${data.spelling_suggestion}</span>?`;
+      }
+      suggestionEl.innerHTML = html;
+    });
+}
+
+function fillSuggested(el, index) {
+  const suggestion = el.textContent;
+  const inputField = document.querySelectorAll('input[name="table_names[]"]')[index];
+  inputField.value = suggestion;
+  checkTableNameAvailability(inputField, index); // recheck
+}
+
+function fillSubSuggestion(suggestion) {
+  const input = document.getElementById('sub_table_name');
+  input.value = suggestion;
+  checkSubTableName(input); // recheck
+}
+</script>
+
 </body>
 </html>

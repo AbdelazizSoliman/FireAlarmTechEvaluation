@@ -132,7 +132,7 @@ GEM
       railties (>= 4.1.0)
       responders
       warden (~> 1.2.3)
-    did_you_mean (2.0.0)
+    did_you_mean (1.6.3)
     diff-lcs (1.5.1)
     dotenv (3.1.7)
     dotenv-rails (3.1.7)
@@ -195,8 +195,6 @@ GEM
     nio4r (2.7.4)
     nokogiri (1.18.2-x64-mingw-ucrt)
       racc (~> 1.4)
-    nokogiri (1.18.2-x86_64-linux-gnu)
-      racc (~> 1.4)
     orm_adapter (0.5.0)
     ostruct (0.6.1)
     parallel (1.26.3)
@@ -204,7 +202,6 @@ GEM
       ast (~> 2.4.1)
       racc
     pdf-core (0.10.0)
-    pg (1.5.9)
     pg (1.5.9-x64-mingw-ucrt)
     phonelib (0.10.3)
     pp (0.6.2)
@@ -359,7 +356,6 @@ GEM
 
 PLATFORMS
   x64-mingw-ucrt
-  x86_64-linux
 
 DEPENDENCIES
   aws-sdk-s3
@@ -369,7 +365,7 @@ DEPENDENCIES
   cssbundling-rails
   debug
   devise
-  did_you_mean (>= 1.6.3)
+  did_you_mean (= 1.6.3)
   dotenv-rails
   jsbundling-rails
   jwt

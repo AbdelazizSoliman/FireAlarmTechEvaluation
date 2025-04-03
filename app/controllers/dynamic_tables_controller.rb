@@ -397,6 +397,10 @@ Rails.logger.debug "Parent tables: #{parent_tables.inspect}"
   end
 
   def to_db_name(name)
-    name.to_s.gsub(/[^0-9A-Za-z\s]/, '').strip.downcase.gsub(/\s+/, '_')
+    name.to_s
+        .parameterize(separator: '_') # handles spaces, camelCase, PascalCase, symbols, etc.
+        .gsub(/__+/, '_')             # collapse double underscores
+        .gsub(/^_+|_+$/, '')          # remove leading/trailing
   end
+  
 end

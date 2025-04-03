@@ -70,19 +70,62 @@ class DynamicTablesController < ApplicationController
   end
 
   def check_table_name
-    raw_name = params[:name].to_s
+    raw_name = params[:name].to_s.strip
     table_name = to_db_name(raw_name)
     exists = ActiveRecord::Base.connection.table_exists?(table_name)
   
-    # Suggest similar name if table already exists
-    suggested = exists ? "#{table_name}_#{params[:subsystem_name].to_s.parameterize(separator: '_')}" : nil
+    # Use built-in spell corrector
+    suggestion = get_spelling_suggestion(raw_name)
   
-    # Spelling suggestion
-    known_words = ActiveRecord::Base.connection.tables.map { |t| t.gsub('_', ' ') }
-    corrector = DidYouMean::SpellChecker.new(dictionary: known_words)
-    spelling_suggestion = corrector.correct(raw_name).first
+    suggested_name = exists ? "#{table_name}_#{params[:subsystem_name].to_s.parameterize(separator: '_')}" : nil
   
-    render json: { exists:, suggested:, spelling_suggestion: spelling_suggestion }
+    render json: {
+      exists: exists,
+      suggested: suggested_name,
+      spelling_suggestion: suggestion
+    }
+  end
+  
+  # === Very lightweight Ruby spellchecker using a mini dictionary ===
+  def get_spelling_suggestion(word)
+    dictionary = %w[
+      fire alarm panel pump system smoke bell sprinkler switch wiring detector
+      access lighting power control panel emergency network security
+    ]
+  
+    distances = dictionary.map { |dict_word|
+      [dict_word, levenshtein_distance(word.downcase, dict_word)]
+    }
+  
+    best_match = distances.min_by(&:last)
+    return best_match[0] if best_match && best_match[1] <= 2 # typo threshold
+    nil
+  end
+  
+  # Simple Levenshtein distance algorithm
+  def levenshtein_distance(a, b)
+    a_len = a.length
+    b_len = b.length
+    return b_len if a_len == 0
+    return a_len if b_len == 0
+  
+    matrix = Array.new(a_len + 1) { Array.new(b_len + 1) }
+  
+    (0..a_len).each { |i| matrix[i][0] = i }
+    (0..b_len).each { |j| matrix[0][j] = j }
+  
+    (1..a_len).each do |i|
+      (1..b_len).each do |j|
+        cost = (a[i - 1] == b[j - 1]) ? 0 : 1
+        matrix[i][j] = [
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        ].min
+      end
+    end
+  
+    matrix[a_len][b_len]
   end
   
   def ordered_tables

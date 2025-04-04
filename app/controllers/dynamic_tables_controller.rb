@@ -193,9 +193,14 @@ class DynamicTablesController < ApplicationController
 
   def sub_tables
     parent_table = params[:parent_table]
+    subsystem_id = params[:subsystemId]
+  
     sub_defs = TableDefinition.where(parent_table: parent_table)
+    sub_defs = sub_defs.where(subsystem_id: subsystem_id) if subsystem_id.present?
+  
     render json: sub_defs.as_json(only: [:id, :table_name, :parent_table])
   end
+  
 
   def create_multiple_features
     table_name = params[:table_name]

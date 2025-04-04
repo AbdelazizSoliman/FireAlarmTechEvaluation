@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   # ✅ API namespace for suppliers
   namespace :api do
+     get 'subsystem_tables', to: 'suppliers#subsystem_tables'
+
     namespace :supplier do
       resources :suppliers, only: [:create, :index, :show]
       resources :projects, only: [:index] 
@@ -43,7 +45,7 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :sub_tables, only: [:index]
+      resources :sub_tables, only: [:index]
      # Dynamic Table API Routes
      
       get "/dynamic_tables/:table_name", to: "dynamic_tables#index"

@@ -3,6 +3,22 @@ module Api
     class SuppliersController < ApplicationController
       skip_before_action :verify_authenticity_token
 
+      def subsystem_tables
+        subsystem_id = params[:subsystem_id]
+
+        tables = TableDefinition
+                   .where(subsystem_id: subsystem_id, parent_table: nil)
+                   .order(:position)
+                   .map do |t|
+                     {
+                       table_name: t.table_name,
+                       human_name: t.table_name.titleize.gsub('_', ' ')
+                     }
+                   end
+
+        render json: tables
+      end
+
       # ✅ Supplier Registration
       def register
         Rails.logger.info "Received registration params: #{params.inspect}"

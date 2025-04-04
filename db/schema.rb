@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_04_220148) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -54,6 +54,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.string "rate_key"
     t.string "amount_key"
     t.string "notes_key"
+    t.integer "row"
+    t.integer "col"
     t.index ["table_name", "column_name"], name: "index_column_metadatas_on_table_name_and_column_name", unique: true
   end
 
@@ -246,28 +248,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["supplier_id"], name: "index_evacuation_systems_on_supplier_id"
   end
 
-  create_table "features", force: :cascade do |t|
-    t.bigint "parent_id", null: false
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_features_on_parent_id"
-    t.index ["subsystem_id"], name: "index_features_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_features_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_features_on_supplier_id"
-  end
-
-  create_table "field_devices", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_field_devices_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_field_devices_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_field_devices_on_supplier_id"
-  end
-
   create_table "fire_alarm_control_panels", force: :cascade do |t|
     t.string "standards"
     t.integer "total_no_of_panels"
@@ -373,16 +353,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["supplier_id"], name: "index_graphic_systems_on_supplier_id"
   end
 
-  create_table "interfac_with_other_systems", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_interfac_with_other_systems_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_interfac_with_other_systems_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_interfac_with_other_systems_on_supplier_id"
-  end
-
   create_table "interface_with_other_systems", force: :cascade do |t|
     t.string "bms_connection"
     t.string "elevator_control_system"
@@ -447,16 +417,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["subsystem_id"], name: "index_isolations_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_iso_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_isolations_on_supplier_id"
-  end
-
-  create_table "lifespan", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_lifespan_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_lifespan_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_lifespan_on_supplier_id"
   end
 
   create_table "manual_pull_stations", force: :cascade do |t|
@@ -545,25 +505,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
   end
 
-  create_table "nurse_station_terminal", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_nurse_station_terminal_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_nurse_station_terminal_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_nurse_station_terminal_on_supplier_id"
-  end
-
   create_table "nurse_station_terminal_module", force: :cascade do |t|
     t.bigint "parent_id", null: false
     t.bigint "subsystem_id", null: false
     t.bigint "supplier_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "total_no_of_nurse_station_terminal"
-    t.string "staff_consoles_module_type"
-    t.string " Staff Consoles Module Type"
     t.index ["parent_id"], name: "index_nurse_station_terminal_module_on_parent_id"
     t.index ["subsystem_id"], name: "index_nurse_station_terminal_module_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_nurse_station_terminal_module_sup_sub", unique: true
@@ -632,26 +579,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["supplier_id", "project_id"], name: "index_projects_suppliers_on_supplier_id_and_project_id"
   end
 
-  create_table "quotation_basis", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_quotation_basis_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_quotation_basis_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_quotation_basis_on_supplier_id"
-  end
-
-  create_table "scope_of_work_sow", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_scope_of_work_sow_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_scope_of_work_sow_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_scope_of_work_sow_on_supplier_id"
-  end
-
   create_table "scope_of_works", force: :cascade do |t|
     t.string "supply"
     t.string "install"
@@ -680,16 +607,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["supplier_id"], name: "index_scope_of_works_on_supplier_id"
   end
 
-  create_table "server_licenses", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_server_licenses_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_server_licenses_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_server_licenses_on_supplier_id"
-  end
-
   create_table "spare_parts", force: :cascade do |t|
     t.integer "total_no_of_device1"
     t.integer "total_no_of_device2"
@@ -716,32 +633,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["supplier_id"], name: "index_spare_parts_on_supplier_id"
   end
 
-  create_table "speakers_microphone", force: :cascade do |t|
-    t.bigint "parent_id", null: false
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_speakers_microphone_on_parent_id"
-    t.index ["subsystem_id"], name: "index_speakers_microphone_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_speakers_microphone_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_speakers_microphone_on_supplier_id"
-  end
-
   create_table "standard_files", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "stuff_terminal_at_patient_room", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_stuff_terminal_at_patient_room_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_stuff_terminal_at_patient_room_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_stuff_terminal_at_patient_room_on_supplier_id"
   end
 
   create_table "subsystem_suppliers", force: :cascade do |t|
@@ -782,6 +677,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["subsystem_id"], name: "index_supplier_data_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_sup_data_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_supplier_data_on_supplier_id"
+  end
+
+  create_table "supplier_data_nurse_call_system", force: :cascade do |t|
+    t.bigint "subsystem_id", null: false
+    t.bigint "supplier_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_supplier_data_nurse_call_system_on_subsystem_id"
+    t.index ["supplier_id", "subsystem_id"], name: "idx_supplier_data_nurse_call_system_sup_sub", unique: true
+    t.index ["supplier_id"], name: "index_supplier_data_nurse_call_system_on_supplier_id"
   end
 
   create_table "suppliers", force: :cascade do |t|
@@ -875,38 +780,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
     t.index ["supplier_id"], name: "index_test_dynamically_on_supplier_id"
   end
 
-  create_table "test_test_test", force: :cascade do |t|
-    t.string "test1_test2_test3"
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_test_test_test_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_test_test_test_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_test_test_test_on_supplier_id"
-  end
-
-  create_table "test_testwe", force: :cascade do |t|
-    t.string "testuo_yet"
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_test_testwe_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_test_testwe_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_test_testwe_on_supplier_id"
-  end
-
-  create_table "testtttt", force: :cascade do |t|
-    t.bigint "subsystem_id", null: false
-    t.bigint "supplier_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["subsystem_id"], name: "index_testtttt_on_subsystem_id"
-    t.index ["supplier_id", "subsystem_id"], name: "idx_testtttt_sup_sub", unique: true
-    t.index ["supplier_id"], name: "index_testtttt_on_supplier_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "first_name", default: "", null: false
     t.string "last_name", default: "", null: false
@@ -933,14 +806,13 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "connection_betweens", "subsystems"
   add_foreign_key "connection_betweens", "suppliers"
-  add_foreign_key "connectivity", "nurse_station_terminal", column: "parent_id"
+  add_foreign_key "connectivity", "supplier_data_nurse_call_system", column: "parent_id"
   add_foreign_key "detectors_field_devices", "subsystems"
   add_foreign_key "detectors_field_devices", "suppliers"
   add_foreign_key "door_holders", "subsystems"
   add_foreign_key "door_holders", "suppliers"
   add_foreign_key "evacuation_systems", "subsystems"
   add_foreign_key "evacuation_systems", "suppliers"
-  add_foreign_key "features", "nurse_station_terminal", column: "parent_id"
   add_foreign_key "fire_alarm_control_panels", "subsystems"
   add_foreign_key "fire_alarm_control_panels", "suppliers"
   add_foreign_key "general_commercial_data", "subsystems"
@@ -957,7 +829,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
   add_foreign_key "material_and_deliveries", "suppliers"
   add_foreign_key "notification_devices", "subsystems"
   add_foreign_key "notification_devices", "suppliers"
-  add_foreign_key "nurse_station_terminal_module", "nurse_station_terminal", column: "parent_id"
+  add_foreign_key "nurse_station_terminal_module", "supplier_data_nurse_call_system", column: "parent_id"
   add_foreign_key "prerecorded_message_audio_modules", "subsystems"
   add_foreign_key "prerecorded_message_audio_modules", "suppliers"
   add_foreign_key "product_data", "subsystems"
@@ -967,7 +839,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_181055) do
   add_foreign_key "scope_of_works", "suppliers"
   add_foreign_key "spare_parts", "subsystems"
   add_foreign_key "spare_parts", "suppliers"
-  add_foreign_key "speakers_microphone", "nurse_station_terminal", column: "parent_id"
   add_foreign_key "subsystem_suppliers", "subsystems"
   add_foreign_key "subsystem_suppliers", "suppliers"
   add_foreign_key "subsystems", "systems"

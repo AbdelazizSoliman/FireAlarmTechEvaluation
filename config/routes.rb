@@ -1,7 +1,6 @@
 Rails.application.routes.draw do
   # ✅ API namespace for suppliers
   namespace :api do
-     get 'subsystem_tables', to: 'suppliers#subsystem_tables'
 
     namespace :supplier do
       resources :suppliers, only: [:create, :index, :show]
@@ -9,7 +8,7 @@ Rails.application.routes.draw do
       resources :project_scopes, only: [:index] 
       resources :systems, only: [:index] 
       resources :subsystems, only: [:index] # ✅ Removed duplicate
-
+      get 'subsystem_tables', to: 'suppliers#subsystem_tables'
       post 'register', to: 'suppliers#register'
       post 'login', to: 'sessions#create'
       get 'profile', to: 'sessions#profile'

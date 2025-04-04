@@ -165,49 +165,49 @@
         </div>
       </section>
 
-      <!-- 3. Create Sub Table -->
-      <section class="mb-8">
-        <h2 class="text-xl font-semibold cursor-pointer" onclick="toggleSection('create-sub-table-form')">
-          Create New Sub Table
-        </h2>
-        <div id="create-sub-table-form" class="hidden mt-2 p-4 bg-white rounded shadow">
-          <form action="/admin/create_sub_table" method="post">
-            <!-- Preserve filter parameters -->
-            <input type="hidden" name="project_filter" value="<%= @project_filter %>">
-            <input type="hidden" name="project_scope_filter" value="<%= @project_scope_filter %>">
-            <input type="hidden" name="system_filter" value="<%= @system_filter %>">
-            <input type="hidden" name="subsystem_filter" value="<%= @subsystem_filter %>">
+     <!-- 3. Create Sub Tables -->
+<section class="mb-8">
+  <h2 class="text-xl font-semibold cursor-pointer" onclick="toggleSection('create-sub-table-form')">
+    Create New Sub Tables
+  </h2>
+  <div id="create-sub-table-form" class="hidden mt-2 p-4 bg-white rounded shadow">
+    <form action="/admin/create_multiple_sub_tables" method="post">
+      <!-- Preserve filter params -->
+      <%= hidden_field_tag :project_filter, @project_filter %>
+      <%= hidden_field_tag :project_scope_filter, @project_scope_filter %>
+      <%= hidden_field_tag :system_filter, @system_filter %>
+      <%= hidden_field_tag :subsystem_filter, @subsystem_filter %>
 
-            <div>
-              <label for="subsystem_id_sub" class="block text-sm font-medium">Subsystem</label>
-              <select id="subsystem_id_sub" name="subsystem_id" required class="mt-1 block w-full">
-                <% @subsystems.each do |name, id| %>
-                  <option value="<%= id %>" <%= "selected" if @subsystem_filter == id.to_s %>><%= name %></option>
-                <% end %>
-              </select>
-            </div>
-            <div class="mt-4">
-              <label for="parent_table" class="block text-sm font-medium">Select Parent Table</label>
-              <select id="parent_table" name="parent_table" required class="mt-1 block w-full">
-                <% @main_tables.each do |td| %>
-                  <option value="<%= td.table_name %>"><%= td.table_name.humanize %></option>
-                <% end %>
-              </select>
-            </div>
-           <div class="mt-4">
-  <label for="sub_table_name" class="block text-sm font-medium">Sub-Table Name</label>
-  <input type="text" id="sub_table_name" name="sub_table_name" required placeholder="e.g., product_variants"
-         class="mt-1 block w-full border-gray-300 rounded"
-         oninput="checkSubTableName(this)">
-  <div id="sub-table-suggestions" class="text-sm text-red-600 mt-1"></div>
-</div>
+      <div>
+        <label class="block text-sm font-medium">Subsystem</label>
+        <select name="subsystem_id" id="subsystem_id_sub" class="mt-1 block w-full" required>
+          <% @subsystems.each do |name, id| %>
+            <option value="<%= id %>" <%= "selected" if @subsystem_filter == id.to_s %>><%= name %></option>
+          <% end %>
+        </select>
+      </div>
 
-            <button type="submit" class="mt-4 w-full bg-indigo-600 text-white py-2 rounded">
-              Create Sub Table
-            </button>
-          </form>
+      <div id="sub-tables-container" class="mt-4 space-y-4">
+        <div class="sub-table-row">
+          <label class="block text-sm font-medium mb-1">Select Parent Table</label>
+          <select name="parent_tables[]" class="block w-full mb-2">
+            <% @main_tables.each do |td| %>
+              <option value="<%= td.table_name %>"><%= td.table_name.humanize %></option>
+            <% end %>
+          </select>
+
+          <input type="text" name="sub_table_names[]" placeholder="e.g., module_variants"
+                 class="block w-full border-gray-300 rounded shadow-sm"
+                 required oninput="checkSubTableName(this, 0)">
+          <div id="sub-table-suggestions-0" class="text-sm text-red-600 mt-1"></div>
         </div>
-      </section>
+      </div>
+
+      <button type="button" class="mt-2 bg-blue-200 px-3 py-1 rounded" onclick="addSubTableRow()">+ Add Sub Table</button>
+      <button type="submit" class="mt-4 w-full bg-indigo-600 text-white py-2 rounded">Create Sub Tables</button>
+    </form>
+  </div>
+</section>
 
       <!-- 4. Add Column / Feature -->
       <section class="mb-8 p-4 bg-white rounded shadow">
@@ -341,75 +341,20 @@
 
   <!-- JavaScript Functions -->
   <script>
-    // Toggle visibility of a section by ID
-    function toggleSection(sectionId) {
-      const section = document.getElementById(sectionId);
-      section.classList.toggle('hidden');
-    }
-
-    // Add a new row for entering a table name
-    function addTableRow() {
-      const container = document.getElementById('main-tables-container');
-      const newRow = document.createElement('div');
-      newRow.className = 'table-row flex flex-col sm:flex-row sm:items-center sm:space-x-4';
-      newRow.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700 sm:w-1/4">Table Name</label>
-        <input type="text" name="table_names[]" placeholder="e.g. product_data" class="mt-1 sm:mt-0 flex-1 border-gray-300 rounded shadow-sm" required />
-      `;
-      container.appendChild(newRow);
-    }
-
-    // Load sub-tables via AJAX based on selected main table
-    function loadSubTables(parentTableName) {
-      const subTableSelect = document.getElementById('sub_table_select');
-      subTableSelect.innerHTML = '<option value="">-- Choose a Sub Table --</option>';
-      subTableSelect.disabled = true;
-
-      if (!parentTableName) return;
-
-      fetch(`/admin/sub_tables?parent_table=${encodeURIComponent(parentTableName)}`)
-        .then(response => response.json())
-        .then(data => {
-          data.forEach(tableDef => {
-            const option = document.createElement('option');
-            option.value = tableDef.table_name;
-            // Humanize the table name (e.g., "supplier_data" becomes "Supplier Data")
-            option.text = tableDef.table_name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-            subTableSelect.appendChild(option);
-          });
-          if (data.length > 0) {
-            subTableSelect.disabled = false;
-          }
-        })
-        .catch(error => console.error('Error loading sub-tables:', error));
-    }
-
-    // Synchronize final table name based on selections
-    function syncFinalTableName() {
-      const parentTableSelect = document.getElementById('parent_table_select');
-      const subTableSelect = document.getElementById('sub_table_select');
-      const finalTableInput = document.getElementById('final_table_name');
-      finalTableInput.value = subTableSelect.value || parentTableSelect.value;
-    }
-
-    // Show/hide the "Allowed Values" input based on selected feature type
-    function toggleFeatureValues() {
-      const featureSelect = document.getElementById('feature');
-      const container = document.getElementById('feature_values_container');
-      if (featureSelect.value === 'combobox' || featureSelect.value === 'checkboxes') {
-        container.classList.remove('hidden');
-      } else {
-        container.classList.add('hidden');
-      }
-    }
-  </script>
- <script>
 let rowIndex = 1;
+let subTableRowIndex = 1;
 
+// Toggle section visibility
+function toggleSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  section.classList.toggle('hidden');
+}
+
+// Add new Main Table input row
 function addTableRow() {
   const container = document.getElementById('main-tables-container');
+  const thisIndex = rowIndex++;
   const newRow = document.createElement('div');
-  const thisIndex = rowIndex;
   newRow.className = 'table-row flex flex-col sm:flex-row sm:items-center sm:space-x-4';
   newRow.innerHTML = `
     <label class="block text-sm font-medium text-gray-700 sm:w-1/4">Table Name</label>
@@ -421,9 +366,36 @@ function addTableRow() {
     </div>
   `;
   container.appendChild(newRow);
-  rowIndex++;
 }
 
+// Add new Sub Table row
+function addSubTableRow() {
+  const container = document.getElementById('sub-tables-container');
+  const idx = subTableRowIndex++;
+
+  const newRow = document.createElement('div');
+  newRow.className = 'sub-table-row mt-4';
+
+  const parentOptions = Array.from(document.querySelectorAll('select[name="parent_tables[]"] option'))
+    .map(opt => `<option value="${opt.value}">${opt.textContent}</option>`)
+    .join('');
+
+  newRow.innerHTML = `
+    <label class="block text-sm font-medium mb-1">Select Parent Table</label>
+    <select name="parent_tables[]" class="block w-full mb-2">
+      ${parentOptions}
+    </select>
+
+    <input type="text" name="sub_table_names[]" placeholder="e.g., module_variants"
+           class="block w-full border-gray-300 rounded shadow-sm"
+           required oninput="checkSubTableName(this, ${idx})">
+    <div id="sub-table-suggestions-${idx}" class="text-sm text-red-600 mt-1"></div>
+  `;
+
+  container.appendChild(newRow);
+}
+
+// Check Main Table availability + suggest correction
 function checkTableNameAvailability(input, index = 0) {
   const name = input.value.trim();
   const subsystemName = document.getElementById('subsystem_id_main')?.selectedOptions[0]?.text || '';
@@ -446,10 +418,11 @@ function checkTableNameAvailability(input, index = 0) {
     });
 }
 
-function checkSubTableName(input) {
+// Check Sub Table availability + suggest correction
+function checkSubTableName(input, index = 0) {
   const name = input.value.trim();
   const subsystemName = document.getElementById('subsystem_id_sub')?.selectedOptions[0]?.text || '';
-  const suggestionEl = document.getElementById('sub-table-suggestions');
+  const suggestionEl = document.getElementById(`sub-table-suggestions-${index}`);
   if (!name) {
     suggestionEl.innerHTML = '';
     return;
@@ -460,25 +433,67 @@ function checkSubTableName(input) {
     .then(data => {
       let html = '';
       if (data.exists) {
-        html += `❗ Table already exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion('${data.suggested}')">${data.suggested}</span>`;
+        html += `❗ Table already exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion(this, ${index})">${data.suggested}</span>`;
       } else if (data.spelling_suggestion && data.spelling_suggestion !== name) {
-        html += `💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion('${data.spelling_suggestion}')">${data.spelling_suggestion}</span>?`;
+        html += `💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion(this, ${index})">${data.spelling_suggestion}</span>?`;
       }
       suggestionEl.innerHTML = html;
     });
 }
 
+// Autofill suggestion for main table
 function fillSuggested(el, index) {
   const suggestion = el.textContent;
   const inputField = document.querySelectorAll('input[name="table_names[]"]')[index];
   inputField.value = suggestion;
-  checkTableNameAvailability(inputField, index); // recheck
+  checkTableNameAvailability(inputField, index);
 }
 
-function fillSubSuggestion(suggestion) {
-  const input = document.getElementById('sub_table_name');
-  input.value = suggestion;
-  checkSubTableName(input); // recheck
+// Autofill suggestion for sub table
+function fillSubSuggestion(el, index) {
+  const suggestion = el.textContent;
+  const inputField = document.querySelectorAll('input[name="sub_table_names[]"]')[index];
+  inputField.value = suggestion;
+  checkSubTableName(inputField, index);
+}
+
+// Load sub-tables (for feature selection)
+function loadSubTables(parentTableName) {
+  const subTableSelect = document.getElementById('sub_table_select');
+  subTableSelect.innerHTML = '<option value="">-- Choose a Sub Table --</option>';
+  subTableSelect.disabled = true;
+
+  if (!parentTableName) return;
+
+  fetch(`/admin/sub_tables?parent_table=${encodeURIComponent(parentTableName)}`)
+    .then(response => response.json())
+    .then(data => {
+      data.forEach(tableDef => {
+        const option = document.createElement('option');
+        option.value = tableDef.table_name;
+        option.text = tableDef.table_name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        subTableSelect.appendChild(option);
+      });
+      if (data.length > 0) {
+        subTableSelect.disabled = false;
+      }
+    })
+    .catch(error => console.error('Error loading sub-tables:', error));
+}
+
+// Sync final table name before adding feature
+function syncFinalTableName() {
+  const parentTableSelect = document.getElementById('parent_table_select');
+  const subTableSelect = document.getElementById('sub_table_select');
+  const finalTableInput = document.getElementById('final_table_name');
+  finalTableInput.value = subTableSelect.value || parentTableSelect.value;
+}
+
+// Show/hide feature values input
+function toggleFeatureValues() {
+  const featureSelect = document.getElementById('feature');
+  const container = document.getElementById('feature_values_container');
+  container.classList.toggle('hidden', !(featureSelect.value === 'combobox' || featureSelect.value === 'checkboxes'));
 }
 </script>
 

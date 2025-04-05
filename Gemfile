@@ -18,6 +18,8 @@ gem 'rack-cors', require: 'rack/cors'
 # Sprockets integration for Rails asset pipeline
 gem 'sprockets-rails'
 
+gem "standard"
+
 # PostgreSQL as the database for Active Record
 gem 'pg', '~> 1.1'
 

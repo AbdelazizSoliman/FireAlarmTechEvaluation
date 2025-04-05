@@ -272,17 +272,22 @@ class DynamicTablesController < ApplicationController
     column_type = params[:column_type]
     feature = params[:feature]
     allowed_values = params[:feature_values].to_s.split(',').map(&:strip).reject(&:blank?).uniq
-
+  
+    # Create column in table
     DynamicTableManager.add_column(table_name, column_name, column_type)
-
+  
+    # Save metadata
     metadata = ColumnMetadata.find_or_initialize_by(table_name: table_name, column_name: column_name)
     metadata.feature = feature
+    metadata.row = params[:row]
+    metadata.col = params[:col]
     metadata.options = metadata.options.merge("allowed_values" => allowed_values)
     metadata.save!
-
+  
     flash[:success] = "Column #{column_name} added to #{table_name}."
     redirect_to admin_path(table_name: table_name, **filter_params)
   end
+  
 
   def show
     subsystem_id = params[:subsystemId]

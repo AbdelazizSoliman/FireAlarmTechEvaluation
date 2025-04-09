@@ -484,32 +484,58 @@
               >
             </div>
 
-            <!-- Grid Position -->
-            <div class="grid grid-cols-2 gap-4">
+            <!-- Grid Position for Label -->
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <label for="label_row" class="block text-sm font-medium"
+                  >Label Row</label
+                >
+                <input
+                  type="number"
+                  id="label_row"
+                  name="label_row"
+                  class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                  placeholder="e.g. 0"
+                />
+              </div>
+              <div>
+                <label for="label_col" class="block text-sm font-medium"
+                  >Label Column</label
+                >
+                <input
+                  type="number"
+                  id="label_col"
+                  name="label_col"
+                  class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                  placeholder="e.g. 0"
+                />
+              </div>
+            </div>
+
+            <!-- Grid Position for Value -->
+            <div class="grid grid-cols-2 gap-4 mt-4">
               <div>
                 <label for="row" class="block text-sm font-medium"
-                  >Row Position</label
+                  >Value Row</label
                 >
                 <input
                   type="number"
                   id="row"
                   name="row"
-                  placeholder="e.g., 1"
-                  min="0"
                   class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                  placeholder="e.g. 0"
                 />
               </div>
               <div>
                 <label for="col" class="block text-sm font-medium"
-                  >Column Position</label
+                  >Value Column</label
                 >
                 <input
                   type="number"
                   id="col"
                   name="col"
-                  placeholder="e.g., 2"
-                  min="0"
                   class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                  placeholder="e.g. 1"
                 />
               </div>
             </div>

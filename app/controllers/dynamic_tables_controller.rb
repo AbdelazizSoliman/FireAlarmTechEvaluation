@@ -268,14 +268,21 @@ class DynamicTablesController < ApplicationController
   
   def add_column
     table_name = params[:table_name]
-    column_name = params[:column_name]
+    raw_col_name = params[:column_name]
+    normalized_col_name = to_db_name(raw_col_name)  # 🟢 This ensures it’s a safe “product_brand_name”-style
+  
     column_type = params[:column_type]
     feature = params[:feature]
     allowed_values = params[:feature_values].to_s.split(',').map(&:strip).reject(&:blank?).uniq
   
-    DynamicTableManager.add_column(table_name, column_name, column_type)
+    # Create the actual DB column with the normalized name
+    DynamicTableManager.add_column(table_name, normalized_col_name, column_type)
   
-    metadata = ColumnMetadata.find_or_initialize_by(table_name: table_name, column_name: column_name)
+    # Save (or update) the matching metadata
+    metadata = ColumnMetadata.find_or_initialize_by(
+      table_name: table_name,
+      column_name: normalized_col_name
+    )
     metadata.feature = feature
     metadata.row = params[:row]
     metadata.col = params[:col]
@@ -284,9 +291,10 @@ class DynamicTablesController < ApplicationController
     metadata.options = metadata.options.merge("allowed_values" => allowed_values)
     metadata.save!
   
-    flash[:success] = "Column #{column_name} added to #{table_name}."
+    flash[:success] = "Column #{normalized_col_name} added to #{table_name}."
     redirect_to admin_path(table_name: table_name, **filter_params)
   end
+  
   
   
 

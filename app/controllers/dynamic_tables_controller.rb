@@ -269,16 +269,16 @@ class DynamicTablesController < ApplicationController
   def add_column
     table_name = params[:table_name]
     raw_col_name = params[:column_name]
-    normalized_col_name = to_db_name(raw_col_name)  # 🟢 This ensures it’s a safe “product_brand_name”-style
+    normalized_col_name = to_db_name(raw_col_name) # Normalize for DB safety
   
     column_type = params[:column_type]
     feature = params[:feature]
     allowed_values = params[:feature_values].to_s.split(',').map(&:strip).reject(&:blank?).uniq
   
-    # Create the actual DB column with the normalized name
+    # Add DB column
     DynamicTableManager.add_column(table_name, normalized_col_name, column_type)
   
-    # Save (or update) the matching metadata
+    # Add or update metadata
     metadata = ColumnMetadata.find_or_initialize_by(
       table_name: table_name,
       column_name: normalized_col_name
@@ -288,15 +288,25 @@ class DynamicTablesController < ApplicationController
     metadata.col = params[:col]
     metadata.label_row = params[:label_row]
     metadata.label_col = params[:label_col]
-    metadata.options = metadata.options.merge("allowed_values" => allowed_values)
+    metadata.options ||= {}
+    metadata.options["allowed_values"] = allowed_values
     metadata.save!
   
     flash[:success] = "Column #{normalized_col_name} added to #{table_name}."
+  
+    # 🧩 Log metadata for debug
+    Rails.logger.info "🧩 Current metadata for #{table_name}:"
+    ColumnMetadata.where(table_name: table_name).each do |meta|
+      Rails.logger.info "  ➤ #{meta.column_name} | Feature: #{meta.feature} | Row: #{meta.row} | Col: #{meta.col} | Label Row: #{meta.label_row} | Label Col: #{meta.label_col} | Allowed Values: #{meta.options&.dig('allowed_values')}"
+    end
+  
+    # 📊 Log actual DB columns
+    db_columns = ActiveRecord::Base.connection.columns(table_name).map(&:name)
+    Rails.logger.info "📊 Actual DB columns for #{table_name}: #{db_columns.join(', ')}"
+  
     redirect_to admin_path(table_name: table_name, **filter_params)
   end
-  
-  
-  
+
 
   def show
     subsystem_id = params[:subsystemId]

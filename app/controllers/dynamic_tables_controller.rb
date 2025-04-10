@@ -238,6 +238,7 @@ class DynamicTablesController < ApplicationController
       next unless allowed_types.include?(col_type)
   
       # ✅ Prevent duplicate grid coordinates
+      if [row, col, label_row, label_col].all?(&:positive?)
       duplicate = ColumnMetadata.where(
         table_name: table_name,
         row: row,
@@ -251,6 +252,7 @@ class DynamicTablesController < ApplicationController
         flash[:error] += "⛔ Duplicate grid location for '#{raw_name}' at row #{row}, col #{col}, label_row #{label_row}, label_col #{label_col}. "
         next
       end
+    end
   
       begin
         ActiveRecord::Migration.add_column(
@@ -295,6 +297,10 @@ class DynamicTablesController < ApplicationController
     flash[created_features.any? ? :success : :error] += msg if msg.present?
   
     redirect_to admin_path(table_name: table_name, **filter_params)
+  end
+  
+  def feature_row
+    render partial: 'feature_row', locals: { idx: params[:idx].to_i }
   end
   
   

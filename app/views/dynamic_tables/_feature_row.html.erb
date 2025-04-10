@@ -1,0 +1,52 @@
+<div class="feature-row mb-4 border p-3 rounded" data-index="<%= idx %>">
+  <label>Feature Name</label>
+  <input type="text" name="feature_names[]" required class="w-full mb-2" />
+
+  <label>Column Type</label>
+  <select name="column_types[]" class="w-full mb-2">
+    <option value="string">String</option>
+    <option value="integer">Integer</option>
+    <option value="boolean">Boolean</option>
+    <option value="decimal">Decimal</option>
+    <option value="text">Text</option>
+    <option value="text[]">Text Array</option>
+    <option value="date">Date</option>
+  </select>
+
+  <label>Frontend Feature</label>
+  <select name="features[]" class="w-full mb-2">
+    <option value="">None</option>
+    <option value="combobox">Combobox</option>
+    <option value="checkboxes">Checkboxes</option>
+  </select>
+
+  <label>Allowed Values (if applicable)</label>
+  <input type="text" name="combobox_values_arr[]" placeholder="Comma-separated" class="w-full mb-2" />
+
+  <input type="hidden" name="has_sub_options_arr[]" value="" />
+  <input type="hidden" name="has_costs[]" value="" />
+  <input type="hidden" name="rate_keys[]" value="" />
+  <input type="hidden" name="amount_keys[]" value="" />
+  <input type="hidden" name="notes_keys[]" value="" />
+  <input type="hidden" name="sub_fields[]" value="" />
+  <input type="hidden" name="array_default_empties[]" value="0" />
+
+  <div class="grid grid-cols-2 gap-2">
+    <div>
+      <label>Label Row</label>
+      <input type="number" name="label_rows[]" class="w-full" />
+    </div>
+    <div>
+      <label>Label Col</label>
+      <input type="number" name="label_cols[]" class="w-full" />
+    </div>
+    <div>
+      <label>Row</label>
+      <input type="number" name="rows[]" class="w-full" />
+    </div>
+    <div>
+      <label>Col</label>
+      <input type="number" name="cols[]" class="w-full" />
+    </div>
+  </div>
+</div>

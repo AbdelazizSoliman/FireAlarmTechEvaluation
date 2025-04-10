@@ -203,18 +203,23 @@ class DynamicTablesController < ApplicationController
   
 
   def create_multiple_features
-    table_name = params[:table_name]
-    feature_names        = params[:feature_names]        || []
-    column_types         = params[:column_types]         || []
-    features             = params[:features]             || []
-    combobox_values_arr  = params[:combobox_values_arr]  || []
-    has_sub_options_arr  = params[:has_sub_options_arr]  || []
-    has_costs            = params[:has_costs]            || []
-    rate_keys            = params[:rate_keys]            || []
-    amount_keys          = params[:amount_keys]          || []
-    notes_keys           = params[:notes_keys]           || []
-    sub_fields           = params[:sub_fields]           || []
+    table_name            = params[:table_name]
+    feature_names         = params[:feature_names]        || []
+    column_types          = params[:column_types]         || []
+    features              = params[:features]             || []
+    combobox_values_arr   = params[:combobox_values_arr]  || []
+    has_sub_options_arr   = params[:has_sub_options_arr]  || []
+    has_costs             = params[:has_costs]            || []
+    rate_keys             = params[:rate_keys]            || []
+    amount_keys           = params[:amount_keys]          || []
+    notes_keys            = params[:notes_keys]           || []
+    sub_fields            = params[:sub_fields]           || []
     array_default_empties = params[:array_default_empties] || []
+  
+    label_rows = params[:label_rows] || []
+    label_cols = params[:label_cols] || []
+    rows       = params[:rows]       || []
+    cols       = params[:cols]       || []
   
     created_features = []
   
@@ -222,10 +227,30 @@ class DynamicTablesController < ApplicationController
       col_name = to_db_name(raw_name)
       next if col_name.blank?
   
-      col_type = column_types[idx]
-      front_feature = features[idx]
+      col_type    = column_types[idx]
+      front_feat  = features[idx]
+      row         = rows[idx].to_i
+      col         = cols[idx].to_i
+      label_row   = label_rows[idx].to_i
+      label_col   = label_cols[idx].to_i
+  
       allowed_types = %w[string integer boolean decimal text text[] date]
       next unless allowed_types.include?(col_type)
+  
+      # ✅ Prevent duplicate grid coordinates
+      duplicate = ColumnMetadata.where(
+        table_name: table_name,
+        row: row,
+        col: col,
+        label_row: label_row,
+        label_col: label_col
+      ).exists?
+  
+      if duplicate
+        flash[:error] ||= ""
+        flash[:error] += "⛔ Duplicate grid location for '#{raw_name}' at row #{row}, col #{col}, label_row #{label_row}, label_col #{label_col}. "
+        next
+      end
   
       begin
         ActiveRecord::Migration.add_column(
@@ -239,17 +264,21 @@ class DynamicTablesController < ApplicationController
         parsed_values = raw_values ? raw_values.split(',').map(&:strip) : nil
   
         options_hash = {}
-        options_hash[:values] = parsed_values if parsed_values
+        options_hash[:allowed_values] = parsed_values if parsed_values
   
         ColumnMetadata.create!(
           table_name: table_name,
           column_name: col_name,
-          feature: front_feature,
+          feature: front_feat,
           has_cost: has_costs[idx].present?,
           sub_field: sub_fields[idx],
           rate_key: rate_keys[idx],
           amount_key: amount_keys[idx],
           notes_key: notes_keys[idx],
+          row: row,
+          col: col,
+          label_row: label_row,
+          label_col: label_col,
           options: options_hash
         )
   
@@ -261,10 +290,13 @@ class DynamicTablesController < ApplicationController
       end
     end
   
-    msg = created_features.any? ? "Created features: #{created_features.join(', ')}" : "No features created."
-    flash[created_features.any? ? :success : :error] = msg
+    msg = created_features.any? ? "✅ Created features: #{created_features.join(', ')}" : nil
+    flash[created_features.any? ? :success : :error] ||= ""
+    flash[created_features.any? ? :success : :error] += msg if msg.present?
+  
     redirect_to admin_path(table_name: table_name, **filter_params)
   end
+  
   
   def add_column
     table_name = params[:table_name]

@@ -25,12 +25,24 @@ module Api
 
     # GET /api/table_metadata/:table_name
     def table_metadata
-      columns = ActiveRecord::Base.connection.columns(@table_name).map(&:name)
-      metadata = ColumnMetadata.where(table_name: @table_name).pluck(:column_name, :feature, :options).to_h do |col_name, feat, opts|
-        [col_name, { feature: feat, options: opts }]
+      @table_name = params[:table_name] # Ensure @table_name is set
+    
+      # Use metadata as the source of truth for column names
+      metadata_records = ColumnMetadata.where(table_name: @table_name)
+    
+      metadata = metadata_records.each_with_object({}) do |meta, hash|
+        hash[meta.column_name] = {
+          feature: meta.feature,
+          options: meta.options
+        }
       end
-      render json: { columns: columns, metadata: metadata }
+    
+      render json: {
+        columns: metadata.keys,  # ✅ Use metadata keys instead of DB columns
+        metadata: metadata
+      }
     end
+    
 
     # POST /api/save_data/:table_name
     def save_data

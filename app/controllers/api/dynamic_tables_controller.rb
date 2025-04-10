@@ -25,20 +25,21 @@ module Api
 
     # GET /api/table_metadata/:table_name
     def table_metadata
-      @table_name = params[:table_name] # Ensure @table_name is set
+      @table_name = params[:table_name]
     
-      # Use metadata as the source of truth for column names
-      metadata_records = ColumnMetadata.where(table_name: @table_name)
-    
-      metadata = metadata_records.each_with_object({}) do |meta, hash|
+      metadata = ColumnMetadata.where(table_name: @table_name).each_with_object({}) do |meta, hash|
         hash[meta.column_name] = {
           feature: meta.feature,
-          options: meta.options
+          options: meta.options,
+          row: meta.row,
+          col: meta.col,
+          label_row: meta.label_row,
+          label_col: meta.label_col
         }
       end
     
       render json: {
-        columns: metadata.keys,  # ✅ Use metadata keys instead of DB columns
+        columns: metadata.keys,
         metadata: metadata
       }
     end

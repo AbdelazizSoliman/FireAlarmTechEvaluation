@@ -4,9 +4,12 @@ module Api
 
     # GET /api/dynamic_tables/:table_name
     def index
+      table_def = TableDefinition.find_by(table_name: @table_name)
+      is_static = table_def&.static?
+    
       columns = ActiveRecord::Base.connection.columns(@table_name).map(&:name)
       records = ActiveRecord::Base.connection.execute("SELECT * FROM #{@table_name}").to_a
-      render json: { columns: columns, data: records }
+      render json: { columns: columns, data: records, static: is_static }
     end
 
     # PATCH /api/dynamic_tables/:table_name/:id
@@ -25,8 +28,7 @@ module Api
 
     # GET /api/table_metadata/:table_name
     def table_metadata
-      @table_name = params[:table_name]
-    
+      table_def = TableDefinition.find_by(table_name: @table_name)
       metadata = ColumnMetadata.where(table_name: @table_name).each_with_object({}) do |meta, hash|
         hash[meta.column_name] = {
           feature: meta.feature,
@@ -40,19 +42,21 @@ module Api
     
       render json: {
         columns: metadata.keys,
-        metadata: metadata
+        metadata: metadata,
+        static: table_def&.static?
       }
     end
     
 
     # POST /api/save_data/:table_name
     def save_data
-      data = params[:data].permit!.to_h # Permit all for dynamic columns, adjust as needed
-      model_class = @table_name.classify.constantize rescue nil
+      data = params[:data].permit!.to_h
+      model_class = @table_name.classify.safe_constantize
+    
       unless model_class
         render json: { error: "Table #{@table_name} not found" }, status: :not_found and return
       end
-
+    
       record = model_class.new(data)
       if record.save
         render json: { success: true, record: record.as_json }, status: :created

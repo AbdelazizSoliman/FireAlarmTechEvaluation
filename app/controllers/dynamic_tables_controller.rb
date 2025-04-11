@@ -349,21 +349,34 @@ class DynamicTablesController < ApplicationController
   def show
     subsystem_id = params[:subsystemId]
     table_name = params[:table_name]
-    allowed_tables = TableDefinition.pluck(:table_name) # Dynamically allow all created tables
-    unless allowed_tables.include?(table_name)
+    table_def = TableDefinition.find_by(table_name: table_name)
+  
+    unless table_def
       return render json: { error: "Invalid table" }, status: :bad_request
     end
-
-    model = table_name.classify.constantize
-    records = model.where(subsystem_id: subsystem_id)
-
-    render json: {
-      columns: records.first&.attributes&.keys,
-      data: records
-    }
+  
+    if table_def.static?
+      model = table_name.classify.constantize
+      records = model.where(subsystem_id: subsystem_id)
+      render json: {
+        columns: records.first&.attributes&.keys,
+        data: records,
+        static: true
+      }
+    else
+      model = table_name.classify.constantize rescue nil
+      records = model&.where(subsystem_id: subsystem_id)
+  
+      render json: {
+        columns: records&.first&.attributes&.keys,
+        data: records,
+        static: false
+      }
+    end
   rescue NameError
     render json: { error: "Invalid table" }, status: :bad_request
   end
+  
 
   private
 

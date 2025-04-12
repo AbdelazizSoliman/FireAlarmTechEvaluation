@@ -28,7 +28,9 @@ module Api
 
     # GET /api/table_metadata/:table_name
     def table_metadata
+      @table_name = params[:table_name]
       table_def = TableDefinition.find_by(table_name: @table_name)
+    
       metadata = ColumnMetadata.where(table_name: @table_name).each_with_object({}) do |meta, hash|
         hash[meta.column_name] = {
           feature: meta.feature,
@@ -43,9 +45,10 @@ module Api
       render json: {
         columns: metadata.keys,
         metadata: metadata,
-        static: table_def&.static?
+        static: table_def&.static || false # <--- Add this
       }
     end
+    
     
 
     # POST /api/save_data/:table_name

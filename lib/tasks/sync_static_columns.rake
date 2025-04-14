@@ -1,25 +1,48 @@
-desc "Sync static models to ColumnMetadata"
-task sync_static_columns: :environment do
-  static_models = TableDefinition.where(static: true).pluck(:table_name)
-  static_models.each do |table_name|
-    model = table_name.classify.safe_constantize
-    next unless model
+# lib/tasks/sync_static_columns.rake
+namespace :sync do
+  desc "Sync legacy static tables and columns into table_definitions and column_metadatas"
+  task legacy_tables: :environment do
+    puts "🔍 Scanning legacy tables..."
 
-    model.columns.each do |col|
-      next if %w[id created_at updated_at].include?(col.name)
+    existing_tables = ActiveRecord::Base.connection.tables
+    system_tables = %w[schema_migrations ar_internal_metadata active_storage_blobs active_storage_attachments active_storage_variant_records]
 
-      ColumnMetadata.find_or_create_by!(
-        table_name: table_name,
-        column_name: col.name
-      ) do |meta|
-        meta.feature = "text"
-        meta.row = 1
-        meta.col = 1
-        meta.label_row = 0
-        meta.label_col = 0
-        meta.options = {}
+    existing_tables.each do |table|
+      next if system_tables.include?(table)
+      next if table.start_with?("pg_")
+
+      # Check if it already exists
+      td = TableDefinition.find_or_initialize_by(table_name: table)
+
+      unless td.persisted?
+        # Try to infer subsystem_id from first row, if exists
+        subsystem_id = nil
+        if ActiveRecord::Base.connection.columns(table).map(&:name).include?("subsystem_id")
+          row = ActiveRecord::Base.connection.exec_query("SELECT subsystem_id FROM #{table} LIMIT 1").first
+          subsystem_id = row&.dig("subsystem_id")
+        end
+
+        td.subsystem_id = subsystem_id
+        td.static = true
+        td.save!
+        puts "✅ Added TableDefinition: #{table}"
+      end
+
+      # Sync column_metadatas
+      existing_column_names = ColumnMetadata.where(table_name: table).pluck(:column_name)
+
+      ActiveRecord::Base.connection.columns(table).each do |col|
+        next if existing_column_names.include?(col.name)
+
+        ColumnMetadata.create!(
+          table_name: table,
+          column_name: col.name,
+          options: { allowed_values: [] }
+        )
+        puts "🧩 Added ColumnMetadata for #{table}.#{col.name}"
       end
     end
+
+    puts "🎉 Legacy static table sync complete!"
   end
-  puts "✅ Synced static model columns to ColumnMetadata."
 end

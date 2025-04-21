@@ -82,6 +82,9 @@ test:
 #
 production:
   <<: *default
-  database: supplier_api_production
-  username: supplier_api
-  password: <%= ENV["SUPPLIER_API_DATABASE_PASSWORD"] %>
+  database: digitalconstructions
+  username: digitalconstructions_user
+  password: OthXajUg8Ua2oUco1YsxTs8cvLbOzjNd
+  host: dpg-d0l1q9midbo4c7390rv0-a.oregon-postgres.render.com
+  sslmode: require
+  port: 5432

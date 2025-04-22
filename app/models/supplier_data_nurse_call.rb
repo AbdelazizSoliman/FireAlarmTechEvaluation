@@ -1,0 +1,2 @@
+class SupplierDataNurseCall < ApplicationRecord
+end

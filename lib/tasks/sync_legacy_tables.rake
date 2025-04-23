@@ -14,19 +14,17 @@ namespace :sync do
 
     all_db_tables.each do |table|
       columns = ActiveRecord::Base.connection.columns(table).map(&:name)
-
-      # 🚫 Skip tables that are not subsystem-related
       next unless columns.include?("subsystem_id")
 
-      # ✅ Register in TableDefinition
+      subsystem_id = ActiveRecord::Base.connection.select_value("SELECT subsystem_id FROM #{table} LIMIT 1") || Subsystem.first&.id || 1
+
       table_def = TableDefinition.find_or_create_by(table_name: table) do |td|
         td.static = true
-        td.subsystem_id = ActiveRecord::Base.connection.select_value("SELECT subsystem_id FROM #{table} LIMIT 1") || Subsystem.first&.id || 1
-        td.position = TableDefinition.where(subsystem_id: td.subsystem_id).maximum(:position).to_i + 1
-        puts "✅ Added TableDefinition: #{table}"
+        td.subsystem_id = subsystem_id
+        td.position = TableDefinition.where(subsystem_id: subsystem_id).maximum(:position).to_i + 1
       end
+      puts "✅ Synced table #{table} to subsystem #{subsystem_id} at position #{table_def.position}"
 
-      # 🧩 Sync each column to ColumnMetadata
       columns.each do |col|
         next if %w[id created_at updated_at subsystem_id supplier_id].include?(col)
 
@@ -46,6 +44,6 @@ namespace :sync do
       end
     end
 
-    puts "🎉 Sync complete! Subsystem-related legacy tables and columns are now registered."
+    puts "🎉 Sync complete!"
   end
 end

@@ -1,5 +1,6 @@
 class DynamicTablesController < ApplicationController
   require 'did_you_mean'
+  require "dynamic_table_manager"
 
   before_action :set_table_name, only: [:add_column]
 

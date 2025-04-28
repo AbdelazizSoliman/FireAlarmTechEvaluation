@@ -1,6 +1,6 @@
 module Api
   class DynamicTablesController < ApplicationController
-    before_action :set_table_name, only: %i[index update table_metadata save_data]
+    # before_action :set_table_name, only: %i[index update table_metadata save_data]
     skip_forgery_protection
     # GET /api/dynamic_tables/:table_name
     def index

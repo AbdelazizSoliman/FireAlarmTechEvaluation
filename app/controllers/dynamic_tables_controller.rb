@@ -256,11 +256,16 @@ class DynamicTablesController < ApplicationController
     end
   
       begin
+        options = {}
+        if col_type == 'text[]'
+          options = { array: true, default: (array_default_empties[idx] == '1' ? [] : nil) }
+        end
+      
         ActiveRecord::Migration.add_column(
           table_name.to_sym,
           col_name.to_sym,
           col_type == 'text[]' ? :text : col_type.to_sym,
-          (col_type == 'text[]' ? { array: true, default: (array_default_empties[idx] == '1' ? [] : nil) } : {})
+          **options
         )
   
         raw_values = combobox_values_arr[idx].presence

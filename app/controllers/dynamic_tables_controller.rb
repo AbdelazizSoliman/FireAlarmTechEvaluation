@@ -1,6 +1,6 @@
 class DynamicTablesController < ApplicationController
   require 'did_you_mean'
-  require "dynamic_table_manager"
+  require_dependency 'dynamic_table_manager'
 
   before_action :set_table_name, only: [:add_column]
 
@@ -315,7 +315,7 @@ class DynamicTablesController < ApplicationController
     allowed_values = params[:feature_values].to_s.split(',').map(&:strip).reject(&:blank?).uniq
   
     # Add DB column
-    DynamicTableManager.add_column(table_name, normalized_col_name, column_type)
+    ::DynamicTableManager.add_column(table_name, normalized_col_name, column_type)
   
     # Add or update metadata
     metadata = ColumnMetadata.find_or_initialize_by(

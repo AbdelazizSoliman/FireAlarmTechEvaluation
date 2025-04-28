@@ -360,194 +360,168 @@
         </section>
 
         <!-- 4. Add Column / Feature -->
-        <section class="mb-8 p-4 bg-white rounded shadow">
-          <h2 class="text-xl font-semibold mb-2">
-            Add New Feature (Select Table, then Sub Table)
-          </h2>
-          <form
-            action="/admin/add_column"
-            method="post"
-            class="space-y-4"
-            onsubmit="syncFinalTableName()"
-          >
-            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-            <!-- Hidden field to store final table name -->
-            <input
-              type="hidden"
-              id="final_table_name"
-              name="table_name"
-              value=""
-            />
+<section class="mb-8 p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">
+    Add New Feature(s)
+  </h2>
 
-            <!-- Table Selection -->
-            <div>
-              <label for="parent_table_select" class="block text-sm font-medium"
-                >Select Main Table</label
-              >
-              <select
-                id="parent_table_select"
-                name="parent_table"
-                class="mt-1 block w-full border-gray-300 rounded"
-                onchange="loadSubTables(this.value); syncFinalTableName();"
-              >
-                <option value="">-- Choose a Main Table --</option>
-                <% @main_tables.each do |td| %>
-                  <option value="<%= td.table_name %>">
-                    <%= td.table_name.humanize %>
-                  </option>
-                <% end %>
-              </select>
-            </div>
-            <div>
-              <label for="sub_table_select" class="block text-sm font-medium"
-                >Select Sub Table (optional)</label
-              >
-              <select
-                id="sub_table_select"
-                class="mt-1 block w-full border-gray-300 rounded"
-                disabled
-                onchange="syncFinalTableName()"
-              >
-                <option value="">-- Choose a Sub Table --</option>
-              </select>
-            </div>
+  <form action="/admin/create_multiple_features" method="post" class="space-y-4" onsubmit="syncFinalTableName()">
+    <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
 
-            <!-- Feature Name -->
-            <div>
-              <label for="column_name" class="block text-sm font-medium"
-                >Feature Name</label
-              >
-              <input
-                type="text"
-                id="column_name"
-                name="column_name"
-                required
-                placeholder="e.g., category"
-                class="mt-1 block w-full border-gray-300 rounded"
-              />
-            </div>
+    <!-- Hidden field to carry the actual table name -->
+    <input type="hidden" id="final_table_name" name="table_name" value="" />
 
-            <!-- Feature Type -->
-            <div>
-              <label for="column_type" class="block text-sm font-medium"
-                >Feature Type</label
-              >
-              <select
-                id="column_type"
-                name="column_type"
-                class="mt-1 block w-full border-gray-300 rounded"
-              >
-                <option value="string">String</option>
-                <option value="integer">Integer</option>
-                <option value="boolean">Boolean</option>
-                <option value="decimal">Decimal</option>
-                <option value="text">Text</option>
-                <option value="text[]">Text Array</option>
-                <option value="date">Date</option>
-              </select>
-            </div>
+    <!-- 1) Main Table Selector -->
+    <div>
+      <label for="parent_table_select" class="block text-sm font-medium">Select Main Table</label>
+      <select id="parent_table_select" class="mt-1 block w-full border-gray-300 rounded"
+              onchange="loadSubTables(this.value); syncFinalTableName();">
+        <option value="">-- Choose a Main Table --</option>
+        <% @main_tables.each do |td| %>
+          <option value="<%= td.table_name %>"><%= td.table_name.humanize %></option>
+        <% end %>
+      </select>
+    </div>
 
-            <!-- Front-end Feature -->
-            <div>
-              <label for="feature" class="block text-sm font-medium"
-                >Front-end Feature</label
-              >
-              <select
-                id="feature"
-                name="feature"
-                class="mt-1 block w-full border-gray-300 rounded"
-                onchange="toggleFeatureValues()"
-              >
-                <option value="">None</option>
-                <option value="combobox">Combobox</option>
-                <option value="checkboxes">Checkboxes</option>
-              </select>
-            </div>
+    <!-- 2) Sub Table Selector (optional) -->
+    <div>
+      <label for="sub_table_select" class="block text-sm font-medium">Select Sub Table (optional)</label>
+      <select id="sub_table_select" class="mt-1 block w-full border-gray-300 rounded" disabled
+              onchange="syncFinalTableName()">
+        <option value="">-- Choose a Sub Table --</option>
+      </select>
+    </div>
 
-            <!-- Allowed Values (only shown for combobox/checkboxes) -->
-            <div id="feature_values_container" class="hidden">
-              <label
-                for="feature_values"
-                class="block text-sm font-medium mt-2"
-              >
-                Allowed Values (comma-separated)
-              </label>
-              <input
-                type="text"
-                id="feature_values"
-                name="feature_values"
-                placeholder="e.g., LCD touchscreen, Traditional Module with Press Buttons"
-                class="mt-1 block w-full border-gray-300 rounded"
-              />
-              <small class="text-gray-500"
-                >Enter distinct values separated by commas</small
-              >
-            </div>
+    <!-- 3) Dynamic Features Container -->
+    <div id="features-container" class="space-y-6 mt-6">
+      <script>
+        document.addEventListener("DOMContentLoaded", () => addFeatureRow());
+      </script>
+    </div>
 
-            <!-- Grid Position for Label -->
-            <div class="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <label for="label_row" class="block text-sm font-medium"
-                  >Label Row</label
-                >
-                <input
-                  type="number"
-                  id="label_row"
-                  name="label_row"
-                  class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                  placeholder="e.g. 0"
-                />
-              </div>
-              <div>
-                <label for="label_col" class="block text-sm font-medium"
-                  >Label Column</label
-                >
-                <input
-                  type="number"
-                  id="label_col"
-                  name="label_col"
-                  class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                  placeholder="e.g. 0"
-                />
-              </div>
-            </div>
+    <!-- Button to add another feature row -->
+    <button type="button"
+            class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+            onclick="addFeatureRow()">
+      + Add Another Feature
+    </button>
 
-            <!-- Grid Position for Value -->
-            <div class="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <label for="row" class="block text-sm font-medium"
-                  >Value Row</label
-                >
-                <input
-                  type="number"
-                  id="row"
-                  name="row"
-                  class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                  placeholder="e.g. 0"
-                />
-              </div>
-              <div>
-                <label for="col" class="block text-sm font-medium"
-                  >Value Column</label
-                >
-                <input
-                  type="number"
-                  id="col"
-                  name="col"
-                  class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                  placeholder="e.g. 1"
-                />
-              </div>
-            </div>
+    <!-- Submit all features -->
+    <button type="submit"
+            class="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+            onclick="syncFinalTableName()">
+      Submit All Features
+    </button>
+  </form>
+</section>
 
-            <button
-              type="submit"
-              class="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
-            >
-              Add Feature
-            </button>
-          </form>
-        </section>
+<script>
+  let featureIndex = 0;
+
+  function addFeatureRow() {
+    const idx = featureIndex++;
+    const container = document.getElementById("features-container");
+    const row = document.createElement("div");
+    row.className = "p-4 bg-gray-50 rounded border";
+
+    row.innerHTML = `
+      <h3 class="font-medium mb-2">Feature #${idx + 1}</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Feature Name</label>
+          <input type="text" name="feature_names[]" required
+                 class="mt-1 block w-full border-gray-300 rounded"
+                 placeholder="e.g. category" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Column Type</label>
+          <select name="column_types[]" class="mt-1 block w-full border-gray-300 rounded">
+            <option value="string">String</option>
+            <option value="integer">Integer</option>
+            <option value="boolean">Boolean</option>
+            <option value="decimal">Decimal</option>
+            <option value="text">Text</option>
+            <option value="text[]">Text Array</option>
+            <option value="date">Date</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium">Front-end Feature</label>
+          <select name="features[]" onchange="toggleValuesInput(${idx}, this.value)"
+                  class="mt-1 block w-full border-gray-300 rounded">
+            <option value="">None</option>
+            <option value="combobox">Combobox</option>
+            <option value="checkboxes">Checkboxes</option>
+          </select>
+        </div>
+        <div id="values-container-${idx}" class="hidden">
+          <label class="block text-sm font-medium">Allowed Values</label>
+          <input type="text" name="combobox_values_arr[]" 
+                 class="mt-1 block w-full border-gray-300 rounded"
+                 placeholder="comma-separated values" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium">Label Row</label>
+          <input type="number" name="label_rows[]" class="mt-1 block w-full border-gray-300 rounded" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Label Column</label>
+          <input type="number" name="label_cols[]" class="mt-1 block w-full border-gray-300 rounded" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium">Value Row</label>
+          <input type="number" name="rows[]" class="mt-1 block w-full border-gray-300 rounded" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Value Column</label>
+          <input type="number" name="cols[]" class="mt-1 block w-full border-gray-300 rounded" />
+        </div>
+      </div>
+    `;
+
+    container.appendChild(row);
+  }
+
+  function toggleValuesInput(idx, featureType) {
+    const cont = document.getElementById(`values-container-${idx}`);
+    cont.classList.toggle("hidden", !(featureType === "combobox" || featureType === "checkboxes"));
+  }
+
+  function syncFinalTableName() {
+    const main = document.getElementById("parent_table_select").value;
+    const sub  = document.getElementById("sub_table_select").value;
+    document.getElementById("final_table_name").value = sub || main;
+  }
+
+  function loadSubTables(parent) {
+    const sel = document.getElementById("sub_table_select");
+    sel.innerHTML = '<option value="">-- Choose a Sub Table --</option>';
+    sel.disabled = true;
+    if (!parent) return;
+
+    fetch(`/admin/sub_tables?parent_table=${encodeURIComponent(parent)}`)
+      .then(r => r.json())
+      .then(data => {
+        data.forEach(td => {
+          const opt = document.createElement("option");
+          opt.value = td.table_name;
+          opt.text  = td.table_name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+          sel.appendChild(opt);
+        });
+        sel.disabled = data.length === 0;
+      });
+  }
+</script>
+
 
         <!-- Existing Features Table -->
         <% if @table_name.present? %>

@@ -1,7 +1,7 @@
 module Api
   class DynamicTablesController < ApplicationController
     before_action :set_table_name, only: %i[index update table_metadata save_data]
-
+    skip_forgery_protection
     # GET /api/dynamic_tables/:table_name
     def index
       table_def = TableDefinition.find_by(table_name: @table_name)
@@ -53,28 +53,37 @@ module Api
 
     # POST /api/save_data/:table_name
     def save_data
-      data = params[:data].permit!.to_h
-      model_class = @table_name.classify.safe_constantize
-    
-      unless model_class
-        render json: { error: "Table #{@table_name} not found" }, status: :not_found and return
-      end
-    
-      record = model_class.new(data)
+      supplier   = authenticate_supplier!
+      return render json: { error: 'Unauthorized' }, status: :unauthorized unless supplier
+
+      table_name   = params[:table_name]
+      payload      = params.require(:data).permit!   # all incoming form fields
+      subsystem_id = payload.delete("subsystem_id") || payload.delete(:subsystem_id)
+      model        = table_name.classify.constantize
+
+      record = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id)
+                    .first_or_initialize
+      record.assign_attributes(payload)
+      record.supplier_id  = supplier.id
+      record.subsystem_id = subsystem_id
+
       if record.save
-        render json: { success: true, record: record.as_json }, status: :created
+        render json: { message: "Data for #{table_name} saved." }, status: :created
       else
         render json: { error: record.errors.full_messages }, status: :unprocessable_entity
       end
+    rescue NameError
+      render json: { error: "Invalid table: #{table_name}" }, status: :bad_request
     end
-
     private
 
-    def set_table_name
-      @table_name = params[:table_name]
-      unless ActiveRecord::Base.connection.table_exists?(@table_name)
-        render json: { error: "Table #{@table_name} not found" }, status: :not_found and return
-      end
+    def authenticate_supplier!
+      auth = request.headers['Authorization']&.split(' ')&.last
+      return unless auth
+      payload = JWT.decode(auth, Rails.application.secret_key_base, true, algorithm: 'HS256').first
+      ::Supplier.find_by(id: payload['sub'])
+    rescue
+      nil
     end
   end
 end

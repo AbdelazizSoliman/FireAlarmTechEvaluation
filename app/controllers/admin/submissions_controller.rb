@@ -1,5 +1,5 @@
 # app/controllers/admin/submissions_controller.rb
-class Admin::SubmissionsController < Admin::BaseController
++ class Admin::SubmissionsController < ApplicationController
   def index
     @notifications = Notification
       .where(notification_type: 'submission')

@@ -4,25 +4,40 @@ module Api
     skip_forgery_protection
 
     def save_all
-      supplier = authenticate_supplier! || (return head :unauthorized)
+      supplier = authenticate_supplier!
+      return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
+
       all_payloads = params.require(:data).permit!.to_h
 
-      ActiveRecord::Base.transaction do
-        all_payloads.each do |table_name, payload|
-          # … your dynamic‐model upsert logic from before …
+      all_payloads.each do |table_name, payload|
+        # ensure table exists
+        unless ActiveRecord::Base.connection.table_exists?(table_name)
+          return render json: { error: "Table #{table_name} not found" },
+                        status: :bad_request
         end
 
-        # 🔔 Notify Admin
-        Notification.create!(
-          title:   "New Submission by #{supplier.supplier_name}",
-          body:    "Supplier ##{supplier.id} has submitted data for subsystem #{all_payloads.values.first['subsystem_id']}.",
-          notifiable: nil,                     # or link it to a Subsystem/ProjectScope
-          notification_type: 'submission',
-          additional_data: all_payloads.to_json
-        )
+        model = Class.new(ActiveRecord::Base) do
+          self.table_name = table_name
+          self.inheritance_column = :_type_disabled
+        end
+
+        # Extract subsystem_id & avoid mass-assign rails‐managed columns
+        p = payload.to_h
+        subsystem_id = p.delete("subsystem_id") || p.delete(:subsystem_id)
+        safe_attrs   = p.except("id", "created_at", "updated_at", "supplier_id")
+
+        record = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id)
+                      .first_or_initialize
+
+        record.assign_attributes(safe_attrs)
+        record.supplier_id  = supplier.id
+        record.subsystem_id = subsystem_id
+        record.save!  # let exception bubble if validation fails
       end
 
       render json: { message: "All tables saved." }, status: :created
+    rescue ActionController::ParameterMissing => e
+      render json: { error: e.message }, status: :bad_request
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
     end

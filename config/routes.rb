@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   # ✅ API namespace for suppliers
   namespace :api do
+    post 'save_all', to: 'dynamic_tables#save_all'
 
     namespace :supplier do
       resources :suppliers, only: [:create, :index, :show]

@@ -1,0 +1,25 @@
+<div class="p-8 max-w-4xl mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Submission Details</h1>
+  <p class="text-gray-600 mb-6">
+    <strong>Submitted at:</strong> <%= @notification.created_at.strftime("%Y-%m-%d %H:%M") %>
+  </p>
+
+  <% @payload.each do |table_name, fields| %>
+    <div class="mb-8">
+      <h2 class="text-xl font-semibold mb-2"><%= table_name.humanize %></h2>
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <dl class="divide-y divide-gray-100">
+          <% fields.each do |col, val| %>
+            <div class="px-6 py-4 flex justify-between">
+              <dt class="font-medium text-gray-700"><%= col.humanize %></dt>
+              <dd class="text-gray-900"><%= val.is_a?(Array) ? val.join(", ") : val %></dd>
+            </div>
+          <% end %>
+        </dl>
+      </div>
+    </div>
+  <% end %>
+
+  <%= link_to "Back to Submissions", admin_submissions_path,
+        class: "inline-block mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" %>
+</div>

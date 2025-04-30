@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+
+  namespace :admin do
+    resources :submissions, only: [:index, :show]
+  end
+  
   # ✅ API namespace for suppliers
   namespace :api do
     post 'save_all', to: 'dynamic_tables#save_all'

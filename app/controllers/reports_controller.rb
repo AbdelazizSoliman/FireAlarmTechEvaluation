@@ -136,16 +136,22 @@ class ReportsController < ApplicationController
   private
 
   # Loads suppliers (and optionally filters by subsystem)
+  # Builds @suppliers_with_subsystems based on which suppliers have submitted any data for the given subsystem
   def load_suppliers_with_subsystems
-    if params[:subsystem_id].present?
-      sid = params[:subsystem_id].to_i
-      @suppliers_with_subsystems = Supplier
-        .includes(:approved_subsystems)
-        .where(approved_subsystems: { id: sid })
-        .distinct
-    else
-      @suppliers_with_subsystems = Supplier.includes(:approved_subsystems).distinct
-    end
+    return (@suppliers_with_subsystems = Supplier.none) unless params[:subsystem_id].present?
+    sid = params[:subsystem_id].to_i
+    # Get all table definitions for this subsystem
+    table_defs = TableDefinition.where(subsystem_id: sid)
+    # For each table, collect supplier_ids that have submissions
+    supplier_ids = table_defs.flat_map do |td|
+      model = Class.new(ActiveRecord::Base) do
+        self.table_name        = td.table_name
+        self.inheritance_column = :_type_disabled
+      end
+      model.where(subsystem_id: sid).pluck(:supplier_id)
+    end.uniq.compact
+    @suppliers_with_subsystems = Supplier.where(id: supplier_ids)
+  end
   end
 
   # Load common context for dynamic actions

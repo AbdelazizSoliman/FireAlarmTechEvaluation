@@ -6,17 +6,17 @@ class ReportsController < ApplicationController
 
   # GET /reports
   def index
-    # You can list summary or links to available reports here
+    # Summary or navigation for different report types
   end
 
   # GET /reports/evaluation_tech_report
-  # Renders the form to select suppliers and subsystem
+  # Renders form to select suppliers & subsystem
   def evaluation_tech_report
     # @suppliers_with_subsystems set by before_action
   end
 
   # GET /reports/evaluation_data?supplier_id=...&subsystem_id=...
-  # Shows dynamic HTML report for a single supplier/subsystem
+  # Dynamic HTML report for one supplier/subsystem
   def evaluation_data
     @data_by_table = @table_defs.each_with_object({}) do |td, h|
       rec   = fetch_record(td, @supplier, @subsystem)
@@ -26,7 +26,7 @@ class ReportsController < ApplicationController
   end
 
   # GET /reports/generate_evaluation_report?supplier_id=...&subsystem_id=...
-  # Streams an Excel file of the evaluation data
+  # Streams an Excel download of the evaluation data
   def generate_excel_report
     p  = Axlsx::Package.new
     wb = p.workbook
@@ -36,7 +36,6 @@ class ReportsController < ApplicationController
 
       @table_defs.each do |td|
         sheet.add_row [td.table_name.titleize, nil, nil], b: true
-
         rec   = fetch_record(td, @supplier, @subsystem)
         attrs = rec&.attributes&.except(*system_cols) || {}
 
@@ -56,48 +55,38 @@ class ReportsController < ApplicationController
   end
 
   # GET /reports/evaluation_report
-  # Alias or legacy action if needed
+  # Legacy alias if still used
   def evaluation_report
     evaluation_data
     render :evaluation_report
   end
 
   # GET /reports/evaluation_result?supplier_id=...&subsystem_id=...
-  # Dynamic evaluation data display for any subsystem tables
+  # Dynamic evaluation result view for any subsystem
   def evaluation_result
     @supplier = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
 
-    # For each table defined under this subsystem, fetch the record and its attributes
     @evaluation_results = @table_defs.each_with_object({}) do |td, h|
       rec   = fetch_record(td, @supplier, @subsystem)
       attrs = rec&.attributes&.except(*system_cols) || {}
       h[td.table_name] = attrs
     end
 
-    # Optionally, compute overall metrics if you have a generic evaluation helper
-    # total_fields = @evaluation_results.values.sum(&:size)
-    # filled_fields = @evaluation_results.values.map(&:values).flatten.compact.size
-    # @acceptance_percentage = total_fields.positive? ? (filled_fields.to_f/total_fields*100).round(2) : 0
-    # @overall_status = @acceptance_percentage >= 60 ? 'Accepted' : 'Rejected'
-
-    # Render the dynamic evaluation_result view
     render :evaluation_result
   end
 
   # GET /reports/recommendation
   def recommendation
-    # TODO: implement recommendation logic
+    # TODO: recommendation logic
   end
 
   # GET /reports/apple_to_apple_comparison
-  # Renders form to select multiple suppliers and subsystem
   def apple_to_apple_comparison
-    # @suppliers_with_subsystems set by before_action if needed
+    # render form for multi-supplier comparison
   end
 
   # GET /reports/show_comparison_report?selected_suppliers[]=...&subsystem_id=...
-  # Shows dynamic HTML comparison table
   def show_comparison_report
     @comparison_data = @table_defs.each_with_object({}) do |td, out|
       out[td.table_name] = @suppliers.map do |sup|
@@ -110,7 +99,7 @@ class ReportsController < ApplicationController
 
   # GET /reports/generate_comparison_report?selected_suppliers[]=...&subsystem_id=...
   def generate_comparison_report
-    # TODO: implement Excel/PDF download for comparison, similar to generate_excel_report
+    # TODO: implement comparison Excel/PDF
   end
 
   # GET /reports/sow
@@ -135,14 +124,12 @@ class ReportsController < ApplicationController
 
   private
 
-  # Loads suppliers (and optionally filters by subsystem)
-  # Builds @suppliers_with_subsystems based on which suppliers have submitted any data for the given subsystem
+  # Builds @suppliers_with_subsystems for the tech report form
   def load_suppliers_with_subsystems
     return (@suppliers_with_subsystems = Supplier.none) unless params[:subsystem_id].present?
-    sid = params[:subsystem_id].to_i
-    # Get all table definitions for this subsystem
+    sid        = params[:subsystem_id].to_i
     table_defs = TableDefinition.where(subsystem_id: sid)
-    # For each table, collect supplier_ids that have submissions
+
     supplier_ids = table_defs.flat_map do |td|
       model = Class.new(ActiveRecord::Base) do
         self.table_name        = td.table_name
@@ -150,11 +137,11 @@ class ReportsController < ApplicationController
       end
       model.where(subsystem_id: sid).pluck(:supplier_id)
     end.uniq.compact
+
     @suppliers_with_subsystems = Supplier.where(id: supplier_ids)
   end
-  end
 
-  # Load common context for dynamic actions
+  # Sets @supplier, @subsystem, @suppliers, and @table_defs for dynamic actions
   def load_context
     @supplier   = Supplier.find(params[:supplier_id])
     @subsystem  = Subsystem.find(params[:subsystem_id])
@@ -162,7 +149,7 @@ class ReportsController < ApplicationController
     @table_defs = TableDefinition.where(subsystem_id: @subsystem.id).order(:position)
   end
 
-  # Fetch one record from a dynamic table via TableDefinition
+  # Fetch a single evaluation record for a table, supplier, and subsystem
   def fetch_record(td, supplier, subsystem)
     model = Class.new(ActiveRecord::Base) do
       self.table_name        = td.table_name
@@ -171,14 +158,13 @@ class ReportsController < ApplicationController
     model.find_by(supplier_id: supplier.id, subsystem_id: subsystem.id)
   end
 
-  # Columns to strip from each record
+  # System columns to exclude from attribute hashes
   def system_cols
     %w[id created_at updated_at supplier_id subsystem_id]
   end
 
-  # Example helper, adjust signature if needed
-  def perform_evaluation(**kwargs)
-    # TODO: reuse existing comparison logic or keep your old method
+  # Stub for any generic evaluation calculations
+  def perform_evaluation(**_kwargs)
     {}
   end
 end

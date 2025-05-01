@@ -1,3 +1,4 @@
+<!-- app/views/reports/evaluation_tech_report.html.erb -->
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-4xl mx-auto">
   <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
     Generate Evaluation/Tech. Report
@@ -28,20 +29,14 @@
     <table class="min-w-full bg-white rounded-lg shadow-md overflow-hidden">
       <thead class="bg-gray-200">
         <tr>
-          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-            Supplier Name
-          </th>
-          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-            Action
-          </th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Supplier Name</th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Action</th>
         </tr>
       </thead>
       <tbody class="text-gray-700">
         <% @suppliers_with_subsystems.each do |supplier| %>
           <tr class="border-t">
-            <td class="px-6 py-3 font-medium">
-              <%= supplier.supplier_name %>
-            </td>
+            <td class="px-6 py-3 font-medium"><%= supplier.supplier_name %></td>
             <td class="px-6 py-3">
               <%= link_to 'View Evaluation',
                           evaluation_data_reports_path(

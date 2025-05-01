@@ -1,13 +1,14 @@
+# app/controllers/reports_controller.rb
 class ReportsController < ApplicationController
   # Only for the tech-report page
   before_action :load_subsystems,               only: [:evaluation_tech_report]
   before_action :load_suppliers_with_subsystems, only: [:evaluation_tech_report]
-  # For the actual report and comparison actions
+  # For the actual evaluation_data, comparison, and Excel download
   before_action :load_context, only: [:evaluation_data, :show_comparison_report, :generate_excel_report]
 
   # GET /reports
   def index
-    # Dashboard or links to various report types
+    # e.g. render a dashboard of links to your various reports
   end
 
   # GET /reports/evaluation_tech_report
@@ -16,7 +17,7 @@ class ReportsController < ApplicationController
   end
 
   # GET /reports/evaluation_data?supplier_id=…&subsystem_id=…
-  # Shows dynamic HTML report for one supplier & subsystem
+  # Shows the dynamic HTML report for one supplier + subsystem
   def evaluation_data
     @data_by_table = @table_defs.each_with_object({}) do |td, h|
       rec   = fetch_record(td, @supplier, @subsystem)
@@ -26,7 +27,7 @@ class ReportsController < ApplicationController
   end
 
   # GET /reports/generate_evaluation_report?supplier_id=…&subsystem_id=…
-  # Streams an Excel download of the evaluation data
+  # Streams an Excel of that same data
   def generate_excel_report
     p  = Axlsx::Package.new
     wb = p.workbook
@@ -54,38 +55,51 @@ class ReportsController < ApplicationController
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
-  # Stubs for other actions...
+  # Stubbed/mirrored legacy actions (no changes needed unless you implement them)
   def evaluation_report;         evaluation_data; render :evaluation_report; end
-  def evaluation_result           ; end
-  def recommendation               ; end
-  def apple_to_apple_comparison    ; end
-  def show_comparison_report       ; end
-  def generate_comparison_report   ; end
-  def sow                          ; end
-  def missing_items                ; end
-  def differences                  ; end
-  def interfaces                   ; end
+  def evaluation_result;         end
+  def recommendation;            end
+  def apple_to_apple_comparison; end
+  def show_comparison_report;    end
+  def generate_comparison_report;end
+  def sow;                       end
+  def missing_items;             end
+  def differences;               end
+  def interfaces;                end
 
   private
 
-  # 1) For the tech report form: load subsystems that have any dynamic tables
+  # 1) Populate @subsystems with only those subsystems
+  #    that have *dynamic* tables (static: false)
   def load_subsystems
-    ids = TableDefinition.distinct.pluck(:subsystem_id)
-    @subsystems = Subsystem.where(id: ids).order(:name)
+    subsystem_ids = TableDefinition
+                      .where(static: false)
+                      .distinct
+                      .pluck(:subsystem_id)
+    @subsystems = Subsystem.where(id: subsystem_ids).order(:name)
   end
 
-  # 2) For the tech report form: load only suppliers who submitted for the chosen subsystem
+  # 2) Populate @suppliers_with_subsystems: only suppliers
+  #    who have actual submissions in those dynamic tables
   def load_suppliers_with_subsystems
     if params[:subsystem_id].present?
       sid        = params[:subsystem_id].to_i
-      table_defs = TableDefinition.where(subsystem_id: sid)
+      # only dynamic definitions
+      table_defs = TableDefinition.where(subsystem_id: sid, static: false)
 
       supplier_ids = table_defs.flat_map do |td|
+        # spin up an anonymous AR model for each table
         model = Class.new(ActiveRecord::Base) do
           self.table_name        = td.table_name
           self.inheritance_column = :_type_disabled
         end
-        model.where(subsystem_id: sid).pluck(:supplier_id)
+        # only query if those columns actually exist
+        if model.column_names.include?('supplier_id') &&
+           model.column_names.include?('subsystem_id')
+          model.where(subsystem_id: sid).pluck(:supplier_id)
+        else
+          []
+        end
       end.uniq.compact
 
       @suppliers_with_subsystems = Supplier.where(id: supplier_ids)
@@ -94,7 +108,7 @@ class ReportsController < ApplicationController
     end
   end
 
-  # 3) For evaluation_data / comparisons: set up context
+  # 3) Shared context for evaluation_data & comparisons
   def load_context
     @supplier   = Supplier.find(params[:supplier_id])
     @subsystem  = Subsystem.find(params[:subsystem_id])
@@ -102,7 +116,7 @@ class ReportsController < ApplicationController
     @table_defs = TableDefinition.where(subsystem_id: @subsystem.id).order(:position)
   end
 
-  # Dynamically fetch a record from the table defined in td
+  # Dynamically fetch the one record for (table, supplier, subsystem)
   def fetch_record(td, supplier, subsystem)
     model = Class.new(ActiveRecord::Base) do
       self.table_name        = td.table_name

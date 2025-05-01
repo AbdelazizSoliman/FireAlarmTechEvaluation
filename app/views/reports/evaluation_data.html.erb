@@ -1,35 +1,47 @@
 <!-- app/views/reports/evaluation_data.html.erb -->
-<h1>Evaluation Data for <%= @supplier.supplier_name %> — <%= @subsystem.name %></h1>
+<div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-5xl mx-auto">
+  <h1 class="text-2xl font-bold mb-4">
+    Evaluation Data for <%= @supplier.supplier_name %> — <%= @subsystem.name %>
+  </h1>
 
-<% @data_by_table.each do |table_name, attrs| %>
-  <section class="mb-8">
-    <h2 class="text-xl font-bold"><%= table_name.titleize %></h2>
-    <% if attrs.any? %>
-      <table class="w-full border">
-        <thead class="bg-gray-200"><tr><th>Attribute</th><th>Value</th></tr></thead>
-        <tbody>
-          <% attrs.each do |col, val| %>
-            <tr class="border-t">
-              <td class="px-2 py-1"><%= col.humanize %></td>
-              <td class="px-2 py-1">
-                <% if val.is_a?(Array) %>
-                  <ul class="list-disc ml-4"><% val.each { |v| %><li><%= v %></li><% } %></ul>
-                <% else %>
-                  <%= val %>
-                <% end %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    <% else %>
-      <p class="italic">No data submitted.</p>
+  <% if @data_by_table.any? %>
+    <% @data_by_table.each do |table_name, attrs| %>
+      <section class="mb-8">
+        <h2 class="text-xl font-semibold mb-2"><%= table_name.titleize %></h2>
+
+        <% if attrs.any? %>
+          <table class="w-full border-collapse border mb-4 bg-white">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="border px-3 py-2 text-left">Attribute</th>
+                <th class="border px-3 py-2 text-left">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% attrs.each do |col, val| %>
+                <tr class="border-t">
+                  <td class="border px-3 py-2"><%= col.humanize %></td>
+                  <td class="border px-3 py-2">
+                    <% if val.is_a?(Array) %>
+                      <ul class="list-disc ml-5">
+                        <% val.each { |v| %><li><%= v %></li><% } %>
+                      </ul>
+                    <% else %>
+                      <%= val %>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="italic text-gray-600">No data submitted for this section.</p>
+        <% end %>
+      </section>
     <% end %>
-  </section>
-<% end %>
+  <% else %>
+    <p class="italic text-gray-600">No evaluation data found for this supplier/subsystem.</p>
+  <% end %>
 
-<%= link_to "Download Excel", reports_download_excel_path(
-      supplier_id:  @supplier.id,
-      subsystem_id: @subsystem.id
-    ),
-    class: "btn btn-primary", data: { turbo: false } %>
+  <%= link_to "Back to Reports", evaluation_tech_report_reports_path, class: "inline-block mt-4 text-blue-600 hover:underline" %>
+</div>

@@ -2,7 +2,7 @@
  class Admin::SubmissionsController < ApplicationController
   def index
     @notifications = Notification
-      .where(notification_type: 'submission')
+      .where(notification_type: 'evaluation')
       .order(created_at: :desc)
       .includes(:notifiable)
   end

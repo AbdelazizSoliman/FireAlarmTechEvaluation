@@ -41,14 +41,16 @@ module Api
         }
       end
 
+      subsystem = Subsystem.find(saved_records.first[:subsystem_id])
+
       # Create one notification summarizing all the tables just saved
       Notification.create!(
         title:             "Multiple Tables Submitted",
-        body:              "Supplier #{supplier.supplier_name} submitted data for #{saved_records.size} tables.",
+        body:              "Supplier #{supplier.supplier_name} submitted data for #{subsystem.name}.",
         notifiable:        supplier,
         read:              false,
         status:            "new",
-        notification_type: "submission",
+        notification_type: "evaluation",
         additional_data:   saved_records.to_json
       )
 
@@ -124,10 +126,12 @@ module Api
       record.subsystem_id = subsystem_id
 
       if record.save
+        subsystem = Subsystem.find(subsystem_id)
+
         # Create a notification for this one table
         Notification.create!(
           title:             "New Submission: #{table_name.titleize}",
-          body:              "Supplier #{supplier.supplier_name} submitted #{table_name.titleize}.",
+          body:              "Supplier #{supplier.supplier_name} submitted data for #{subsystem.name}.",
           notifiable:        supplier,
           read:              false,
           status:            "new",

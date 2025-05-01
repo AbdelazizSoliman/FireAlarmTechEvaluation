@@ -1,9 +1,8 @@
+# app/controllers/reports_controller.rb
 class ReportsController < ApplicationController
-  # Only for the tech-report page
   before_action :load_subsystems,               only: [:evaluation_tech_report]
   before_action :load_suppliers_with_subsystems, only: [:evaluation_tech_report]
-  # For the actual evaluation_data, comparison, and Excel download
-  before_action :load_context, only: [:evaluation_data, :show_comparison_report, :generate_excel_report]
+  before_action :load_context,                   only: [:evaluation_data, :show_comparison_report, :generate_excel_report]
 
   # GET /reports
   def index
@@ -11,12 +10,10 @@ class ReportsController < ApplicationController
   end
 
   # GET /reports/evaluation_tech_report
-  # Renders the subsystem selector + supplier list
   def evaluation_tech_report
   end
 
   # GET /reports/evaluation_data?supplier_id=…&subsystem_id=…
-  # Shows dynamic HTML report for one supplier + subsystem
   def evaluation_data
     @data_by_table = @table_defs.each_with_object({}) do |td, h|
       rec   = fetch_record(td, @supplier, @subsystem)
@@ -26,7 +23,6 @@ class ReportsController < ApplicationController
   end
 
   # GET /reports/generate_evaluation_report?supplier_id=…&subsystem_id=…
-  # Streams an Excel of that same data
   def generate_excel_report
     p  = Axlsx::Package.new
     wb = p.workbook
@@ -54,7 +50,7 @@ class ReportsController < ApplicationController
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
-  # Stubbed/mirrored legacy actions
+  # Legacy stubs
   def evaluation_report;         evaluation_data; render :evaluation_report; end
   def evaluation_result;         end
   def recommendation;            end
@@ -68,24 +64,26 @@ class ReportsController < ApplicationController
 
   private
 
-  # 1) Load all subsystems (for dropdown)
+  # 1) Dropdown: all subsystems (static or dynamic)
   def load_subsystems
     @subsystems = Subsystem.order(:name)
   end
 
-  # 2) Load only suppliers who have submitted for the chosen subsystem
+  # 2) Suppliers who have submitted *any* table under this subsystem
   def load_suppliers_with_subsystems
     if params[:subsystem_id].present?
       sid        = params[:subsystem_id].to_i
-      table_defs = TableDefinition.where(subsystem_id: sid, static: false)
+      # **No more `static: false` filter** — include *all* table_definitions for this subsystem
+      table_defs = TableDefinition.where(subsystem_id: sid)
 
       supplier_ids = table_defs.flat_map do |td|
         model = Class.new(ActiveRecord::Base) do
           self.table_name        = td.table_name
           self.inheritance_column = :_type_disabled
         end
-        if model.column_names.include?('supplier_id') &&
-           model.column_names.include?('subsystem_id')
+
+        # only query if the table actually has those columns
+        if model.column_names.include?('supplier_id') && model.column_names.include?('subsystem_id')
           model.where(subsystem_id: sid).pluck(:supplier_id)
         else
           []
@@ -102,11 +100,15 @@ class ReportsController < ApplicationController
   def load_context
     @supplier   = Supplier.find(params[:supplier_id])
     @subsystem  = Subsystem.find(params[:subsystem_id])
-    @suppliers  = Supplier.where(id: params[:selected_suppliers] || params[:supplier_id])
-    @table_defs = TableDefinition.where(subsystem_id: @subsystem.id).order(:position)
+    @suppliers  = Supplier.where(
+                    id: params[:selected_suppliers] || params[:supplier_id]
+                  )
+    @table_defs = TableDefinition
+                    .where(subsystem_id: @subsystem.id)
+                    .order(:position)
   end
 
-  # Dynamically fetch record for table, supplier, subsystem
+  # Dynamically fetch a record for (table, supplier, subsystem)
   def fetch_record(td, supplier, subsystem)
     model = Class.new(ActiveRecord::Base) do
       self.table_name        = td.table_name
@@ -115,7 +117,7 @@ class ReportsController < ApplicationController
     model.find_by(supplier_id: supplier.id, subsystem_id: subsystem.id)
   end
 
-  # Columns to omit when rendering attributes
+  # Columns to strip out before rendering
   def system_cols
     %w[id created_at updated_at supplier_id subsystem_id]
   end

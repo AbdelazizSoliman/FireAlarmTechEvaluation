@@ -1,16 +1,17 @@
+# app/controllers/api/dynamic_tables_controller.rb
 module Api
   class DynamicTablesController < ApplicationController
-    # before_action :set_table_name, only: %i[index update table_metadata save_data]
     skip_forgery_protection
 
+    # POST /api/save_all
     def save_all
       supplier = authenticate_supplier!
       return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
 
       all_payloads = params.require(:data).permit!.to_h
+      saved_records = []
 
       all_payloads.each do |table_name, payload|
-        # ensure table exists
         unless ActiveRecord::Base.connection.table_exists?(table_name)
           return render json: { error: "Table #{table_name} not found" },
                         status: :bad_request
@@ -21,10 +22,9 @@ module Api
           self.inheritance_column = :_type_disabled
         end
 
-        # Extract subsystem_id & avoid mass-assign rails‐managed columns
-        p = payload.to_h
-        subsystem_id = p.delete("subsystem_id") || p.delete(:subsystem_id)
-        safe_attrs   = p.except("id", "created_at", "updated_at", "supplier_id")
+        p             = payload.to_h
+        subsystem_id  = p.delete("subsystem_id") || p.delete(:subsystem_id)
+        safe_attrs    = p.except("id", "created_at", "updated_at", "supplier_id")
 
         record = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id)
                       .first_or_initialize
@@ -32,7 +32,24 @@ module Api
         record.assign_attributes(safe_attrs)
         record.supplier_id  = supplier.id
         record.subsystem_id = subsystem_id
-        record.save!  # let exception bubble if validation fails
+        record.save!
+
+        saved_records << {
+          table:        table_name,
+          record_id:    record.id,
+          subsystem_id: subsystem_id
+        }
+      end
+
+      # Notify the admin that multiple tables have been submitted at once
+      begin
+        Notification.create!(
+          notification_type: 'submission',
+          notifiable:        supplier,
+          additional_data:   saved_records.to_json
+        )
+      rescue => e
+        Rails.logger.error "Notification failed: #{e.message}"
       end
 
       render json: { message: "All tables saved." }, status: :created
@@ -88,26 +105,40 @@ module Api
         static: table_def&.static || false # <--- Add this
       }
     end
-    
-    
 
     # POST /api/save_data/:table_name
     def save_data
-      supplier   = authenticate_supplier!
+      supplier = authenticate_supplier!
       return render json: { error: 'Unauthorized' }, status: :unauthorized unless supplier
 
       table_name   = params[:table_name]
-      payload      = params.require(:data).permit!   # all incoming form fields
+      payload      = params.require(:data).permit!
       subsystem_id = payload.delete("subsystem_id") || payload.delete(:subsystem_id)
       model        = table_name.classify.constantize
 
       record = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id)
                     .first_or_initialize
+
       record.assign_attributes(payload)
       record.supplier_id  = supplier.id
       record.subsystem_id = subsystem_id
 
       if record.save
+        # Notify the admin of this single‐table submission
+        begin
+          Notification.create!(
+            notification_type: 'submission',
+            notifiable:        supplier,
+            additional_data:   {
+                                 table:        table_name,
+                                 record_id:    record.id,
+                                 subsystem_id: subsystem_id
+                               }.to_json
+          )
+        rescue => e
+          Rails.logger.error "Notification failed: #{e.message}"
+        end
+
         render json: { message: "Data for #{table_name} saved." }, status: :created
       else
         render json: { error: record.errors.full_messages }, status: :unprocessable_entity
@@ -115,13 +146,22 @@ module Api
     rescue NameError
       render json: { error: "Invalid table: #{table_name}" }, status: :bad_request
     end
+
+    # ... your existing index, update, and table_metadata actions unchanged ...
+
     private
 
     def authenticate_supplier!
       token = request.headers['Authorization']&.split(' ')&.last
       return unless token
-      payload = JWT.decode(token, Rails.application.secret_key_base,
-                           true, algorithm: 'HS256').first
+
+      payload = JWT.decode(
+        token,
+        Rails.application.secret_key_base,
+        true,
+        algorithm: 'HS256'
+      ).first
+
       ::Supplier.find_by(id: payload['sub'])
     rescue
       nil

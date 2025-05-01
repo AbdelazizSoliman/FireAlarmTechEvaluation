@@ -107,23 +107,31 @@ Rails.application.routes.draw do
   end
 
  # Reports Routes
-  resources :reports, only: [:index] do
-    collection do
-      get :evaluation_tech_report
-      get :evaluation_data # Show evaluation data for a supplier and subsystem
-      get :generate_evaluation_report # Generate and download the evaluation report
-      get :evaluation_report  # Generate Evaluation/Tech Report
-      get :evaluation_result
-      get :recommendation  # Generate Recommendation
-      get :apple_to_apple_comparison  # Generate Apple to Apple Comparison
-      get :show_comparison_report
-      get :generate_comparison_report
-      get :sow  # Generate/Determine SOW between Suppliers & Installation Contractor
-      get :missing_items  # Generate Missing Items
-      get :differences  # Generate Differences between Bidders
-      get :interfaces  # Generate Interfaces among Systems
-    end
+ resources :reports, only: [:index] do
+  collection do
+    # — Single‐supplier (takes supplier_id & subsystem_id as query params) —
+    get :evaluation_tech_report       # original “Generate Evaluation/Tech Report” form
+    get :evaluation_data              # Show HTML for one supplier/subsystem
+    get :generate_evaluation_report   # Download PDF/Excel for one supplier/subsystem
+    get :evaluation_result            # Show pass/fail metrics for one supplier/subsystem
+    get :recommendation               # (if still needed)
+    
+    # **NEW**: streamlined Excel download for dynamic tables
+    # URL: /reports/generate_excel_report?supplier_id=…&subsystem_id=…
+    get :generate_excel_report
+
+    # — Multi‐supplier Apple‐to‐Apple (takes selected_suppliers[] & subsystem_id) —
+    get :apple_to_apple_comparison    # original form
+    get :show_comparison_report       # HTML comparison
+    get :generate_comparison_report   # Excel comparison download
+
+    # — Other legacy reports —
+    get :sow
+    get :missing_items
+    get :differences
+    get :interfaces
   end
+end
 
   # ✅ Standalone Routes for Systems and Subsystems
   resources :project_scopes, only: [:index, :show, :new, :create]

@@ -1,13 +1,13 @@
 class ReportsController < ApplicationController
   # Only for the tech-report page
-  before_action :load_subsystems,             only: [:evaluation_tech_report]
+  before_action :load_subsystems,               only: [:evaluation_tech_report]
   before_action :load_suppliers_with_subsystems, only: [:evaluation_tech_report]
   # For the actual report and comparison actions
   before_action :load_context, only: [:evaluation_data, :show_comparison_report, :generate_excel_report]
 
   # GET /reports
   def index
-    # You can render a dashboard or links to the various report types here
+    # Dashboard or links to various report types
   end
 
   # GET /reports/evaluation_tech_report
@@ -16,7 +16,7 @@ class ReportsController < ApplicationController
   end
 
   # GET /reports/evaluation_data?supplier_id=…&subsystem_id=…
-  # Shows the dynamic HTML report for one supplier & subsystem
+  # Shows dynamic HTML report for one supplier & subsystem
   def evaluation_data
     @data_by_table = @table_defs.each_with_object({}) do |td, h|
       rec   = fetch_record(td, @supplier, @subsystem)
@@ -54,56 +54,24 @@ class ReportsController < ApplicationController
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
-  # Legacy alias if you still need it
-  def evaluation_report
-    evaluation_data
-    render :evaluation_report
-  end
-
-  # GET /reports/evaluation_result?supplier_id=…&subsystem_id=…
-  # Render a simple pass/fail page (or reuse evaluation_data view)
-  def evaluation_result
-    @supplier   = Supplier.find(params[:supplier_id])
-    @subsystem  = Subsystem.find(params[:subsystem_id])
-
-    @evaluation_results = @table_defs.each_with_object({}) do |td, h|
-      rec   = fetch_record(td, @supplier, @subsystem)
-      attrs = rec&.attributes&.except(*system_cols) || {}
-      h[td.table_name] = attrs
-    end
-
-    render :evaluation_result
-  end
-
-  # Stub actions for your other report types
-  def recommendation; end
-  def apple_to_apple_comparison; end
-
-  # GET /reports/show_comparison_report?selected_suppliers[]=…&subsystem_id=…
-  def show_comparison_report
-    @comparison_data = @table_defs.each_with_object({}) do |td, out|
-      out[td.table_name] = @suppliers.map do |sup|
-        rec   = fetch_record(td, sup, @subsystem)
-        attrs = rec&.attributes&.except(*system_cols) || {}
-        [sup.supplier_name, attrs]
-      end.to_h
-    end
-  end
-
-  def generate_comparison_report; end
-  def sow;              end
-  def missing_items;    end
-  def differences;      end
-  def interfaces;       end
+  # Stubs for other actions...
+  def evaluation_report;         evaluation_data; render :evaluation_report; end
+  def evaluation_result           ; end
+  def recommendation               ; end
+  def apple_to_apple_comparison    ; end
+  def show_comparison_report       ; end
+  def generate_comparison_report   ; end
+  def sow                          ; end
+  def missing_items                ; end
+  def differences                  ; end
+  def interfaces                   ; end
 
   private
 
   # 1) For the tech report form: load subsystems that have any dynamic tables
   def load_subsystems
-    @subsystems = Subsystem
-                    .joins(:table_definitions)
-                    .distinct
-                    .order(:name)
+    ids = TableDefinition.distinct.pluck(:subsystem_id)
+    @subsystems = Subsystem.where(id: ids).order(:name)
   end
 
   # 2) For the tech report form: load only suppliers who submitted for the chosen subsystem
@@ -130,12 +98,8 @@ class ReportsController < ApplicationController
   def load_context
     @supplier   = Supplier.find(params[:supplier_id])
     @subsystem  = Subsystem.find(params[:subsystem_id])
-    @suppliers  = Supplier.where(
-                    id: params[:selected_suppliers] || params[:supplier_id]
-                  )
-    @table_defs = TableDefinition
-                    .where(subsystem_id: @subsystem.id)
-                    .order(:position)
+    @suppliers  = Supplier.where(id: params[:selected_suppliers] || params[:supplier_id])
+    @table_defs = TableDefinition.where(subsystem_id: @subsystem.id).order(:position)
   end
 
   # Dynamically fetch a record from the table defined in td
@@ -150,10 +114,5 @@ class ReportsController < ApplicationController
   # Columns to strip out before rendering
   def system_cols
     %w[id created_at updated_at supplier_id subsystem_id]
-  end
-
-  # Stub if you ever need generic evaluation logic
-  def perform_evaluation(**_kwargs)
-    {}
   end
 end

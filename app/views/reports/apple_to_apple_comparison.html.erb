@@ -1,13 +1,7 @@
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-4xl mx-auto">
-  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
-    Generate Apple-to-Apple Comparison
-  </h1>
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Generate Apple-to-Apple Comparison</h1>
 
-  <%= form_with url: apple_to_apple_comparison_reports_path,
-                method: :get,
-                local: true,
-                class: "space-y-6" do |f| %>
-
+  <%= form_with url: apple_to_apple_comparison_reports_path, method: :get, local: true, class: "space-y-6" do |f| %>
     <!-- Subsystem Filter -->
     <div class="flex items-center space-x-4">
       <div>
@@ -18,8 +12,7 @@
                      class: "border rounded px-3 py-2" %>
       </div>
       <div>
-        <%= f.submit "Filter Suppliers",
-                     class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
+        <%= f.submit "Filter Suppliers", class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
       </div>
     </div>
 
@@ -37,8 +30,9 @@
             <tr class="border-t">
               <td class="px-6 py-3">
                 <%= check_box_tag 'selected_suppliers[]', supplier.id,
-                      Array(params[:selected_suppliers]).include?(supplier.id.to_s),
-                      class: "form-checkbox" %>
+                     Array(params[:selected_suppliers]).include?(supplier.id.to_s),
+                     class: "form-checkbox"
+                %>
               </td>
               <td class="px-6 py-3 font-medium"><%= supplier.supplier_name %></td>
             </tr>
@@ -59,9 +53,7 @@
                      class: "bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" %>
       </div>
     <% else %>
-      <p class="text-center text-gray-500">
-        No suppliers found for the selected subsystem.
-      </p>
+      <p class="text-center text-gray-500">No suppliers found for the selected subsystem.</p>
     <% end %>
   <% end %>
 </div>

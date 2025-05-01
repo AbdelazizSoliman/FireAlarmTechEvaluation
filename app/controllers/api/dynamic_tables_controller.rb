@@ -59,6 +59,53 @@ module Api
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
     end
 
+    # GET /api/dynamic_tables/:table_name
+    def index
+      table_def = TableDefinition.find_by(table_name: @table_name)
+      is_static = table_def&.static?
+    
+      columns = ActiveRecord::Base.connection.columns(@table_name).map(&:name)
+      records = ActiveRecord::Base.connection.execute("SELECT * FROM #{@table_name}").to_a
+      render json: { columns: columns, data: records, static: is_static }
+    end
+
+    # PATCH /api/dynamic_tables/:table_name/:id
+    def update
+      record_id = params[:id]
+      update_params = params.except(:table_name, :id, :controller, :action)
+
+      set_clause = update_params.map do |key, value|
+        "#{key} = #{ActiveRecord::Base.connection.quote(value)}"
+      end.join(', ')
+      sql = "UPDATE #{@table_name} SET #{set_clause} WHERE id = #{record_id}"
+
+      ActiveRecord::Base.connection.execute(sql)
+      render json: { message: 'Record updated successfully!' }
+    end
+
+    # GET /api/table_metadata/:table_name
+    def table_metadata
+      @table_name = params[:table_name]
+      table_def = TableDefinition.find_by(table_name: @table_name)
+    
+      metadata = ColumnMetadata.where(table_name: @table_name).each_with_object({}) do |meta, hash|
+        hash[meta.column_name] = {
+          feature: meta.feature,
+          options: meta.options,
+          row: meta.row,
+          col: meta.col,
+          label_row: meta.label_row,
+          label_col: meta.label_col
+        }
+      end
+    
+      render json: {
+        columns: metadata.keys,
+        metadata: metadata,
+        static: table_def&.static || false # <--- Add this
+      }
+    end
+
     # POST /api/save_data/:table_name
     def save_data
       supplier   = authenticate_supplier!

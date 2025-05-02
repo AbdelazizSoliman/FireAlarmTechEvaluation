@@ -1,8 +1,14 @@
+<!-- app/views/reports/apple_to_apple_comparison.html.erb -->
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-4xl mx-auto">
-  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Generate Apple-to-Apple Comparison</h1>
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+    Generate Apple-to-Apple Comparison
+  </h1>
 
-  <%= form_with url: apple_to_apple_comparison_reports_path, method: :get, local: true, class: "space-y-6" do |f| %>
-    <!-- Subsystem Filter -->
+  <!-- Filter form: just reloads this page with subsystem_id -->
+  <%= form_with url: apple_to_apple_comparison_reports_path,
+                method: :get,
+                local: true,
+                class: "space-y-6 mb-6" do |f| %>
     <div class="flex items-center space-x-4">
       <div>
         <%= f.label :subsystem_id, "Select Subsystem:", class: "block font-semibold" %>
@@ -12,48 +18,56 @@
                      class: "border rounded px-3 py-2" %>
       </div>
       <div>
-        <%= f.submit "Filter Suppliers", class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
+        <%= f.submit "Filter Suppliers",
+                     class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
       </div>
     </div>
+  <% end %>
 
-    <% if @suppliers_with_subsystems.any? %>
-      <!-- Supplier Selection Table -->
-      <table class="min-w-full bg-white rounded-lg shadow-md overflow-hidden">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Select</th>
-            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Supplier Name</th>
+  <% if @suppliers_with_subsystems.any? %>
+    <table class="min-w-full bg-white rounded-lg shadow-md overflow-hidden mb-6">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Select</th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Supplier Name</th>
+        </tr>
+      </thead>
+      <tbody class="text-gray-700">
+        <% @suppliers_with_subsystems.each do |supplier| %>
+          <tr class="border-t">
+            <td class="px-6 py-3">
+              <input type="checkbox"
+                     name="selected_suppliers[]"
+                     value="<%= supplier.id %>"
+                     id="sup_<%= supplier.id %>"
+                     <%= 'checked' if Array(params[:selected_suppliers]).include?(supplier.id.to_s) %>>
+            </td>
+            <td class="px-6 py-3 font-medium">
+              <label for="sup_<%= supplier.id %>"><%= supplier.supplier_name %></label>
+            </td>
           </tr>
-        </thead>
-        <tbody class="text-gray-700">
-          <% @suppliers_with_subsystems.each do |supplier| %>
-            <tr class="border-t">
-              <td class="px-6 py-3">
-                <%= check_box_tag 'selected_suppliers[]', supplier.id,
-                     Array(params[:selected_suppliers]).include?(supplier.id.to_s),
-                     class: "form-checkbox"
-                %>
-              </td>
-              <td class="px-6 py-3 font-medium"><%= supplier.supplier_name %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+        <% end %>
+      </tbody>
+    </table>
 
-      <!-- Action Buttons -->
-      <div class="flex space-x-4">
-        <%= f.submit "Show Comparison",
-                     name: 'commit',
-                     value: 'show',
-                     class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+    <div class="flex space-x-4">
+      <%# Show Comparison button %>
+      <%= link_to "Show Comparison",
+                  show_comparison_report_reports_path(
+                    subsystem_id:       params[:subsystem_id],
+                    selected_suppliers: Array(params[:selected_suppliers])
+                  ),
+                  class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
 
-        <%= f.submit "Generate Comparison",
-                     name: 'commit',
-                     value: 'generate',
-                     class: "bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" %>
-      </div>
-    <% else %>
-      <p class="text-center text-gray-500">No suppliers found for the selected subsystem.</p>
-    <% end %>
+      <%# Generate Comparison (Excel) button %>
+      <%= link_to "Generate Comparison",
+                  generate_comparison_report_reports_path(
+                    subsystem_id:       params[:subsystem_id],
+                    selected_suppliers: Array(params[:selected_suppliers])
+                  ),
+                  class: "bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" %>
+    </div>
+  <% else %>
+    <p class="text-center text-gray-500">No suppliers found for the selected subsystem.</p>
   <% end %>
 </div>

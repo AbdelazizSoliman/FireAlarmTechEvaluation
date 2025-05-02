@@ -1,23 +1,25 @@
 # app/controllers/reports_controller.rb
 class ReportsController < ApplicationController
-  # For both the Tech and Apple-to-Apple forms:
+  # Only for the Tech/Apple-to-Apple _forms_
   before_action :load_subsystems,               only: [:evaluation_tech_report, :apple_to_apple_comparison]
   before_action :load_suppliers_with_subsystems, only: [:evaluation_tech_report, :apple_to_apple_comparison]
 
-  # For rendering or downloading any individual/subset report:
-  before_action :load_context, only: [:evaluation_data, :show_comparison_report, :generate_excel_report]
+  # Single‐supplier report (HTML & Excel)
+  before_action :load_single_context, only: [:evaluation_data, :generate_evaluation_report]
+
+  # Multi‐supplier comparison (HTML & Excel)
+  before_action :load_multi_context,  only: [:show_comparison_report, :generate_comparison_report]
 
   # GET /reports
   def index
-    # Dashboard or links to report types...
+    # your dashboard / links
   end
 
-  # — Single-supplier Tech Report Form —
+  # — Tech Form —
   # GET /reports/evaluation_tech_report
-  def evaluation_tech_report
-  end
+  def evaluation_tech_report; end
 
-  # — Single-supplier Data Display —
+  # — Single‐supplier HTML —
   # GET /reports/evaluation_data?supplier_id=…&subsystem_id=…
   def evaluation_data
     @data_by_table = @table_defs.each_with_object({}) do |td, h|
@@ -27,39 +29,41 @@ class ReportsController < ApplicationController
     end
   end
 
-  # — Single-supplier Excel Download —
+  # — Single‐supplier Excel —
   # GET /reports/generate_evaluation_report?supplier_id=…&subsystem_id=…
-  def generate_excel_report
+  def generate_evaluation_report
     p  = Axlsx::Package.new
     wb = p.workbook
 
     wb.add_worksheet(name: 'Evaluation Data') do |sheet|
       sheet.add_row ['Section', 'Attribute', 'Value'], b: true
+
       @table_defs.each do |td|
         sheet.add_row [td.table_name.titleize, nil, nil], b: true
         rec   = fetch_record(td, @supplier, @subsystem)
         attrs = rec&.attributes&.except(*system_cols) || {}
+
         attrs.each do |col, val|
-          display = val.is_a?(Array) ? val.join(', ') : val
-          sheet.add_row [nil, col.humanize, display.to_s]
+          disp = val.is_a?(Array) ? val.join(', ') : val.to_s
+          sheet.add_row [nil, col.humanize, disp]
         end
+
         sheet.add_row []
       end
     end
 
-    filename = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
+    fn = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
     send_data p.to_stream.read,
-              filename: filename,
+              filename: fn,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
-  # — Apple-to-Apple Comparison Form —
+  # — Apple‐to‐Apple Form —
   # GET /reports/apple_to_apple_comparison
-  def apple_to_apple_comparison
-  end
+  def apple_to_apple_comparison; end
 
-  # — Multi-supplier Comparison Display —
-  # GET /reports/show_comparison_report?selected_suppliers[]=…&subsystem_id=…
+  # — Multi‐supplier HTML —
+  # GET /reports/show_comparison_report?subsystem_id=…&selected_suppliers[]=…
   def show_comparison_report
     @comparison_data = @table_defs.each_with_object({}) do |td, out|
       out[td.table_name] = @suppliers.map do |sup|
@@ -70,13 +74,42 @@ class ReportsController < ApplicationController
     end
   end
 
-  # — Multi-supplier Excel/PDF Download —
-  # GET /reports/generate_comparison_report?selected_suppliers[]=…&subsystem_id=…
+  # — Multi‐supplier Excel —
+  # GET /reports/generate_comparison_report?subsystem_id=…&selected_suppliers[]=…
   def generate_comparison_report
-    # TODO: mirror generate_excel_report logic here
+    p  = Axlsx::Package.new
+    wb = p.workbook
+
+    @table_defs.each do |td|
+      sheet_name = td.table_name.titleize[0..30]  # Excel limit
+      wb.add_worksheet(name: sheet_name) do |sheet|
+        # Header: Attribute + each supplier
+        header = ['Attribute'] + @suppliers.map(&:supplier_name)
+        sheet.add_row header, b: true
+
+        # Gather all keys
+        recs  = @suppliers.map { |sup| fetch_record(td, sup, @subsystem) }
+        hashes = recs.map { |r| r&.attributes&.except(*system_cols) || {} }
+        all_keys = hashes.flat_map(&:keys).uniq
+
+        all_keys.each do |col|
+          row = [col.humanize]
+          hashes.each do |h|
+            v = h[col]
+            row << (v.is_a?(Array) ? v.join(', ') : (v.to_s.presence || ''))
+          end
+          sheet.add_row row
+        end
+      end
+    end
+
+    fn = "Comparison_#{@subsystem.name}.xlsx"
+    send_data p.to_stream.read,
+              filename: fn,
+              type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
-  # (Other legacy stubs…)
+  # (other stubs…)
   def evaluation_report;         evaluation_data; render :evaluation_report; end
   def evaluation_result;         end
   def recommendation;            end
@@ -87,44 +120,48 @@ class ReportsController < ApplicationController
 
   private
 
-  # Load all subsystems for the dropdown
+  # — Form dropdowns — load every subsystem
   def load_subsystems
     @subsystems = Subsystem.order(:name)
   end
 
-  # Load only those suppliers who have data for the chosen subsystem
+  # — For both forms — load suppliers who have at least one record in **any** table for the chosen subsystem
   def load_suppliers_with_subsystems
-    if params[:subsystem_id].present?
-      sid        = params[:subsystem_id].to_i
-      table_defs = TableDefinition.where(subsystem_id: sid)
+    return (@suppliers_with_subsystems = Supplier.none) unless params[:subsystem_id].present?
 
-      supplier_ids = table_defs.flat_map do |td|
-        model = Class.new(ActiveRecord::Base) do
-          self.table_name        = td.table_name
-          self.inheritance_column = :_type_disabled
-        end
-        if model.column_names.include?('supplier_id') && model.column_names.include?('subsystem_id')
-          model.where(subsystem_id: sid).pluck(:supplier_id)
-        else
-          []
-        end
-      end.uniq.compact
+    sid = params[:subsystem_id].to_i
+    tds = TableDefinition.where(subsystem_id: sid)
 
-      @suppliers_with_subsystems = Supplier.where(id: supplier_ids)
-    else
-      @suppliers_with_subsystems = Supplier.none
-    end
+    ids = tds.flat_map do |td|
+      model = Class.new(ActiveRecord::Base) do
+        self.table_name        = td.table_name
+        self.inheritance_column = :_type_disabled
+      end
+      if model.column_names.include?('supplier_id') && model.column_names.include?('subsystem_id')
+        model.where(subsystem_id: sid).pluck(:supplier_id)
+      else
+        []
+      end
+    end.uniq.compact
+
+    @suppliers_with_subsystems = Supplier.where(id: ids)
   end
 
-  # Shared setup for evaluation_data & comparison actions
-  def load_context
+  # — Single‐supplier context loader —
+  def load_single_context
     @supplier   = Supplier.find(params[:supplier_id])
     @subsystem  = Subsystem.find(params[:subsystem_id])
-    @suppliers  = Supplier.where(id: params[:selected_suppliers] || params[:supplier_id])
     @table_defs = TableDefinition.where(subsystem_id: @subsystem.id).order(:position)
   end
 
-  # Fetch exactly one record for a given table/supplier/subsystem
+  # — Multi‐supplier context loader —
+  def load_multi_context
+    @subsystem  = Subsystem.find(params[:subsystem_id])
+    @suppliers  = Supplier.where(id: Array(params[:selected_suppliers]).map(&:to_i))
+    @table_defs = TableDefinition.where(subsystem_id: @subsystem.id).order(:position)
+  end
+
+  # Helper to spin up an AR model and fetch a record
   def fetch_record(td, supplier, subsystem)
     model = Class.new(ActiveRecord::Base) do
       self.table_name        = td.table_name
@@ -133,7 +170,7 @@ class ReportsController < ApplicationController
     model.find_by(supplier_id: supplier.id, subsystem_id: subsystem.id)
   end
 
-  # Columns to strip before displaying
+  # Columns to strip out of the reports
   def system_cols
     %w[id created_at updated_at supplier_id subsystem_id]
   end

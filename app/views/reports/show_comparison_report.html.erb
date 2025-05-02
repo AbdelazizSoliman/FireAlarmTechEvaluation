@@ -1,29 +1,56 @@
-<!-- app/views/reports/show_comparison_report.html.erb -->
-<h1>Comparison for <%= @subsystem.name %></h1>
+<div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-6xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">
+    Apple-to-Apple Comparison for <%= @subsystem.name %>
+  </h1>
 
-<% @comparison_data.each do |table_name, by_supplier| %>
-  <section class="mb-8">
-    <h2 class="text-xl font-bold"><%= table_name.titleize %></h2>
-    <table class="w-full border">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="px-2 py-1">Attribute</th>
-          <% by_supplier.keys.each do |sup_name| %>
-            <th class="px-2 py-1"><%= sup_name %></th>
-          <% end %>
-        </tr>
-      </thead>
-      <tbody>
-        <% columns = by_supplier.values.first.keys.sort %>
-        <% columns.each do |col| %>
-          <tr class="border-t">
-            <td class="px-2 py-1"><%= col.humanize %></td>
-            <% by_supplier.each_value do |attrs| %>
-              <td class="px-2 py-1"><%= attrs[col] || '–' %></td>
-            <% end %>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </section>
-<% end %>
+  <% if @comparison_data.present? %>
+    <% @comparison_data.each do |table_name, by_supplier| %>
+      <section class="mb-10">
+        <h2 class="text-xl font-semibold mb-2"><%= table_name.titleize %></h2>
+
+        <%# Gather all attribute keys across suppliers %>
+        <% columns = by_supplier.values.flat_map(&:keys).uniq.sort %>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="border px-3 py-2 text-left">Attribute</th>
+                <% by_supplier.keys.each do |supplier_name| %>
+                  <th class="border px-3 py-2 text-left"><%= supplier_name %></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% columns.each_with_index do |col, i| %>
+                <tr class="<%= i.even? ? 'bg-white' : 'bg-gray-50' %>">
+                  <td class="border px-3 py-2 font-medium"><%= col.humanize %></td>
+                  <% by_supplier.each_value do |attrs| %>
+                    <td class="border px-3 py-2">
+                      <% val = attrs[col] %>
+                      <% if val.is_a?(Array) %>
+                        <ul class="list-disc ml-4">
+                          <% val.each { |v| %><li><%= v %></li><% } %>
+                        </ul>
+                      <% else %>
+                        <%= val.presence || '—' %>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    <% end %>
+  <% else %>
+    <p class="italic text-gray-600">No comparison data available.</p>
+  <% end %>
+
+  <div class="mt-6">
+    <%= link_to "← Back to Comparison Form",
+                apple_to_apple_comparison_reports_path(subsystem_id: @subsystem.id),
+                class: "text-blue-600 hover:underline" %>
+  </div>
+</div>

@@ -79,33 +79,44 @@ class ReportsController < ApplicationController
   def generate_comparison_report
     p  = Axlsx::Package.new
     wb = p.workbook
-
-    @table_defs.each do |td|
-      sheet_name = td.table_name.titleize[0..30]  # Excel limit
-      wb.add_worksheet(name: sheet_name) do |sheet|
-        # Header: Attribute + each supplier
-        header = ['Attribute'] + @suppliers.map(&:supplier_name)
-        sheet.add_row header, b: true
-
-        # Gather all keys
-        recs  = @suppliers.map { |sup| fetch_record(td, sup, @subsystem) }
-        hashes = recs.map { |r| r&.attributes&.except(*system_cols) || {} }
-        all_keys = hashes.flat_map(&:keys).uniq
-
+  
+    wb.add_worksheet(name: 'Comparison') do |sheet|
+      # 1) Header row
+      header = ['Attribute'] + @suppliers.map(&:supplier_name)
+      sheet.add_row header, b: true
+  
+      # 2) For each data table...
+      @table_defs.each do |td|
+        # a) Table‐name row
+        sheet.add_row [td.table_name.titleize] + [''] * @suppliers.size, b: true
+  
+        # b) Gather each supplier’s attributes for this table
+        hashes = @suppliers.map do |sup|
+          rec = fetch_record(td, sup, @subsystem)
+          rec ? rec.attributes.except(*system_cols) : {}
+        end
+  
+        # c) All attribute keys across those hashes
+        all_keys = hashes.flat_map(&:keys).uniq.sort
+  
+        # d) One row per attribute
         all_keys.each do |col|
           row = [col.humanize]
           hashes.each do |h|
             v = h[col]
-            row << (v.is_a?(Array) ? v.join(', ') : (v.to_s.presence || ''))
+            row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
           end
           sheet.add_row row
         end
+  
+        # e) Blank spacer row
+        sheet.add_row []
       end
     end
-
-    fn = "Comparison_#{@subsystem.name}.xlsx"
+  
+    filename = "Comparison_#{@subsystem.name.parameterize}.xlsx"
     send_data p.to_stream.read,
-              filename: fn,
+              filename: filename,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 

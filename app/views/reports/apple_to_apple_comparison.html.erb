@@ -1,10 +1,9 @@
-<!-- app/views/reports/apple_to_apple_comparison.html.erb -->
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-4xl mx-auto">
   <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
     Generate Apple-to-Apple Comparison
   </h1>
 
-  <!-- Filter form: just reloads this page with subsystem_id -->
+  <!-- 1) Filter form -->
   <%= form_with url: apple_to_apple_comparison_reports_path,
                 method: :get,
                 local: true,
@@ -25,48 +24,53 @@
   <% end %>
 
   <% if @suppliers_with_subsystems.any? %>
-    <table class="min-w-full bg-white rounded-lg shadow-md overflow-hidden mb-6">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Select</th>
-          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Supplier Name</th>
-        </tr>
-      </thead>
-      <tbody class="text-gray-700">
-        <% @suppliers_with_subsystems.each do |supplier| %>
-          <tr class="border-t">
-            <td class="px-6 py-3">
-              <input type="checkbox"
-                     name="selected_suppliers[]"
-                     value="<%= supplier.id %>"
-                     id="sup_<%= supplier.id %>"
-                     <%= 'checked' if Array(params[:selected_suppliers]).include?(supplier.id.to_s) %>>
-            </td>
-            <td class="px-6 py-3 font-medium">
-              <label for="sup_<%= supplier.id %>"><%= supplier.supplier_name %></label>
-            </td>
+    <!-- 2) Comparison form -->
+    <form method="get" data-turbo="false">
+      <!-- keep the subsystem across submits -->
+      <input type="hidden" name="subsystem_id" value="<%= params[:subsystem_id] %>"/>
+
+      <table class="min-w-full bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Select</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Supplier Name</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody class="text-gray-700">
+          <% @suppliers_with_subsystems.each do |supplier| %>
+            <% sid = supplier.id.to_s %>
+            <tr class="border-t">
+              <td class="px-6 py-3">
+                <input type="checkbox"
+                       name="selected_suppliers[]"
+                       value="<%= sid %>"
+                       id="sup_<%= sid %>"
+                       <%= 'checked' if Array(params[:selected_suppliers]).include?(sid) %> >
+              </td>
+              <td class="px-6 py-3 font-medium">
+                <label for="sup_<%= sid %>"><%= supplier.supplier_name %></label>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
 
-    <div class="flex space-x-4">
-      <%# Show Comparison button %>
-      <%= link_to "Show Comparison",
-                  show_comparison_report_reports_path(
-                    subsystem_id:       params[:subsystem_id],
-                    selected_suppliers: Array(params[:selected_suppliers])
-                  ),
-                  class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+      <div class="flex space-x-4">
+        <!-- Show Comparison: get HTML side-by-side -->
+        <button type="submit"
+                formaction="<%= show_comparison_report_reports_path %>"
+                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+          Show Comparison
+        </button>
 
-      <%# Generate Comparison (Excel) button %>
-      <%= link_to "Generate Comparison",
-                  generate_comparison_report_reports_path(
-                    subsystem_id:       params[:subsystem_id],
-                    selected_suppliers: Array(params[:selected_suppliers])
-                  ),
-                  class: "bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" %>
-    </div>
+        <!-- Generate Comparison: download Excel -->
+        <button type="submit"
+                formaction="<%= generate_comparison_report_reports_path %>"
+                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+          Generate Comparison
+        </button>
+      </div>
+    </form>
   <% else %>
     <p class="text-center text-gray-500">No suppliers found for the selected subsystem.</p>
   <% end %>

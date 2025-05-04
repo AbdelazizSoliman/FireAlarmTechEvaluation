@@ -1,5 +1,7 @@
 # app/models/column_metadata.rb
 class ColumnMetadata < ApplicationRecord
+  self.table_name = 'column_metadatas'
+  
   before_validation :assign_default_positions, on: :create
 
   validates :table_name, :column_name, presence: true

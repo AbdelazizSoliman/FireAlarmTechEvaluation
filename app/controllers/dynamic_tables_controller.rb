@@ -272,7 +272,7 @@ class DynamicTablesController < ApplicationController
       flash[:error] = "No features created."
     end
 
-    redirect_to admin_dynamic_tables_path(
+    redirect_to admin_path(
       table_name:       table_name,
       **filter_params
     )

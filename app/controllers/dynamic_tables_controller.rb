@@ -209,101 +209,75 @@ class DynamicTablesController < ApplicationController
     column_types          = params[:column_types]         || []
     features              = params[:features]             || []
     combobox_values_arr   = params[:combobox_values_arr]  || []
-    has_sub_options_arr   = params[:has_sub_options_arr]  || []
     has_costs             = params[:has_costs]            || []
     rate_keys             = params[:rate_keys]            || []
     amount_keys           = params[:amount_keys]          || []
     notes_keys            = params[:notes_keys]           || []
     sub_fields            = params[:sub_fields]           || []
     array_default_empties = params[:array_default_empties] || []
-  
-    label_rows = params[:label_rows] || []
-    label_cols = params[:label_cols] || []
-    rows       = params[:rows]       || []
-    cols       = params[:cols]       || []
-  
-    created_features = []
-  
+
+    created = []
+
     feature_names.each_with_index do |raw_name, idx|
-      col_name = to_db_name(raw_name)
+      col_name   = to_db_name(raw_name)
       next if col_name.blank?
-  
-      col_type    = column_types[idx]
-      front_feat  = features[idx]
-      row         = rows[idx].to_i
-      col         = cols[idx].to_i
-      label_row   = label_rows[idx].to_i
-      label_col   = label_cols[idx].to_i
-  
-      allowed_types = %w[string integer boolean decimal text text[] date]
-      next unless allowed_types.include?(col_type)
-  
-      # ✅ Prevent duplicate grid coordinates
-      if [row, col, label_row, label_col].all?(&:positive?)
-      duplicate = ColumnMetadata.where(
-        table_name: table_name,
-        row: row,
-        col: col,
-        label_row: label_row,
-        label_col: label_col
-      ).exists?
-  
-      if duplicate
-        flash[:error] ||= ""
-        flash[:error] += "⛔ Duplicate grid location for '#{raw_name}' at row #{row}, col #{col}, label_row #{label_row}, label_col #{label_col}. "
-        next
-      end
-    end
-  
+
+      # only allow your permitted types
+      next unless %w[string integer boolean decimal text text[] date].include?(column_types[idx])
+
+      # migrate the column
       begin
-        options = {}
-        if col_type == 'text[]'
-          options = { array: true, default: (array_default_empties[idx] == '1' ? [] : nil) }
+        migration_opts = {}
+        if column_types[idx] == 'text[]'
+          migration_opts = {
+            array:   true,
+            default: (array_default_empties[idx] == '1' ? [] : nil)
+          }
+          col_type = :text
+        else
+          col_type = column_types[idx].to_sym
         end
-      
+
         ActiveRecord::Migration.add_column(
-          table_name.to_sym,
-          col_name.to_sym,
-          col_type == 'text[]' ? :text : col_type.to_sym,
-          **options
+          table_name.to_sym, col_name.to_sym, col_type, **migration_opts
         )
-  
-        raw_values = combobox_values_arr[idx].presence
-        parsed_values = raw_values ? raw_values.split(',').map(&:strip) : nil
-  
-        options_hash = {}
-        options_hash[:allowed_values] = parsed_values if parsed_values
-  
-        ColumnMetadata.create!(
-          table_name: table_name,
-          column_name: col_name,
-          feature: front_feat,
-          has_cost: has_costs[idx].present?,
-          sub_field: sub_fields[idx],
-          rate_key: rate_keys[idx],
-          amount_key: amount_keys[idx],
-          notes_key: notes_keys[idx],
-          row: row,
-          col: col,
-          label_row: label_row,
-          label_col: label_col,
-          options: options_hash
+
+        # build your metadata row — NO row/col/label_* passed here
+        md = ColumnMetadata.create!(
+          table_name:   table_name,
+          column_name:  col_name,
+          feature:      features[idx].presence,
+          has_cost:     has_costs[idx].present?,
+          sub_field:    sub_fields[idx],
+          rate_key:     rate_keys[idx],
+          amount_key:   amount_keys[idx],
+          notes_key:    notes_keys[idx],
+          options:      begin
+                          vals = combobox_values_arr[idx].to_s.split(',').map(&:strip)
+                          vals.any? ? { allowed_values: vals } : {}
+                        end
         )
-  
-        created_features << col_name
+
+        created << col_name
       rescue => e
-        Rails.logger.error "❌ Error adding column #{col_name}: #{e.message}"
+        Rails.logger.error "Error adding column #{col_name}: #{e.message}"
         flash[:error] ||= ""
-        flash[:error] += "Error adding #{col_name}: #{e.message}. "
+        flash[:error] += "Failed to add #{col_name}: #{e.message}. "
       end
     end
-  
-    msg = created_features.any? ? "✅ Created features: #{created_features.join(', ')}" : nil
-    flash[created_features.any? ? :success : :error] ||= ""
-    flash[created_features.any? ? :success : :error] += msg if msg.present?
-  
-    redirect_to admin_path(table_name: table_name, **filter_params)
+
+    if created.any?
+      flash[:success] = "Created features: #{created.join(', ')}"
+    elsif flash[:error].blank?
+      flash[:error] = "No features created."
+    end
+
+    redirect_to admin_dynamic_tables_path(
+      table_name:       table_name,
+      **filter_params
+    )
   end
+
   
   def feature_row
     render partial: 'feature_row', locals: { idx: params[:idx].to_i }
@@ -387,7 +361,12 @@ class DynamicTablesController < ApplicationController
   private
 
   def filter_params
-    params.permit(:project_filter, :project_scope_filter, :system_filter, :subsystem_filter)
+    params.slice(
+      :project_filter,
+      :project_scope_filter,
+      :system_filter,
+      :subsystem_filter
+    ).permit!
   end
 
   def set_table_name

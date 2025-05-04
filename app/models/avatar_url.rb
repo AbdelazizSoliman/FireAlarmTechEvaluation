@@ -13,3 +13,4 @@ class AvatarUrl
     "https://eu.ui-avatars.com/api/#{name}/#{size * 2}/#{background.delete_prefix("#")}/#{text.delete_prefix("#")}"
   end
 end
+ self.table_name = 'column_metadatas'

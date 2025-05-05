@@ -13,40 +13,52 @@ module Api
 
     # POST /api/save_all
     def save_all
-      supplier = authenticate_supplier!
-      return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
-
-      all_payloads  = params.require(:data).permit!.to_h
-      saved_records = []
-
-   all_payloads.each do |table_name, payload|
-  next unless ActiveRecord::Base.connection.table_exists?(table_name)
-  model = Class.new(ActiveRecord::Base) do
-    self.table_name        = table_name
-    self.inheritance_column = :_type_disabled
-  end
-
-  raw_attrs    = payload.to_h
-  subsystem_id = raw_attrs.delete("subsystem_id") || raw_attrs.delete(:subsystem_id)
-
-  # 1) keep only real columns
-  allowed      = model.column_names
-  safe_attrs   = raw_attrs.slice(*allowed)
-                      .except("id","created_at","updated_at","supplier_id")
-  
-  # 2) drop parent_id if blank so it doesn't become 0
-  if safe_attrs.key?("parent_id") && safe_attrs["parent_id"].blank?
-    safe_attrs.delete("parent_id")
-  end
-
-  record = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id)
-                .first_or_initialize
-
-  record.assign_attributes(safe_attrs)
-  record.supplier_id  = supplier.id
-  record.subsystem_id = subsystem_id
-  record.save!
-end
+      payloads = params.require(:data).to_unsafe_h  # your incoming per-table hashes
+      # 1) fetch all defs in two‐phase order: parents first
+      table_defs = TableDefinition
+        .where(subsystem_id: params[:subsystem_id])
+        .order(Arel.sql("COALESCE(parent_table, '') ASC, position ASC"))
+    
+      table_defs.each do |td|
+        name = td.table_name
+        next unless payloads.key?(name)
+    
+        raw    = payloads[name] || {}
+        model  = Class.new(ActiveRecord::Base) do
+          self.table_name        = name
+          self.inheritance_column = :_type_disabled
+        end
+    
+        # 2) strip everything except real columns
+        allowed = model.column_names
+        safe    = raw.slice(*allowed)
+                     .except("id","created_at","updated_at","supplier_id","subsystem_id")
+    
+        # 3) if this is a child table, look up its parent record & wire the FK
+        if td.parent_table.present?
+          parent_rec = Class.new(ActiveRecord::Base) {
+            self.table_name        = td.parent_table
+            self.inheritance_column = :_type_disabled
+          }.find_by(supplier_id: safe["supplier_id"], subsystem_id: safe["subsystem_id"])
+    
+          # only set it if we actually found a parent
+          safe["parent_id"] = parent_rec.id if parent_rec
+        end
+    
+        # 4) upsert (preserve existing if present)
+        record = model.where(
+          supplier_id:  safe["supplier_id"],
+          subsystem_id: safe["subsystem_id"]
+        ).first_or_initialize
+    
+        record.assign_attributes(safe)
+        record.save!
+      end
+    
+      head :no_content
+    rescue => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
 
 
       subsystem = Subsystem.find(saved_records.first[:subsystem_id])

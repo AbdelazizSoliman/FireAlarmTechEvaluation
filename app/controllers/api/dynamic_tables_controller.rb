@@ -10,7 +10,7 @@ module Api
                             .map { |name, parent, pos| { table_name: name, parent_table: parent, position: pos } }
       render json: defs
     end
-    
+
     # POST /api/save_all
     def save_all
       supplier = authenticate_supplier!
@@ -19,35 +19,35 @@ module Api
       all_payloads  = params.require(:data).permit!.to_h
       saved_records = []
 
-      all_payloads.each do |table_name, payload|
-        unless ActiveRecord::Base.connection.table_exists?(table_name)
-          return render json: { error: "Table #{table_name} not found" },
-                        status: :bad_request
-        end
+   all_payloads.each do |table_name, payload|
+  next unless ActiveRecord::Base.connection.table_exists?(table_name)
+  model = Class.new(ActiveRecord::Base) do
+    self.table_name        = table_name
+    self.inheritance_column = :_type_disabled
+  end
 
-        model = Class.new(ActiveRecord::Base) do
-          self.table_name        = table_name
-          self.inheritance_column = :_type_disabled
-        end
+  raw_attrs    = payload.to_h
+  subsystem_id = raw_attrs.delete("subsystem_id") || raw_attrs.delete(:subsystem_id)
 
-        p            = payload.to_h
-        subsystem_id = p.delete("subsystem_id") || p.delete(:subsystem_id)
-        safe_attrs   = p.except("id", "created_at", "updated_at", "supplier_id")
+  # 1) keep only real columns
+  allowed      = model.column_names
+  safe_attrs   = raw_attrs.slice(*allowed)
+                      .except("id","created_at","updated_at","supplier_id")
+  
+  # 2) drop parent_id if blank so it doesn't become 0
+  if safe_attrs.key?("parent_id") && safe_attrs["parent_id"].blank?
+    safe_attrs.delete("parent_id")
+  end
 
-        record = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id)
-                      .first_or_initialize
+  record = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id)
+                .first_or_initialize
 
-        record.assign_attributes(safe_attrs)
-        record.supplier_id  = supplier.id
-        record.subsystem_id = subsystem_id
-        record.save!
+  record.assign_attributes(safe_attrs)
+  record.supplier_id  = supplier.id
+  record.subsystem_id = subsystem_id
+  record.save!
+end
 
-        saved_records << {
-          table:        table_name,
-          record_id:    record.id,
-          subsystem_id: subsystem_id
-        }
-      end
 
       subsystem = Subsystem.find(saved_records.first[:subsystem_id])
 

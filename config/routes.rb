@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   
   # ✅ API namespace for suppliers
   namespace :api do
+    get "/subsystems/:subsystem_id/table_definitions", to: "dynamic_tables#table_definitions"
     post 'save_all', to: 'dynamic_tables#save_all'
 
     namespace :supplier do

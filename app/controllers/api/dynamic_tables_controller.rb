@@ -3,6 +3,14 @@ module Api
   class DynamicTablesController < ApplicationController
     skip_forgery_protection
 
+    def table_definitions
+      defs = TableDefinition.where(subsystem_id: params[:subsystem_id])
+                            .order(:position)
+                            .pluck(:table_name, :parent_table, :position)
+                            .map { |name, parent, pos| { table_name: name, parent_table: parent, position: pos } }
+      render json: defs
+    end
+    
     # POST /api/save_all
     def save_all
       supplier = authenticate_supplier!

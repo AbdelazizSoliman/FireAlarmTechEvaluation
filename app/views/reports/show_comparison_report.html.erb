@@ -4,36 +4,41 @@
     Apple-to-Apple Comparison for <%= @subsystem.name %>
   </h1>
 
+  <%# group definitions by parent_table %>
   <% groups = @table_defs.group_by(&:parent_table) %>
+  <% parents = groups[nil] || [] %>
 
-  <% groups[nil].each do |parent_td| %>
+  <% parents.each do |parent_td| %>
+    <% children = groups[parent_td.table_name] || [] %>
+
     <section class="mb-10">
       <h2 class="text-xl font-semibold mb-2"><%= parent_td.table_name.titleize %></h2>
 
-      <% children = groups[parent_td.table_name] || [] %>
       <% if children.any? %>
+        <!-- Subtables view -->
         <div class="overflow-x-auto">
           <table class="min-w-full border-collapse">
             <thead>
               <tr class="bg-gray-200">
                 <th class="border px-3 py-2 text-left">Attribute</th>
-                <%# أعمدة باسم الجداول الفرعية %>
                 <% children.each do |ctd| %>
                   <th class="border px-3 py-2 text-left"><%= ctd.table_name.titleize %></th>
                 <% end %>
               </tr>
             </thead>
             <tbody>
-              <% cols = children.flat_map { |ctd|
+              <%# collect all attribute keys across all suppliers for each subtable %>
+              <% cols = children.flat_map do |ctd|
                    @comparison_data[ctd.table_name]&.values&.flat_map(&:keys) || []
-                 }.uniq.sort %>
+                 end.uniq.sort %>
 
               <% cols.each_with_index do |col, i| %>
                 <tr class="<%= i.even? ? 'bg-white' : 'bg-gray-50' %>">
                   <td class="border px-3 py-2 font-medium"><%= col.humanize %></td>
                   <% children.each do |ctd| %>
+                    <%# gather every supplier’s value for this subtable + attribute %>
                     <% vals = @comparison_data[ctd.table_name]&.values&.map { |h| h[col] }.compact.flatten %>
-                    <td class="border px-3 py-2">
+                    <td class="border px-3 py-2 align-top">
                       <% if vals.any? %>
                         <ul class="list-disc ml-4">
                           <% vals.each { |v| %><li><%= v %></li><% } %>
@@ -48,8 +53,44 @@
             </tbody>
           </table>
         </div>
+
       <% else %>
-        <p class="italic text-gray-600">No subtables to compare.</p>
+        <!-- Fallback to per-supplier view for parents without subtables -->
+        <% by_supplier = @comparison_data[parent_td.table_name] || {} %>
+        <%# collect all attribute keys %>
+        <% cols = by_supplier.values.flat_map(&:keys).uniq.sort %>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="border px-3 py-2 text-left">Attribute</th>
+                <% by_supplier.keys.each do |supplier_name| %>
+                  <th class="border px-3 py-2 text-left"><%= supplier_name %></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% cols.each_with_index do |col, i| %>
+                <tr class="<%= i.even? ? 'bg-white' : 'bg-gray-50' %>">
+                  <td class="border px-3 py-2 font-medium"><%= col.humanize %></td>
+                  <% by_supplier.each_value do |attrs| %>
+                    <td class="border px-3 py-2 align-top">
+                      <% val = attrs[col] %>
+                      <% if val.is_a?(Array) %>
+                        <ul class="list-disc ml-4">
+                          <% val.each { |v| %><li><%= v %></li><% } %>
+                        </ul>
+                      <% else %>
+                        <%= val.presence || '—' %>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
       <% end %>
     </section>
   <% end %>

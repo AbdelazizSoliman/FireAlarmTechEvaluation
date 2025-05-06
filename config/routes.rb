@@ -6,6 +6,10 @@ Rails.application.routes.draw do
 
   # ✅ API namespace for suppliers
   namespace :api do
+    get  '/subsystems/:subsystem_id/table_order',       to: 'dynamic_tables#table_order'
+    get  '/subsystems/:subsystem_id/table_definitions', to: 'dynamic_tables#table_definitions'
+    post '/subsystems/:subsystem_id/save_all',          to: 'dynamic_tables#save_all'
+    
     namespace :supplier do
       resources :suppliers,      only: [:create, :index, :show]
       resources :projects,       only: [:index]
@@ -41,13 +45,13 @@ Rails.application.routes.draw do
     end
 
     # Dynamic‐table endpoints under /api/subsystems/:id
-    resources :subsystems, only: [] do
-      member do
-        get  :table_order        # GET  /api/subsystems/:id/table_order
-        get  :table_definitions  # GET  /api/subsystems/:id/table_definitions
-        post :save_all           # POST /api/subsystems/:id/save_all
-      end
-    end
+    # resources :subsystems, only: [] do
+    #   member do
+    #     get  :table_order        # GET  /api/subsystems/:id/table_order
+    #     get  :table_definitions  # GET  /api/subsystems/:id/table_definitions
+    #     post :save_all           # POST /api/subsystems/:id/save_all
+    #   end
+    # end
 
     resources :sub_tables, only: [:index]
 

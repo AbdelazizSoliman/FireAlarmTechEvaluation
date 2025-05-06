@@ -4,17 +4,21 @@ module Api
     skip_forgery_protection
 
     # decode & find supplier via JWT
-    private def authenticate_supplier!
-      token = request.headers["Authorization"]&.split(" ")&.last
-      return unless token
-      payload = JWT.decode(
-        token,
+    private
+    def authenticate_supplier!
+      auth = request.headers['Authorization']&.split(' ')&.last
+      return unless auth
+
+      # decode with correct key
+      payload, = JWT.decode(
+        auth,
         Rails.application.secret_key_base,
         true,
-        algorithm: "HS256"
-      ).first
-      Supplier.find_by(id: payload["sub"])
-    rescue
+        { algorithms: ['HS256'] }
+      )
+
+      Supplier.find_by(id: payload['sub'])
+    rescue JWT::DecodeError
       nil
     end
 

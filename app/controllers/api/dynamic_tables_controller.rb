@@ -3,7 +3,7 @@ module Api
   class DynamicTablesController < ApplicationController
     skip_forgery_protection
 
-    # you _are_ a supplier: decode JWT
+    # decode & find supplier via JWT
     private def authenticate_supplier!
       token = request.headers["Authorization"]&.split(" ")&.last
       return unless token
@@ -40,11 +40,12 @@ module Api
     # POST /api/save_all?subsystem_id=…
     def save_all
       supplier     = authenticate_supplier!
-      return head :unauthorized unless supplier
+      return head(:unauthorized) unless supplier
 
       subsystem_id = params[:subsystem_id]
       payloads     = params.require(:data).to_unsafe_h
 
+      # parents first, then children
       table_defs = TableDefinition
                      .where(subsystem_id: subsystem_id)
                      .order(Arel.sql("COALESCE(parent_table,'') ASC, position ASC"))
@@ -57,25 +58,24 @@ module Api
 
         raw   = payloads[tn] || {}
         model = Class.new(ActiveRecord::Base) do
-          self.table_name         = tn
+          self.table_name        = tn
           self.inheritance_column = :_type_disabled
         end
 
-        # only real columns
+        # only keep real columns
         allowed = model.column_names
         safe    = raw.slice(*allowed)
                      .except("id","created_at","updated_at","supplier_id","subsystem_id")
 
-        # if it's a sub-table, hook up parent_id
+        # if child, wire up parent_id
         if td.parent_table.present?
-          parent_model = Class.new(ActiveRecord::Base) do
-            self.table_name         = td.parent_table
+          parent = Class.new(ActiveRecord::Base) do
+            self.table_name        = td.parent_table
             self.inheritance_column = :_type_disabled
-          end
-          parent = parent_model.find_by(
-                     supplier_id:  supplier.id,
-                     subsystem_id: subsystem_id
-                   )
+          end.find_by(
+            supplier_id:  supplier.id,
+            subsystem_id: subsystem_id
+          )
           safe["parent_id"] = parent.id if parent
         end
 

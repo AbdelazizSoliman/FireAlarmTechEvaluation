@@ -1,35 +1,33 @@
+# config/routes.rb
 Rails.application.routes.draw do
-
   namespace :admin do
     resources :submissions, only: [:index, :show]
   end
-  
+
   # ✅ API namespace for suppliers
   namespace :api do
     namespace :supplier do
       resources :suppliers, only: [:create, :index, :show]
-      resources :projects, only: [:index] 
-      resources :project_scopes, only: [:index] 
-      resources :systems, only: [:index] 
-      resources :subsystems, only: [:index] # ✅ Removed duplicate
-      get 'subsystem_tables', to: 'suppliers#subsystem_tables'
-      post 'register', to: 'suppliers#register'
-      post 'login', to: 'sessions#create'
-      get 'profile', to: 'sessions#profile'
-      get 'dashboard', to: 'suppliers#dashboard'
-      get 'supplier_data', to: 'supplier_data#index'
+      resources :projects, only: [:index]
+      resources :project_scopes, only: [:index]
+      resources :systems, only: [:index]
+      resources :subsystems, only: [:index]
+      get  'subsystem_tables', to: 'suppliers#subsystem_tables'
+      post 'register',          to: 'suppliers#register'
+      post 'login',             to: 'sessions#create'
+      get  'profile',           to: 'sessions#profile'
+      get  'dashboard',         to: 'suppliers#dashboard'
+      get  'supplier_data',     to: 'supplier_data#index'
     end
 
-    # Nested Routes for Projects, Systems, and Subsystems within API namespace
+    # Nested routes for Projects → ProjectScopes → Systems → Subsystems
     resources :projects do
       resources :project_scopes do
         resources :systems do
           resources :subsystems, only: [] do
-            post :submit_all, on: :member
-            get :submitted_data, on: :member
-            member do
-              put :update_submission
-            end
+            post   :submit_all,      on: :member
+            get    :submitted_data,  on: :member
+            put    :update_submission, on: :member
           end
         end
       end
@@ -42,25 +40,27 @@ Rails.application.routes.draw do
       end
     end
 
-    namespace :api do
-      resources :subsystems, only: [] do
-        member do
-          get  :table_order          # GET  /api/subsystems/:id/table_order
-          get  :table_definitions    # GET  /api/subsystems/:id/table_definitions
-          post :save_all             # POST /api/subsystems/:id/save_all
-        end
+    # Dynamic‐table endpoints under /api/subsystems/:id
+    resources :subsystems, only: [] do
+      member do
+        get  :table_order        # GET  /api/subsystems/:id/table_order
+        get  :table_definitions  # GET  /api/subsystems/:id/table_definitions
+        post :save_all           # POST /api/subsystems/:id/save_all
       end
+    end
 
-      resources :sub_tables, only: [:index]
-     # Dynamic Table API Routes
-     
-      get "/dynamic_tables/:table_name", to: "dynamic_tables#index"
-      patch "/dynamic_tables/:table_name/:id", to: "dynamic_tables#update"
-      get '/table_metadata/:table_name', to: 'dynamic_tables#table_metadata'
-      post '/save_data/:table_name', to: 'dynamic_tables#save_data'
+    resources :sub_tables, only: [:index]
+
+    # Additional dynamic‐table routes
+    get    '/dynamic_tables/:table_name',        to: 'dynamic_tables#index'
+    patch  '/dynamic_tables/:table_name/:id',    to: 'dynamic_tables#update'
+    get    '/table_metadata/:table_name',        to: 'dynamic_tables#table_metadata'
+    post   '/save_data/:table_name',             to: 'dynamic_tables#save_data'
   end
 
-  # ✅ RESTORE EVALUATION SYSTEM & STANDALONE ROUTES
+  # -------------------------
+  # Non‐API (legacy) routes
+  # -------------------------
   resources :projects do
     resources :project_scopes do
       resources :systems do
@@ -72,29 +72,26 @@ Rails.application.routes.draw do
     end
   end
 
-  # ✅ Comparisons (Apple to Apple Comparison)
   resources :comparisons, only: [:index] do
     collection do
-      post :generate   # Generate Apple to Apple Comparison
-      get :export      # Export Apple to Apple Comparison to Excel (optional)
+      post :generate
+      get  :export
     end
   end
 
-  # ✅ Supplier Routes (Non-API)
   resources :suppliers do
     collection do
       get :search
       get 'dashboard', to: 'suppliers#dashboard'
     end
     member do
-      post :set_membership_and_approve  # ✅ Handle membership and approval process
+      post :set_membership_and_approve
     end
   end
 
-  # ✅ Notifications (Non-API)
   resources :notifications do
     member do
-      get :manage_membership
+      get  :manage_membership
       post :approve_supplier
       post :reject_supplier
     end
@@ -103,77 +100,64 @@ Rails.application.routes.draw do
   resources :requirements_data, only: [:index] do
     collection do
       post :update
-      get :download
+      get  :download
     end
   end
 
- # Reports Routes
- resources :reports, only: [:index] do
-  collection do
-    # — Single‐supplier (takes supplier_id & subsystem_id as query params) —
-    get :evaluation_tech_report       # original “Generate Evaluation/Tech Report” form
-    get :evaluation_data              # Show HTML for one supplier/subsystem
-    get :generate_evaluation_report   # Download PDF/Excel for one supplier/subsystem
-    get :evaluation_result            # Show pass/fail metrics for one supplier/subsystem
-    get :recommendation               # (if still needed)
-    
-    # **NEW**: streamlined Excel download for dynamic tables
-    # URL: /reports/generate_excel_report?supplier_id=…&subsystem_id=…
-    get :generate_excel_report
+  resources :reports, only: [:index] do
+    collection do
+      get :evaluation_tech_report
+      get :evaluation_data
+      get :generate_evaluation_report
+      get :evaluation_result
+      get :recommendation
 
-    # — Multi‐supplier Apple‐to‐Apple (takes selected_suppliers[] & subsystem_id) —
-    get :apple_to_apple_comparison    # original form
-    get :show_comparison_report       # HTML comparison
-    get :generate_comparison_report   # Excel comparison download
+      get :generate_excel_report
 
-    # — Other legacy reports —
-    get :sow
-    get :missing_items
-    get :differences
-    get :interfaces
+      get :apple_to_apple_comparison
+      get :show_comparison_report
+      get :generate_comparison_report
+
+      get :sow
+      get :missing_items
+      get :differences
+      get :interfaces
+    end
   end
-end
 
-  # ✅ Standalone Routes for Systems and Subsystems
   resources :project_scopes, only: [:index, :show, :new, :create]
-  resources :systems, only: [:index, :show, :new, :create]
-  resources :subsystems, only: [:index, :show, :new, :create]
+  resources :systems,        only: [:index, :show, :new, :create]
+  resources :subsystems,     only: [:index, :show, :new, :create]
 
-  # ✅ Health check route
-  get "up" => "rails/health#show", as: :rails_health_check
-
-  # ✅ Excel download route
-  get 'projects/download_excel', to: 'projects#download_excel', as: 'download_excel'
-  get 'reports/generate_excel_report', to: 'reports#generate_excel_report', as: 'generate_excel_report'
-
+  get 'up',                        to: 'rails/health#show',          as: :rails_health_check
+  get 'projects/download_excel',   to: 'projects#download_excel',     as: :download_excel
+  get 'reports/generate_excel_report', to: 'reports#generate_excel_report', as: :generate_excel_report
 
   devise_for :users
 
-  # Redirect authenticated users to Dashboard
   authenticated :user do
-    root to: "dashboard#index", as: :authenticated_root
+    root to: 'dashboard#index', as: :authenticated_root
   end
 
-  # Redirect unauthenticated users to the login page
   devise_scope :user do
-    root to: "devise/sessions#new", as: :unauthenticated_root
+    root to: 'devise/sessions#new', as: :unauthenticated_root
   end
 
-  get "/admin", to: "dynamic_tables#admin"
-  post "/admin/add_column", to: "dynamic_tables#add_column"
-  post '/admin/create_table', to: 'dynamic_tables#create_table'
-  get '/dynamic_tables/:table_name/columns/:column_name/edit_metadata', to: 'dynamic_tables#edit_metadata', as: 'edit_metadata_dynamic_tables'
-  patch '/dynamic_tables/:table_name/columns/:column_name/update_metadata', to: 'dynamic_tables#update_metadata', as: 'update_metadata_dynamic_tables'
-  get '/dynamic_tables/:table_name', to: 'dynamic_tables#show', as: 'dynamic_table'
-  get '/subsystems/:subsystem_id/:table_name', to: 'dynamic_tables#show_with_subsystem', as: 'subsystem_dynamic_table'
-  post '/admin/create_sub_table', to: 'dynamic_tables#create_multiple_sub_tables'
-  post '/admin/create_multiple_tables', to: 'dynamic_tables#create_multiple_tables'
-  post '/admin/create_multiple_sub_tables', to: 'dynamic_tables#create_multiple_sub_tables'
-  post '/admin/create_multiple_features', to: 'dynamic_tables#create_multiple_features'
-  get '/admin/sub_tables', to: 'dynamic_tables#sub_tables'
-  get '/table_metadata/:table_name', to: 'dynamic_tables#show'
-  post '/admin/move_table', to: 'dynamic_tables#move_table', as: 'move_table_dynamic_tables'
-  get '/subsystems/:subsystem_id/ordered_tables', to: 'dynamic_tables#ordered_tables'
-  get '/admin/check_table_name', to: 'dynamic_tables#check_table_name'
-
+  # Admin panel routes
+  get  '/admin',                           to: 'dynamic_tables#admin'
+  post '/admin/add_column',                to: 'dynamic_tables#add_column'
+  post '/admin/create_table',              to: 'dynamic_tables#create_table'
+  post '/admin/create_multiple_tables',    to: 'dynamic_tables#create_multiple_tables'
+  post '/admin/create_multiple_sub_tables',to: 'dynamic_tables#create_multiple_sub_tables'
+  post '/admin/create_multiple_features',  to: 'dynamic_tables#create_multiple_features'
+  post '/admin/move_table',                to: 'dynamic_tables#move_table',             as: :move_table_dynamic_tables
+  get  '/admin/sub_tables',                to: 'dynamic_tables#sub_tables'
+  get  '/admin/check_table_name',          to: 'dynamic_tables#check_table_name'
+  get  '/dynamic_tables/:table_name/columns/:column_name/edit_metadata',
+       to: 'dynamic_tables#edit_metadata', as: :edit_metadata_dynamic_tables
+  patch '/dynamic_tables/:table_name/columns/:column_name/update_metadata',
+        to: 'dynamic_tables#update_metadata', as: :update_metadata_dynamic_tables
+  get  '/dynamic_tables/:table_name',      to: 'dynamic_tables#show',                 as: :dynamic_table
+  get  '/subsystems/:subsystem_id/:table_name',
+       to: 'dynamic_tables#show_with_subsystem',                         as: :subsystem_dynamic_table
 end

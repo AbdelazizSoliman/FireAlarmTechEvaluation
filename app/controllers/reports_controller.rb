@@ -79,41 +79,72 @@ class ReportsController < ApplicationController
   def generate_comparison_report
     p  = Axlsx::Package.new
     wb = p.workbook
-  
+
     wb.add_worksheet(name: 'Comparison') do |sheet|
-      # 1) Header row
-      header = ['Attribute'] + @suppliers.map(&:supplier_name)
-      sheet.add_row header, b: true
-  
-      # 2) For each data table...
-      @table_defs.each do |td|
-        # a) Table‐name row
-        sheet.add_row [td.table_name.titleize] + [''] * @suppliers.size, b: true
-  
-        # b) Gather each supplier’s attributes for this table
-        hashes = @suppliers.map do |sup|
-          rec = fetch_record(td, sup, @subsystem)
-          rec ? rec.attributes.except(*system_cols) : {}
-        end
-  
-        # c) All attribute keys across those hashes
-        all_keys = hashes.flat_map(&:keys).uniq.sort
-  
-        # d) One row per attribute
-        all_keys.each do |col|
-          row = [col.humanize]
-          hashes.each do |h|
-            v = h[col]
-            row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
+      # group definitions by parent_table (nil = top-level parents)
+      grouped = @table_defs.group_by(&:parent_table)
+      parents = grouped[nil] || []
+
+      parents.each do |parent_td|
+        # 1) Parent heading row, bold
+        sheet.add_row [parent_td.table_name.titleize] + [''] * @suppliers.size,
+                      b: true
+
+        children = grouped[parent_td.table_name] || []
+
+        # 2) If it has subtables, iterate them…
+        if children.any?
+          children.each do |ctd|
+            # Sub-table heading
+            sheet.add_row [ctd.table_name.titleize] + [''] * @suppliers.size,
+                          b: true
+
+            # Gather each supplier’s record for this sub-table
+            hashes = @suppliers.map do |sup|
+              rec = fetch_record(ctd, sup, @subsystem)
+              rec ? rec.attributes.except(*system_cols) : {}
+            end
+
+            # All attribute keys
+            all_keys = hashes.flat_map(&:keys).uniq.sort
+
+            # One row per attribute
+            all_keys.each do |col|
+              row = [col.humanize]
+              hashes.each do |h|
+                v = h[col]
+                row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
+              end
+              sheet.add_row row
+            end
+
+            # Spacer
+            sheet.add_row []
           end
-          sheet.add_row row
+
+        # 3) Otherwise treat the parent itself as the table…
+        else
+          hashes = @suppliers.map do |sup|
+            rec = fetch_record(parent_td, sup, @subsystem)
+            rec ? rec.attributes.except(*system_cols) : {}
+          end
+
+          all_keys = hashes.flat_map(&:keys).uniq.sort
+
+          all_keys.each do |col|
+            row = [col.humanize]
+            hashes.each do |h|
+              v = h[col]
+              row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
+            end
+            sheet.add_row row
+          end
+
+          sheet.add_row []
         end
-  
-        # e) Blank spacer row
-        sheet.add_row []
       end
     end
-  
+
     filename = "Comparison_#{@subsystem.name.parameterize}.xlsx"
     send_data p.to_stream.read,
               filename: filename,

@@ -1,39 +1,45 @@
+<!-- app/views/reports/show_comparison_report.html.erb -->
 <div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-6xl mx-auto">
   <h1 class="text-2xl font-bold mb-6">
     Apple-to-Apple Comparison for <%= @subsystem.name %>
   </h1>
 
-  <% if @comparison_data.present? %>
-    <% @comparison_data.each do |table_name, by_supplier| %>
-      <section class="mb-10">
-        <h2 class="text-xl font-semibold mb-2"><%= table_name.titleize %></h2>
+  <% groups = @table_defs.group_by(&:parent_table) %>
 
-        <%# Gather all attribute keys across suppliers %>
-        <% columns = by_supplier.values.flat_map(&:keys).uniq.sort %>
+  <% groups[nil].each do |parent_td| %>
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold mb-2"><%= parent_td.table_name.titleize %></h2>
 
+      <% children = groups[parent_td.table_name] || [] %>
+      <% if children.any? %>
         <div class="overflow-x-auto">
           <table class="min-w-full border-collapse">
             <thead>
               <tr class="bg-gray-200">
                 <th class="border px-3 py-2 text-left">Attribute</th>
-                <% by_supplier.keys.each do |supplier_name| %>
-                  <th class="border px-3 py-2 text-left"><%= supplier_name %></th>
+                <%# أعمدة باسم الجداول الفرعية %>
+                <% children.each do |ctd| %>
+                  <th class="border px-3 py-2 text-left"><%= ctd.table_name.titleize %></th>
                 <% end %>
               </tr>
             </thead>
             <tbody>
-              <% columns.each_with_index do |col, i| %>
+              <% cols = children.flat_map { |ctd|
+                   @comparison_data[ctd.table_name]&.values&.flat_map(&:keys) || []
+                 }.uniq.sort %>
+
+              <% cols.each_with_index do |col, i| %>
                 <tr class="<%= i.even? ? 'bg-white' : 'bg-gray-50' %>">
                   <td class="border px-3 py-2 font-medium"><%= col.humanize %></td>
-                  <% by_supplier.each_value do |attrs| %>
+                  <% children.each do |ctd| %>
+                    <% vals = @comparison_data[ctd.table_name]&.values&.map { |h| h[col] }.compact.flatten %>
                     <td class="border px-3 py-2">
-                      <% val = attrs[col] %>
-                      <% if val.is_a?(Array) %>
+                      <% if vals.any? %>
                         <ul class="list-disc ml-4">
-                          <% val.each { |v| %><li><%= v %></li><% } %>
+                          <% vals.each { |v| %><li><%= v %></li><% } %>
                         </ul>
                       <% else %>
-                        <%= val.presence || '—' %>
+                        —  
                       <% end %>
                     </td>
                   <% end %>
@@ -42,10 +48,10 @@
             </tbody>
           </table>
         </div>
-      </section>
-    <% end %>
-  <% else %>
-    <p class="italic text-gray-600">No comparison data available.</p>
+      <% else %>
+        <p class="italic text-gray-600">No subtables to compare.</p>
+      <% end %>
+    </section>
   <% end %>
 
   <div class="mt-6">

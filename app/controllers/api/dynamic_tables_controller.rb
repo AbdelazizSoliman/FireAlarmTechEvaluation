@@ -3,6 +3,21 @@ module Api
   class DynamicTablesController < ApplicationController
     skip_forgery_protection
 
+    # you _are_ a supplier: decode JWT
+    private def authenticate_supplier!
+      token = request.headers["Authorization"]&.split(" ")&.last
+      return unless token
+      payload = JWT.decode(
+        token,
+        Rails.application.secret_key_base,
+        true,
+        algorithm: "HS256"
+      ).first
+      Supplier.find_by(id: payload["sub"])
+    rescue
+      nil
+    end
+
     # GET /api/subsystems/:subsystem_id/table_order
     def table_order
       order = TableDefinition
@@ -18,16 +33,17 @@ module Api
                .where(subsystem_id: params[:subsystem_id])
                .order(:position)
                .pluck(:table_name, :parent_table, :position)
-               .map { |t,p,pos|
-                 { table_name: t, parent_table: p, position: pos }
-               }
+               .map { |t,p,pos| { table_name: t, parent_table: p, position: pos } }
       render json: defs
     end
 
     # POST /api/save_all?subsystem_id=…
     def save_all
-      payloads     = params.require(:data).to_unsafe_h
+      supplier     = authenticate_supplier!
+      return head :unauthorized unless supplier
+
       subsystem_id = params[:subsystem_id]
+      payloads     = params.require(:data).to_unsafe_h
 
       table_defs = TableDefinition
                      .where(subsystem_id: subsystem_id)
@@ -45,42 +61,41 @@ module Api
           self.inheritance_column = :_type_disabled
         end
 
-        # keep only real columns
+        # only real columns
         allowed = model.column_names
         safe    = raw.slice(*allowed)
                      .except("id","created_at","updated_at","supplier_id","subsystem_id")
 
-        # hook up parent_id for subtables
+        # if it's a sub-table, hook up parent_id
         if td.parent_table.present?
           parent_model = Class.new(ActiveRecord::Base) do
             self.table_name         = td.parent_table
             self.inheritance_column = :_type_disabled
           end
           parent = parent_model.find_by(
-            supplier_id:  raw["supplier_id"],
-            subsystem_id: raw["subsystem_id"]
-          )
+                     supplier_id:  supplier.id,
+                     subsystem_id: subsystem_id
+                   )
           safe["parent_id"] = parent.id if parent
         end
 
-        # upsert
-        record = model.where(
-                   supplier_id:  raw["supplier_id"],
-                   subsystem_id: raw["subsystem_id"]
-                 ).first_or_initialize
+        # upsert by supplier+subsystem
+        record = model
+                   .where(supplier_id:  supplier.id,
+                          subsystem_id: subsystem_id)
+                   .first_or_initialize
 
         record.assign_attributes(safe)
+        record.supplier_id  = supplier.id
+        record.subsystem_id = subsystem_id
         record.save!
-        saved << { table: tn, id: record.id }
+
+        saved << { table: tn, record_id: record.id }
       end
 
-      # one notification for the batch
+      # one notification for entire batch
       if saved.any?
-        first = saved.first
-        sup   = payloads[first[:table]]["supplier_id"]
-        supplier  = Supplier.find(sup)
-        subsystem = Subsystem.find(params[:subsystem_id])
-
+        subsystem = Subsystem.find(subsystem_id)
         Notification.create!(
           title:             "Multiple Tables Submitted",
           body:              "Supplier #{supplier.supplier_name} submitted data for #{subsystem.name}.",
@@ -106,16 +121,18 @@ module Api
       tn        = params[:table_name]
       table_def = TableDefinition.find_by!(table_name: tn)
 
-      meta = ColumnMetadata.where(table_name: tn).each_with_object({}) do |m,h|
-        h[m.column_name] = {
-          feature:   m.feature,
-          options:   m.options,
-          row:       m.row,
-          col:       m.col,
-          label_row: m.label_row,
-          label_col: m.label_col
-        }
-      end
+      meta = ColumnMetadata
+               .where(table_name: tn)
+               .each_with_object({}) do |m,h|
+                 h[m.column_name] = {
+                   feature:   m.feature,
+                   options:   m.options,
+                   row:       m.row,
+                   col:       m.col,
+                   label_row: m.label_row,
+                   label_col: m.label_col
+                 }
+               end
 
       render json: {
         columns:  meta.keys,

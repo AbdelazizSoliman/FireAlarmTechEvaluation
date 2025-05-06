@@ -7,17 +7,17 @@ Rails.application.routes.draw do
   # ✅ API namespace for suppliers
   namespace :api do
     namespace :supplier do
-      resources :suppliers, only: [:create, :index, :show]
-      resources :projects, only: [:index]
+      resources :suppliers,      only: [:create, :index, :show]
+      resources :projects,       only: [:index]
       resources :project_scopes, only: [:index]
-      resources :systems, only: [:index]
-      resources :subsystems, only: [:index]
+      resources :systems,        only: [:index]
+      resources :subsystems,     only: [:index]
       get  'subsystem_tables', to: 'suppliers#subsystem_tables'
-      post 'register',          to: 'suppliers#register'
-      post 'login',             to: 'sessions#create'
-      get  'profile',           to: 'sessions#profile'
-      get  'dashboard',         to: 'suppliers#dashboard'
-      get  'supplier_data',     to: 'supplier_data#index'
+      post 'register',         to: 'suppliers#register'
+      post 'login',            to: 'sessions#create'
+      get  'profile',          to: 'sessions#profile'
+      get  'dashboard',        to: 'suppliers#dashboard'
+      get  'supplier_data',    to: 'supplier_data#index'
     end
 
     # Nested routes for Projects → ProjectScopes → Systems → Subsystems
@@ -25,9 +25,9 @@ Rails.application.routes.draw do
       resources :project_scopes do
         resources :systems do
           resources :subsystems, only: [] do
-            post   :submit_all,      on: :member
-            get    :submitted_data,  on: :member
-            put    :update_submission, on: :member
+            post :submit_all,      on: :member
+            get  :submitted_data,  on: :member
+            put  :update_submission, on: :member
           end
         end
       end
@@ -52,10 +52,10 @@ Rails.application.routes.draw do
     resources :sub_tables, only: [:index]
 
     # Additional dynamic‐table routes
-    get    '/dynamic_tables/:table_name',        to: 'dynamic_tables#index'
-    patch  '/dynamic_tables/:table_name/:id',    to: 'dynamic_tables#update'
-    get    '/table_metadata/:table_name',        to: 'dynamic_tables#table_metadata'
-    post   '/save_data/:table_name',             to: 'dynamic_tables#save_data'
+    get   '/dynamic_tables/:table_name',     to: 'dynamic_tables#index'
+    patch '/dynamic_tables/:table_name/:id', to: 'dynamic_tables#update'
+    get   '/table_metadata/:table_name',     to: 'dynamic_tables#table_metadata'
+    post  '/save_data/:table_name',          to: 'dynamic_tables#save_data'
   end
 
   # -------------------------
@@ -129,35 +129,34 @@ Rails.application.routes.draw do
   resources :systems,        only: [:index, :show, :new, :create]
   resources :subsystems,     only: [:index, :show, :new, :create]
 
-  get 'up',                        to: 'rails/health#show',          as: :rails_health_check
-  get 'projects/download_excel',   to: 'projects#download_excel',     as: :download_excel
-  get 'reports/generate_excel_report', to: 'reports#generate_excel_report', as: :generate_excel_report
+  get  'up',                           to: 'rails/health#show',           as: :rails_health_check
+  get  'projects/download_excel',      to: 'projects#download_excel',      as: :download_excel
+  get  'reports/generate_excel_report',to: 'reports#generate_excel_report',as: :generate_excel_report
 
   devise_for :users
 
   authenticated :user do
     root to: 'dashboard#index', as: :authenticated_root
   end
-
   devise_scope :user do
     root to: 'devise/sessions#new', as: :unauthenticated_root
   end
 
   # Admin panel routes
-  get  '/admin',                           to: 'dynamic_tables#admin'
-  post '/admin/add_column',                to: 'dynamic_tables#add_column'
-  post '/admin/create_table',              to: 'dynamic_tables#create_table'
-  post '/admin/create_multiple_tables',    to: 'dynamic_tables#create_multiple_tables'
-  post '/admin/create_multiple_sub_tables',to: 'dynamic_tables#create_multiple_sub_tables'
-  post '/admin/create_multiple_features',  to: 'dynamic_tables#create_multiple_features'
-  post '/admin/move_table',                to: 'dynamic_tables#move_table',             as: :move_table_dynamic_tables
-  get  '/admin/sub_tables',                to: 'dynamic_tables#sub_tables'
-  get  '/admin/check_table_name',          to: 'dynamic_tables#check_table_name'
-  get  '/dynamic_tables/:table_name/columns/:column_name/edit_metadata',
-       to: 'dynamic_tables#edit_metadata', as: :edit_metadata_dynamic_tables
+  get   '/admin',                           to: 'dynamic_tables#admin'
+  post  '/admin/add_column',                to: 'dynamic_tables#add_column'
+  post  '/admin/create_table',              to: 'dynamic_tables#create_table'
+  post  '/admin/create_multiple_tables',    to: 'dynamic_tables#create_multiple_tables'
+  post  '/admin/create_multiple_sub_tables',to: 'dynamic_tables#create_multiple_sub_tables'
+  post  '/admin/create_multiple_features',  to: 'dynamic_tables#create_multiple_features'
+  post  '/admin/move_table',                to: 'dynamic_tables#move_table',       as: :move_table_dynamic_tables
+  get   '/admin/sub_tables',                to: 'dynamic_tables#sub_tables'
+  get   '/admin/check_table_name',          to: 'dynamic_tables#check_table_name'
+  get   '/dynamic_tables/:table_name/columns/:column_name/edit_metadata',
+        to: 'dynamic_tables#edit_metadata',   as: :edit_metadata_dynamic_tables
   patch '/dynamic_tables/:table_name/columns/:column_name/update_metadata',
         to: 'dynamic_tables#update_metadata', as: :update_metadata_dynamic_tables
-  get  '/dynamic_tables/:table_name',      to: 'dynamic_tables#show',                 as: :dynamic_table
-  get  '/subsystems/:subsystem_id/:table_name',
-       to: 'dynamic_tables#show_with_subsystem',                         as: :subsystem_dynamic_table
+  get   '/dynamic_tables/:table_name',      to: 'dynamic_tables#show',           as: :dynamic_table
+  get   '/subsystems/:subsystem_id/:table_name',
+        to: 'dynamic_tables#show_with_subsystem',                      as: :subsystem_dynamic_table
 end

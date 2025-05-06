@@ -3,7 +3,7 @@ module Api
   class DynamicTablesController < ApplicationController
     skip_forgery_protection
 
-    # GET  /api/subsystems/:subsystem_id/table_order
+    # GET /api/subsystems/:subsystem_id/table_order
     def table_order
       order = TableDefinition
                 .where(subsystem_id: params[:subsystem_id])
@@ -12,13 +12,15 @@ module Api
       render json: { order: order }
     end
 
-    # GET  /api/subsystems/:subsystem_id/table_definitions
+    # GET /api/subsystems/:subsystem_id/table_definitions
     def table_definitions
       defs = TableDefinition
                .where(subsystem_id: params[:subsystem_id])
                .order(:position)
                .pluck(:table_name, :parent_table, :position)
-               .map { |t,p,pos| { table_name: t, parent_table: p, position: pos } }
+               .map { |t,p,pos|
+                 { table_name: t, parent_table: p, position: pos }
+               }
       render json: defs
     end
 
@@ -43,21 +45,21 @@ module Api
           self.inheritance_column = :_type_disabled
         end
 
-        # only real columns
+        # keep only real columns
         allowed = model.column_names
         safe    = raw.slice(*allowed)
                      .except("id","created_at","updated_at","supplier_id","subsystem_id")
 
-        # wire parent_id for subtables
+        # hook up parent_id for subtables
         if td.parent_table.present?
           parent_model = Class.new(ActiveRecord::Base) do
             self.table_name         = td.parent_table
             self.inheritance_column = :_type_disabled
           end
           parent = parent_model.find_by(
-                     supplier_id:  raw["supplier_id"],
-                     subsystem_id: raw["subsystem_id"]
-                   )
+            supplier_id:  raw["supplier_id"],
+            subsystem_id: raw["subsystem_id"]
+          )
           safe["parent_id"] = parent.id if parent
         end
 
@@ -69,14 +71,15 @@ module Api
 
         record.assign_attributes(safe)
         record.save!
-        saved << { table: tn, record_id: record.id }
+        saved << { table: tn, id: record.id }
       end
 
-      # send one notification if any saved
+      # one notification for the batch
       if saved.any?
-        first_payload = saved.first
-        supplier  = Supplier.find(payloads[first_payload[:table]]["supplier_id"])
-        subsystem = Subsystem.find(subsystem_id)
+        first = saved.first
+        sup   = payloads[first[:table]]["supplier_id"]
+        supplier  = Supplier.find(sup)
+        subsystem = Subsystem.find(params[:subsystem_id])
 
         Notification.create!(
           title:             "Multiple Tables Submitted",

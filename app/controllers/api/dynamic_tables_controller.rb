@@ -1,34 +1,32 @@
 # app/controllers/api/dynamic_tables_controller.rb
 module Api
   class DynamicTablesController < ApplicationController
-    # we’re handling our own CSRF via token header
     skip_forgery_protection
 
     # GET  /api/subsystems/:subsystem_id/table_order
     def table_order
-      order = TableDefinition.where(subsystem_id: params[:subsystem_id])
-                             .order(:position)
-                             .pluck(:table_name)
+      order = TableDefinition
+                .where(subsystem_id: params[:subsystem_id])
+                .order(:position)
+                .pluck(:table_name)
       render json: { order: order }
     end
 
     # GET  /api/subsystems/:subsystem_id/table_definitions
     def table_definitions
-      defs = TableDefinition.where(subsystem_id: params[:subsystem_id])
-                            .order(:position)
-                            .pluck(:table_name, :parent_table, :position)
-                            .map { |t,p,pos|
-                              { table_name: t, parent_table: p, position: pos }
-                            }
+      defs = TableDefinition
+               .where(subsystem_id: params[:subsystem_id])
+               .order(:position)
+               .pluck(:table_name, :parent_table, :position)
+               .map { |t,p,pos| { table_name: t, parent_table: p, position: pos } }
       render json: defs
     end
 
     # POST /api/save_all?subsystem_id=…
     def save_all
-      payloads = params.require(:data).to_unsafe_h
+      payloads     = params.require(:data).to_unsafe_h
       subsystem_id = params[:subsystem_id]
 
-      # fetch in parents‐first order
       table_defs = TableDefinition
                      .where(subsystem_id: subsystem_id)
                      .order(Arel.sql("COALESCE(parent_table,'') ASC, position ASC"))
@@ -41,7 +39,7 @@ module Api
 
         raw   = payloads[tn] || {}
         model = Class.new(ActiveRecord::Base) do
-          self.table_name        = tn
+          self.table_name         = tn
           self.inheritance_column = :_type_disabled
         end
 
@@ -53,17 +51,17 @@ module Api
         # wire parent_id for subtables
         if td.parent_table.present?
           parent_model = Class.new(ActiveRecord::Base) do
-            self.table_name        = td.parent_table
+            self.table_name         = td.parent_table
             self.inheritance_column = :_type_disabled
           end
           parent = parent_model.find_by(
-            supplier_id:  raw["supplier_id"],
-            subsystem_id: raw["subsystem_id"]
-          )
+                     supplier_id:  raw["supplier_id"],
+                     subsystem_id: raw["subsystem_id"]
+                   )
           safe["parent_id"] = parent.id if parent
         end
 
-        # upsert by supplier+subsystem
+        # upsert
         record = model.where(
                    supplier_id:  raw["supplier_id"],
                    subsystem_id: raw["subsystem_id"]
@@ -74,11 +72,11 @@ module Api
         saved << { table: tn, record_id: record.id }
       end
 
-      # single notification
+      # send one notification if any saved
       if saved.any?
-        first = saved.first
-        supplier  = Supplier.find(params.dig(:data, first[:table], "supplier_id"))
-        subsystem = Subsystem.find(params[:subsystem_id])
+        first_payload = saved.first
+        supplier  = Supplier.find(payloads[first_payload[:table]]["supplier_id"])
+        subsystem = Subsystem.find(subsystem_id)
 
         Notification.create!(
           title:             "Multiple Tables Submitted",
@@ -95,6 +93,7 @@ module Api
 
     rescue ActionController::ParameterMissing => e
       render json: { error: e.message }, status: :bad_request
+
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
     end
@@ -103,7 +102,8 @@ module Api
     def table_metadata
       tn        = params[:table_name]
       table_def = TableDefinition.find_by!(table_name: tn)
-      meta = ColumnMetadata.where(table_name: tn).each_with_object({}) do |m, h|
+
+      meta = ColumnMetadata.where(table_name: tn).each_with_object({}) do |m,h|
         h[m.column_name] = {
           feature:   m.feature,
           options:   m.options,
@@ -120,11 +120,5 @@ module Api
         static:   table_def.static?
       }
     end
-
-    # other actions (index/update/save_data) unchanged…
-
-    private
-
-    # optional: implement authenticate_supplier! if you use save_data…
   end
 end

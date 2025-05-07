@@ -40,8 +40,10 @@ class ReportsController < ApplicationController
 
       @table_defs.each do |td|
         sheet.add_row [td.table_name.titleize, nil, nil], b: true
+
         rec   = fetch_record(td, @supplier, @subsystem)
-        attrs = rec&.attributes&.except(*system_cols) || {}
+        # exclude system cols and parent_id
+        attrs = rec&.attributes&.except(*(system_cols + ['parent_id'])) || {}
 
         attrs.each do |col, val|
           disp = val.is_a?(Array) ? val.join(', ') : val.to_s
@@ -52,11 +54,12 @@ class ReportsController < ApplicationController
       end
     end
 
-    fn = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
+    filename = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
     send_data p.to_stream.read,
-              filename: fn,
+              filename: filename,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+
 
   # — Apple‐to‐Apple Form —
   # GET /reports/apple_to_apple_comparison
@@ -81,67 +84,36 @@ class ReportsController < ApplicationController
     wb = p.workbook
 
     wb.add_worksheet(name: 'Comparison') do |sheet|
-      # group definitions by parent_table (nil = top-level parents)
-      grouped = @table_defs.group_by(&:parent_table)
-      parents = grouped[nil] || []
+      # 1) Header row
+      header = ['Attribute'] + @suppliers.map(&:supplier_name)
+      sheet.add_row header, b: true
 
-      parents.each do |parent_td|
-        # 1) Parent heading row, bold
-        sheet.add_row [parent_td.table_name.titleize] + [''] * @suppliers.size,
-                      b: true
+      # 2) For each data table...
+      @table_defs.each do |td|
+        # a) Table‐name row
+        sheet.add_row [td.table_name.titleize] + [''] * @suppliers.size, b: true
 
-        children = grouped[parent_td.table_name] || []
-
-        # 2) If it has subtables, iterate them…
-        if children.any?
-          children.each do |ctd|
-            # Sub-table heading
-            sheet.add_row [ctd.table_name.titleize] + [''] * @suppliers.size,
-                          b: true
-
-            # Gather each supplier’s record for this sub-table
-            hashes = @suppliers.map do |sup|
-              rec = fetch_record(ctd, sup, @subsystem)
-              rec ? rec.attributes.except(*system_cols) : {}
-            end
-
-            # All attribute keys
-            all_keys = hashes.flat_map(&:keys).uniq.sort
-
-            # One row per attribute
-            all_keys.each do |col|
-              row = [col.humanize]
-              hashes.each do |h|
-                v = h[col]
-                row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
-              end
-              sheet.add_row row
-            end
-
-            # Spacer
-            sheet.add_row []
-          end
-
-        # 3) Otherwise treat the parent itself as the table…
-        else
-          hashes = @suppliers.map do |sup|
-            rec = fetch_record(parent_td, sup, @subsystem)
-            rec ? rec.attributes.except(*system_cols) : {}
-          end
-
-          all_keys = hashes.flat_map(&:keys).uniq.sort
-
-          all_keys.each do |col|
-            row = [col.humanize]
-            hashes.each do |h|
-              v = h[col]
-              row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
-            end
-            sheet.add_row row
-          end
-
-          sheet.add_row []
+        # b) Gather each supplier’s attributes for this table
+        hashes = @suppliers.map do |sup|
+          rec = fetch_record(td, sup, @subsystem)
+          rec ? rec.attributes.except(*(system_cols + ['parent_id'])) : {}
         end
+
+        # c) All attribute keys across those hashes, excluding parent_id
+        all_keys = hashes.flat_map(&:keys).uniq.sort
+
+        # d) One row per attribute
+        all_keys.each do |col|
+          row = [col.humanize]
+          hashes.each do |h|
+            v = h[col]
+            row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
+          end
+          sheet.add_row row
+        end
+
+        # e) Blank spacer row
+        sheet.add_row []
       end
     end
 
@@ -150,6 +122,7 @@ class ReportsController < ApplicationController
               filename: filename,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+
 
   # (other stubs…)
   def evaluation_report;         evaluation_data; render :evaluation_report; end

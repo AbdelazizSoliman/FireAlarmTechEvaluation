@@ -14,9 +14,11 @@
 
       <% if children.any? %>
         <% children.each do |child_td| %>
-          <% attrs = @data_by_table[child_td.table_name] || {} %>
+          <% attrs = (@data_by_table[child_td.table_name] || {})                 %>
+          <% filtered = attrs.reject { |col,_| col == 'parent_id' }             %>
           <h3 class="font-medium mt-4 mb-1"><%= child_td.table_name.titleize %></h3>
-          <% if attrs.any? %>
+
+          <% if filtered.any? %>
             <table class="w-full border-collapse border mb-4 bg-white">
               <thead>
                 <tr class="bg-gray-200">
@@ -25,7 +27,7 @@
                 </tr>
               </thead>
               <tbody>
-                <% attrs.each do |col, val| %>
+                <% filtered.each do |col, val| %>
                   <tr class="border-t">
                     <td class="border px-3 py-2"><%= col.humanize %></td>
                     <td class="border px-3 py-2">
@@ -34,7 +36,7 @@
                           <% val.each { |v| %><li><%= v %></li><% } %>
                         </ul>
                       <% else %>
-                        <%= val %>
+                        <%= val.presence || '—' %>
                       <% end %>
                     </td>
                   </tr>
@@ -44,8 +46,9 @@
           <% end %>
         <% end %>
       <% else %>
-        <% attrs = @data_by_table[parent_td.table_name] || {} %>
-        <% if attrs.any? %>
+        <% attrs    = (@data_by_table[parent_td.table_name] || {}) %>
+        <% filtered = attrs.reject { |col,_| col == 'parent_id' }   %>
+        <% if filtered.any? %>
           <table class="w-full border-collapse border mb-4 bg-white">
             <thead>
               <tr class="bg-gray-200">
@@ -54,7 +57,7 @@
               </tr>
             </thead>
             <tbody>
-              <% attrs.each do |col, val| %>
+              <% filtered.each do |col, val| %>
                 <tr class="border-t">
                   <td class="border px-3 py-2"><%= col.humanize %></td>
                   <td class="border px-3 py-2">
@@ -63,7 +66,7 @@
                         <% val.each { |v| %><li><%= v %></li><% } %>
                       </ul>
                     <% else %>
-                      <%= val %>
+                      <%= val.presence || '—' %>
                     <% end %>
                   </td>
                 </tr>
@@ -75,6 +78,7 @@
     </section>
   <% end %>
 
-  <%= link_to "Back to Reports", evaluation_tech_report_reports_path,
+  <%= link_to "Back to Reports",
+              evaluation_tech_report_reports_path,
               class: "inline-block mt-4 text-blue-600 hover:underline" %>
 </div>

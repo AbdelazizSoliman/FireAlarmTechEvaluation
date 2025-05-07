@@ -4,31 +4,27 @@
     Apple-to-Apple Comparison for <%= @subsystem.name %>
   </h1>
 
-  <%#-- Group table definitions by parent_table (nil = top-level parents) --%>
-  <% groups = @table_defs.group_by(&:parent_table) %>
-  <% parents = groups[nil] || [] %>
+  <% groups  = @table_defs.group_by(&:parent_table)        %>
+  <% parents = groups[nil] || []                          %>
 
   <% parents.each do |parent_td| %>
     <section class="mb-10">
       <h2 class="text-xl font-semibold mb-4"><%= parent_td.table_name.titleize %></h2>
-
-      <%#-- find its subtables --%>
       <% children = groups[parent_td.table_name] || [] %>
 
       <% if children.any? %>
-        <%#-- for each subtable, render its own per-supplier table --%>
         <% children.each do |ctd| %>
           <div class="mb-8">
             <h3 class="text-lg font-medium mb-2"><%= ctd.table_name.titleize %></h3>
-            <% by_supplier = (@comparison_data[ctd.table_name] || {}) %>
-            <% cols        = by_supplier.values.flat_map(&:keys).uniq.sort %>
+            <% by_sup = (@comparison_data[ctd.table_name] || {})                     %>
+            <% cols   = by_sup.values.flat_map(&:keys).uniq.reject { |c| c=='parent_id' }.sort %>
 
             <div class="overflow-x-auto">
               <table class="min-w-full border-collapse bg-white">
                 <thead>
                   <tr class="bg-gray-200">
                     <th class="border px-3 py-2 text-left">Attribute</th>
-                    <% by_supplier.keys.each do |sup_name| %>
+                    <% by_sup.keys.each do |sup_name| %>
                       <th class="border px-3 py-2 text-left"><%= sup_name %></th>
                     <% end %>
                   </tr>
@@ -37,7 +33,7 @@
                   <% cols.each_with_index do |col, i| %>
                     <tr class="<%= i.even? ? 'bg-white' : 'bg-gray-50' %>">
                       <td class="border px-3 py-2 font-medium"><%= col.humanize %></td>
-                      <% by_supplier.each_value do |attrs| %>
+                      <% by_sup.each_value do |attrs| %>
                         <td class="border px-3 py-2 align-top">
                           <% val = attrs[col] %>
                           <% if val.is_a?(Array) %>
@@ -56,18 +52,15 @@
             </div>
           </div>
         <% end %>
-
       <% else %>
-        <%#-- no subtables: render the parent itself per-supplier --%>
-        <% by_supplier = (@comparison_data[parent_td.table_name] || {}) %>
-        <% cols        = by_supplier.values.flat_map(&:keys).uniq.sort %>
-
+        <% by_sup = (@comparison_data[parent_td.table_name] || {})                     %>
+        <% cols   = by_sup.values.flat_map(&:keys).uniq.reject { |c| c=='parent_id' }.sort %>
         <div class="overflow-x-auto">
           <table class="min-w-full border-collapse bg-white">
             <thead>
               <tr class="bg-gray-200">
                 <th class="border px-3 py-2 text-left">Attribute</th>
-                <% by_supplier.keys.each do |sup_name| %>
+                <% by_sup.keys.each do |sup_name| %>
                   <th class="border px-3 py-2 text-left"><%= sup_name %></th>
                 <% end %>
               </tr>
@@ -76,7 +69,7 @@
               <% cols.each_with_index do |col, i| %>
                 <tr class="<%= i.even? ? 'bg-white' : 'bg-gray-50' %>">
                   <td class="border px-3 py-2 font-medium"><%= col.humanize %></td>
-                  <% by_supplier.each_value do |attrs| %>
+                  <% by_sup.each_value do |attrs| %>
                     <td class="border px-3 py-2 align-top">
                       <% val = attrs[col] %>
                       <% if val.is_a?(Array) %>

@@ -35,28 +35,40 @@ class ReportsController < ApplicationController
     p  = Axlsx::Package.new
     wb = p.workbook
 
+    # group table definitions by parent_table
+    groups = @table_defs.group_by(&:parent_table)
+
     wb.add_worksheet(name: 'Evaluation Data') do |sheet|
-      sheet.add_row ['Section', 'Attribute', 'Value'], b: true
+      sheet.add_row ['Section / Table', 'Attribute', 'Value'], b: true
 
-      @table_defs.each do |td|
-        sheet.add_row [td.table_name.titleize, nil, nil], b: true
+      # top-level parents
+      (groups[nil] || []).each do |parent_td|
+        # parent header row
+        sheet.add_row [parent_td.table_name.titleize, nil, nil], b: true
 
-        rec   = fetch_record(td, @supplier, @subsystem)
-        # exclude system cols and parent_id
-        attrs = rec&.attributes&.except(*(system_cols + ['parent_id'])) || {}
+        # for each child under this parent
+        (groups[parent_td.table_name] || []).each do |child_td|
+          # child header (indented)
+          sheet.add_row ["  ↳ #{child_td.table_name.titleize}", nil, nil], b: true
 
-        attrs.each do |col, val|
-          disp = val.is_a?(Array) ? val.join(', ') : val.to_s
-          sheet.add_row [nil, col.humanize, disp]
+          # fetch & sanitize
+          rec   = fetch_record(child_td, @supplier, @subsystem)
+          attrs = rec&.attributes&.except(*(system_cols + ['parent_id'])) || {}
+
+          attrs.each do |col, val|
+            disp = val.is_a?(Array) ? val.join(', ') : val.to_s
+            sheet.add_row [nil, col.humanize, disp]
+          end
+
+          # blank spacer
+          sheet.add_row []
         end
-
-        sheet.add_row []
       end
     end
 
-    filename = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
+    fn = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
     send_data p.to_stream.read,
-              filename: filename,
+              filename: fn,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
@@ -83,37 +95,41 @@ class ReportsController < ApplicationController
     p  = Axlsx::Package.new
     wb = p.workbook
 
+    groups = @table_defs.group_by(&:parent_table)
+
     wb.add_worksheet(name: 'Comparison') do |sheet|
-      # 1) Header row
+      # header row: attribute + one column per supplier
       header = ['Attribute'] + @suppliers.map(&:supplier_name)
       sheet.add_row header, b: true
 
-      # 2) For each data table...
-      @table_defs.each do |td|
-        # a) Table‐name row
-        sheet.add_row [td.table_name.titleize] + [''] * @suppliers.size, b: true
+      (groups[nil] || []).each do |parent_td|
+        # parent section row
+        sheet.add_row [parent_td.table_name.titleize] + [''] * @suppliers.size, b: true
 
-        # b) Gather each supplier’s attributes for this table
-        hashes = @suppliers.map do |sup|
-          rec = fetch_record(td, sup, @subsystem)
-          rec ? rec.attributes.except(*(system_cols + ['parent_id'])) : {}
-        end
+        (groups[parent_td.table_name] || []).each do |child_td|
+          # child subsection row
+          sheet.add_row ["↳ #{child_td.table_name.titleize}"] + [''] * @suppliers.size, b: true
 
-        # c) All attribute keys across those hashes, excluding parent_id
-        all_keys = hashes.flat_map(&:keys).uniq.sort
-
-        # d) One row per attribute
-        all_keys.each do |col|
-          row = [col.humanize]
-          hashes.each do |h|
-            v = h[col]
-            row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
+          # gather each supplier’s attrs, sanitized
+          hashes = @suppliers.map do |sup|
+            rec = fetch_record(child_td, sup, @subsystem)
+            rec ? rec.attributes.except(*(system_cols + ['parent_id'])) : {}
           end
-          sheet.add_row row
-        end
 
-        # e) Blank spacer row
-        sheet.add_row []
+          # all attribute keys
+          all_keys = hashes.flat_map(&:keys).uniq.sort
+
+          all_keys.each_with_index do |col, i|
+            row = [col.humanize]
+            hashes.each do |h|
+              v = h[col]
+              row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
+            end
+            sheet.add_row row
+          end
+
+          sheet.add_row []
+        end
       end
     end
 
@@ -122,7 +138,6 @@ class ReportsController < ApplicationController
               filename: filename,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
-
 
   # (other stubs…)
   def evaluation_report;         evaluation_data; render :evaluation_report; end

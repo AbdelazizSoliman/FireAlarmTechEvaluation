@@ -32,45 +32,58 @@ class ReportsController < ApplicationController
   # — Single‐supplier Excel —
   # GET /reports/generate_evaluation_report?supplier_id=…&subsystem_id=…
   def generate_evaluation_report
-    p  = Axlsx::Package.new
-    wb = p.workbook
+    pkg  = Axlsx::Package.new
+    wb   = pkg.workbook
 
     # group table definitions by parent_table
     groups = @table_defs.group_by(&:parent_table)
 
     wb.add_worksheet(name: 'Evaluation Data') do |sheet|
-      sheet.add_row ['Section / Table', 'Attribute', 'Value'], b: true
+      # Column headings
+      sheet.add_row ['Section/Table', 'Attribute', 'Value'], b: true
 
-      # top-level parents
+      # For each top‐level parent
       (groups[nil] || []).each do |parent_td|
-        # parent header row
+        # 1) Parent header row
         sheet.add_row [parent_td.table_name.titleize, nil, nil], b: true
 
-        # for each child under this parent
-        (groups[parent_td.table_name] || []).each do |child_td|
-          # child header (indented)
-          sheet.add_row ["  ↳ #{child_td.table_name.titleize}", nil, nil], b: true
+        children = groups[parent_td.table_name] || []
 
-          # fetch & sanitize
-          rec   = fetch_record(child_td, @supplier, @subsystem)
-          attrs = rec&.attributes&.except(*(system_cols + ['parent_id'])) || {}
+        if children.any?
+          # 2) If it has children, print each child’s data
+          children.each do |child_td|
+            sheet.add_row ["  ↳ #{child_td.table_name.titleize}", nil, nil], b: true
+            rec   = fetch_record(child_td, @supplier, @subsystem)
+            attrs = (rec&.attributes || {}).except(*system_cols, 'parent_id')
+
+            attrs.each do |col, val|
+              display = val.is_a?(Array) ? val.join(', ') : val.to_s
+              sheet.add_row [nil, col.humanize, display]
+            end
+
+            sheet.add_row []  # blank line
+          end
+        else
+          # 3) No children: print the parent’s own data
+          rec   = fetch_record(parent_td, @supplier, @subsystem)
+          attrs = (rec&.attributes || {}).except(*system_cols, 'parent_id')
 
           attrs.each do |col, val|
-            disp = val.is_a?(Array) ? val.join(', ') : val.to_s
-            sheet.add_row [nil, col.humanize, disp]
+            display = val.is_a?(Array) ? val.join(', ') : val.to_s
+            sheet.add_row [nil, col.humanize, display]
           end
 
-          # blank spacer
-          sheet.add_row []
+          sheet.add_row []  # blank line
         end
       end
     end
 
-    fn = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
-    send_data p.to_stream.read,
-              filename: fn,
+    filename = "Evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx"
+    send_data pkg.to_stream.read,
+              filename: filename,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+
 
 
   # — Apple‐to‐Apple Form —
@@ -92,52 +105,78 @@ class ReportsController < ApplicationController
   # — Multi‐supplier Excel —
   # GET /reports/generate_comparison_report?subsystem_id=…&selected_suppliers[]=…
   def generate_comparison_report
-    p  = Axlsx::Package.new
-    wb = p.workbook
+    pkg  = Axlsx::Package.new
+    wb   = pkg.workbook
 
     groups = @table_defs.group_by(&:parent_table)
 
     wb.add_worksheet(name: 'Comparison') do |sheet|
-      # header row: attribute + one column per supplier
+      # Build header row: “Attribute” + supplier names
       header = ['Attribute'] + @suppliers.map(&:supplier_name)
       sheet.add_row header, b: true
 
       (groups[nil] || []).each do |parent_td|
-        # parent section row
+        # Parent section row
         sheet.add_row [parent_td.table_name.titleize] + [''] * @suppliers.size, b: true
 
-        (groups[parent_td.table_name] || []).each do |child_td|
-          # child subsection row
-          sheet.add_row ["↳ #{child_td.table_name.titleize}"] + [''] * @suppliers.size, b: true
+        children = groups[parent_td.table_name] || []
 
-          # gather each supplier’s attrs, sanitized
+        if children.any?
+          # If it has children, loop them
+          children.each do |child_td|
+            # Child subsection header
+            sheet.add_row ["↳ #{child_td.table_name.titleize}"] + [''] * @suppliers.size, b: true
+
+            # Gather each supplier’s hash of attrs
+            hashes = @suppliers.map do |sup|
+              rec = fetch_record(child_td, sup, @subsystem)
+              rec ? rec.attributes.except(*system_cols, 'parent_id') : {}
+            end
+
+            # All attribute keys
+            keys = hashes.flat_map(&:keys).uniq.sort
+
+            # One row per attribute
+            keys.each_with_index do |col, idx|
+              row = [col.humanize]
+              hashes.each do |h|
+                val = h[col]
+                row << (val.is_a?(Array) ? val.join(', ') : val.to_s)
+              end
+              sheet.add_row row
+            end
+
+            sheet.add_row []  # blank line
+          end
+        else
+          # No children: compare the parent itself
           hashes = @suppliers.map do |sup|
-            rec = fetch_record(child_td, sup, @subsystem)
-            rec ? rec.attributes.except(*(system_cols + ['parent_id'])) : {}
+            rec = fetch_record(parent_td, sup, @subsystem)
+            rec ? rec.attributes.except(*system_cols, 'parent_id') : {}
           end
 
-          # all attribute keys
-          all_keys = hashes.flat_map(&:keys).uniq.sort
+          keys = hashes.flat_map(&:keys).uniq.sort
 
-          all_keys.each_with_index do |col, i|
+          keys.each_with_index do |col, idx|
             row = [col.humanize]
             hashes.each do |h|
-              v = h[col]
-              row << (v.is_a?(Array) ? v.join(', ') : v.to_s)
+              val = h[col]
+              row << (val.is_a?(Array) ? val.join(', ') : val.to_s)
             end
             sheet.add_row row
           end
 
-          sheet.add_row []
+          sheet.add_row []  # blank line
         end
       end
     end
 
     filename = "Comparison_#{@subsystem.name.parameterize}.xlsx"
-    send_data p.to_stream.read,
+    send_data pkg.to_stream.read,
               filename: filename,
               type:    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
+
 
   # (other stubs…)
   def evaluation_report;         evaluation_data; render :evaluation_report; end

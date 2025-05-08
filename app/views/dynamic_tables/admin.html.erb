@@ -502,50 +502,53 @@
 
 
         <!-- Existing Features Table -->
-        <% if @table_name.present? %>
-          <section class="mb-8">
-            <h3 class="text-lg font-semibold">
-              Existing Features in <%= @table_name.humanize %>
-            </h3>
-            <% if @existing_columns.any? %>
-              <table class="min-w-full mt-4">
-                <thead class="bg-indigo-600 text-white">
-                  <tr>
-                    <th class="px-6 py-3">Feature Name</th>
-                    <th class="px-6 py-3">Type</th>
-                    <th class="px-6 py-3">Metadata</th>
-                    <th class="px-6 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white">
-                  <% @existing_columns.each do |col| %>
-                    <tr>
-                      <td class="px-6 py-4"><%= col[:name] %></td>
-                      <td class="px-6 py-4"><%= col[:type] %></td>
-                      <td class="px-6 py-4">
-                        <%= col[:metadata] ? "Set" : "Not Set" %>
-                      </td>
-                      <td class="px-6 py-4">
-                        <%=
-                          link_to "Edit Metadata", edit_metadata_dynamic_tables_path(
-                            table_name: @table_name,
-                            column_name: col[:name],
-                            project_filter: @project_filter,
-                            project_scope_filter: @project_scope_filter,
-                            system_filter: @system_filter,
-                            subsystem_filter: @subsystem_filter
-                          ), class: "text-indigo-600"
-                        %>
-                      </td>
-                    </tr>
-                  <% end %>
-                </tbody>
-              </table>
-            <% else %>
-              <p class="text-sm mt-4">No columns found for this table.</p>
-            <% end %>
-          </section>
-        <% end %>
+<% if @table_name.present? %>
+  <section class="mb-8">
+    <h3 class="text-lg font-semibold">
+      Existing Features in <%= @table_name.humanize %>
+    </h3>
+    <% if @existing_columns.any? %>
+      <table class="min-w-full mt-4">
+        <thead class="bg-indigo-600 text-white">
+          <tr>
+            <th class="px-6 py-3">Feature Name</th>
+            <th class="px-6 py-3">Type</th>
+            <th class="px-6 py-3">Standard Value</th>
+            <th class="px-6 py-3">Tolerance (%)</th>
+            <th class="px-6 py-3">Metadata Set?</th>
+            <th class="px-6 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white">
+          <% @existing_columns.each do |col| %>
+            <% md = col[:metadata] %>
+            <tr>
+              <td class="px-6 py-4"><%= col[:name] %></td>
+              <td class="px-6 py-4"><%= col[:type] %></td>
+              <td class="px-6 py-4"><%= md&.standard_value || '—' %></td>
+              <td class="px-6 py-4"><%= md&.tolerance || '—' %></td>
+              <td class="px-6 py-4"><%= md ? "Yes" : "No" %></td>
+              <td class="px-6 py-4">
+                <%= link_to "Edit Metadata",
+                      edit_metadata_dynamic_tables_path(
+                        table_name: @table_name,
+                        column_name: col[:name],
+                        project_filter: @project_filter,
+                        project_scope_filter: @project_scope_filter,
+                        system_filter: @system_filter,
+                        subsystem_filter: @subsystem_filter
+                      ),
+                      class: "text-indigo-600 hover:underline" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="text-sm mt-4">No columns found for this table.</p>
+    <% end %>
+  </section>
+<% end %>
       <% else %>
         <!-- Prompt if no subsystem is selected -->
         <div

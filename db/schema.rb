@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_22_234649) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_08_095232) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -58,6 +58,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_22_234649) do
     t.integer "col"
     t.integer "label_row"
     t.integer "label_col"
+    t.decimal "standard_value", precision: 12, scale: 4
+    t.decimal "tolerance", precision: 5, scale: 2
     t.index ["table_name", "column_name"], name: "index_column_metadatas_on_table_name_and_column_name", unique: true
   end
 
@@ -248,6 +250,30 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_22_234649) do
     t.index ["subsystem_id"], name: "index_evacuation_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_evac_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_evacuation_systems_on_supplier_id"
+  end
+
+  create_table "evaluation_criteria", force: :cascade do |t|
+    t.string "table_name", null: false
+    t.string "column_name", null: false
+    t.string "kind", null: false
+    t.jsonb "params", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "subsystem_id", null: false
+    t.index ["subsystem_id"], name: "index_evaluation_criteria_on_subsystem_id"
+    t.index ["table_name", "column_name"], name: "index_evaluation_criteria_on_table_name_and_column_name", unique: true
+  end
+
+  create_table "evaluation_results", force: :cascade do |t|
+    t.string "table_name", null: false
+    t.string "column_name", null: false
+    t.decimal "score", precision: 12, scale: 4, null: false
+    t.bigint "supplier_id", null: false
+    t.bigint "subsystem_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subsystem_id"], name: "index_evaluation_results_on_subsystem_id"
+    t.index ["supplier_id"], name: "index_evaluation_results_on_supplier_id"
   end
 
   create_table "fire_alarm_control_panels", force: :cascade do |t|
@@ -686,6 +712,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_22_234649) do
     t.bigint "supplier_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "supplier_name"
     t.index ["subsystem_id"], name: "index_supplier_data_nurse_call_system_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_supplier_data_nurse_call_system_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_supplier_data_nurse_call_system_on_supplier_id"
@@ -826,6 +853,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_22_234649) do
   add_foreign_key "door_holders", "suppliers"
   add_foreign_key "evacuation_systems", "subsystems"
   add_foreign_key "evacuation_systems", "suppliers"
+  add_foreign_key "evaluation_criteria", "subsystems"
+  add_foreign_key "evaluation_results", "subsystems"
+  add_foreign_key "evaluation_results", "suppliers"
   add_foreign_key "fire_alarm_control_panels", "subsystems"
   add_foreign_key "fire_alarm_control_panels", "suppliers"
   add_foreign_key "general_commercial_data", "subsystems"

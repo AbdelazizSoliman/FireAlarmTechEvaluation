@@ -1,10 +1,13 @@
 class CreateEvaluationResults < ActiveRecord::Migration[7.1]
   def change
     create_table :evaluation_results do |t|
-      t.references :supplier, required: true, null: false, foreign_key: true
-      t.references :column_metadata, required: true, null: false, foreign_key: true
-      t.decimal :degree, precision: 5, scale: 2
-      t.string :status
+      t.string     :table_name,  null: false
+      t.string     :column_name, null: false
+      t.decimal    :score,       precision: 12, scale: 4, null: false
+
+      # If you have Supplier and Subsystem models and want FKs:
+      t.references :supplier,    null: false, foreign_key: true, type: :bigint
+      t.references :subsystem,   null: false, foreign_key: true, type: :bigint
 
       t.timestamps
     end

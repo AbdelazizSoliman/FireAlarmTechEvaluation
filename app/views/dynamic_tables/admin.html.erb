@@ -87,7 +87,15 @@
             <ul class="list-disc pl-6">
               <% @main_tables.each do |td| %>
                 <li class="mb-2 flex items-center">
-                  <span class="mr-4"><%= td.table_name.humanize %></span>
+                   <%= link_to td.table_name.humanize,
+                  admin_path(
+                    project_filter:       @project_filter,
+                    project_scope_filter: @project_scope_filter,
+                    system_filter:        @system_filter,
+                    subsystem_filter:     @subsystem_filter,
+                    table_name:           td.table_name
+                  ),
+                  class: "mr-4 text-indigo-700 hover:underline" %>
                   <%= link_to "Move Up",
                               move_table_dynamic_tables_path(id: td.id,
                                                               direction: 'up',

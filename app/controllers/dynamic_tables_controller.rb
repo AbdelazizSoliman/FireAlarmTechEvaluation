@@ -1,364 +1,347 @@
+# app/controllers/dynamic_tables_controller.rb
 class DynamicTablesController < ApplicationController
   require 'did_you_mean'
   require_dependency 'dynamic_table_manager'
 
   before_action :set_table_name, only: [:add_column]
 
+  # GET /admin
   def admin
-    @projects = Project.all.pluck(:name, :id)
-    @project_filter = params[:project_filter]
-    @project_scope_filter = params[:project_scope_filter]
-    @system_filter = params[:system_filter]
-    @subsystem_filter = params[:subsystem_filter]
+    @projects               = Project.all.pluck(:name, :id)
+    @project_filter         = params[:project_filter]
+    @project_scope_filter   = params[:project_scope_filter]
+    @system_filter          = params[:system_filter]
+    @subsystem_filter       = params[:subsystem_filter]
 
-    @project_scopes = @project_filter.present? ? Project.find(@project_filter).project_scopes.pluck(:name, :id) : []
-    @systems = @project_scope_filter.present? ? ProjectScope.find(@project_scope_filter).systems.pluck(:name, :id) : []
-    @subsystems = @system_filter.present? ? System.find(@system_filter).subsystems.pluck(:name, :id) : []
+    @project_scopes = if @project_filter.present?
+                        Project.find(@project_filter).project_scopes.pluck(:name, :id)
+                      else
+                        []
+                      end
+
+    @systems = if @project_scope_filter.present?
+                 ProjectScope.find(@project_scope_filter).systems.pluck(:name, :id)
+               else
+                 []
+               end
+
+    @subsystems = if @system_filter.present?
+                    System.find(@system_filter).subsystems.pluck(:name, :id)
+                  else
+                    []
+                  end
 
     if @subsystem_filter.present?
-      table_defs = TableDefinition.where(subsystem_id: @subsystem_filter)
-      @main_tables = table_defs.where(parent_table: nil).order(:position)
-      @sub_tables = table_defs.where.not(parent_table: nil)
+      table_defs    = TableDefinition.where(subsystem_id: @subsystem_filter)
+      @main_tables  = table_defs.where(parent_table: nil).order(:position)
+      @sub_tables   = table_defs.where.not(parent_table: nil)
     else
       @main_tables = []
-      @sub_tables = []
+      @sub_tables  = []
     end
 
     if params[:table_name].present? && ActiveRecord::Base.connection.table_exists?(params[:table_name])
-      @table_name = params[:table_name]
+      @table_name      = params[:table_name]
       @existing_columns = ActiveRecord::Base.connection.columns(@table_name).map do |col|
-        metadata = ColumnMetadata.find_by(table_name: @table_name, column_name: col.name)
-        { name: col.name, type: col.type, metadata: metadata }
+        md = ColumnMetadata.find_by(table_name: @table_name, column_name: col.name)
+        { name: col.name, type: col.type, metadata: md }
       end
     else
-      @table_name = nil
+      @table_name       = nil
       @existing_columns = []
     end
   end
 
+  # POST /admin/move_table
   def move_table
-    permitted_params = params.permit(:direction, :id, :table_name, :project_filter, :project_scope_filter, :system_filter, :subsystem_filter)
-    table_def = TableDefinition.find(permitted_params[:id])
-    direction = permitted_params[:direction]
-
-    if direction == 'up'
-      prev_table = TableDefinition.where(subsystem_id: table_def.subsystem_id, parent_table: nil)
-                                   .where("position < ?", table_def.position)
-                                   .order(position: :desc).first
-      if prev_table
-        table_def.position, prev_table.position = prev_table.position, table_def.position
-        table_def.save!
-        prev_table.save!
+    p = params.permit(:direction, :id, :table_name, :project_filter,
+                      :project_scope_filter, :system_filter, :subsystem_filter)
+    td = TableDefinition.find(p[:id])
+    case p[:direction]
+    when 'up'
+      prev = TableDefinition.where(subsystem_id: td.subsystem_id, parent_table: nil)
+                            .where("position < ?", td.position)
+                            .order(position: :desc).first
+      if prev
+        td.position, prev.position = prev.position, td.position
+        td.save!; prev.save!
       end
-    elsif direction == 'down'
-      next_table = TableDefinition.where(subsystem_id: table_def.subsystem_id, parent_table: nil)
-                                   .where("position > ?", table_def.position)
-                                   .order(:position).first
-      if next_table
-        table_def.position, next_table.position = next_table.position, table_def.position
-        table_def.save!
-        next_table.save!
+    when 'down'
+      nxt = TableDefinition.where(subsystem_id: td.subsystem_id, parent_table: nil)
+                            .where("position > ?", td.position)
+                            .order(:position).first
+      if nxt
+        td.position, nxt.position = nxt.position, td.position
+        td.save!; nxt.save!
       end
     end
 
-    redirect_to admin_path(filter_params.merge(table_name: params[:table_name]))
+    redirect_to admin_path(p.merge(table_name: params[:table_name]))
   end
 
+  # GET  /admin/check_table_name
   def check_table_name
-    raw_name = params[:name].to_s.strip
-    table_name = to_db_name(raw_name)
-    exists = ActiveRecord::Base.connection.table_exists?(table_name)
-    suggestion = get_spelling_suggestion(raw_name)
-    suggested_name = exists ? "#{table_name}_#{params[:subsystem_name].to_s.parameterize(separator: '_')}" : nil
+    raw    = params[:name].to_s.strip
+    tbl    = to_db_name(raw)
+    exists = ActiveRecord::Base.connection.table_exists?(tbl)
+    sugg   = if exists
+               "#{tbl}_#{params[:subsystem_name].to_s.parameterize(separator: '_')}"
+             else
+               get_spelling_suggestion(raw)
+             end
 
     render json: {
       exists: exists,
-      suggested: suggested_name,
-      spelling_suggestion: suggestion
+      suggested: sugg
     }
   end
 
-  def get_spelling_suggestion(word)
-    dictionary = %w[fire alarm panel pump system smoke bell sprinkler switch wiring detector access lighting power control emergency network security]
-    distances = dictionary.map { |dict_word| [dict_word, levenshtein_distance(word.downcase, dict_word)] }
-    best_match = distances.min_by(&:last)
-    return best_match[0] if best_match && best_match[1] <= 2
-    nil
+  # GET /dynamic_tables/:table_name/columns/:column_name/edit_metadata
+  def edit_metadata
+    @table_name  = params[:table_name]
+    @column_name = params[:column_name]
+    @metadata    = ColumnMetadata.find_or_initialize_by(
+                     table_name:  @table_name,
+                     column_name: @column_name
+                   )
   end
 
-  def levenshtein_distance(a, b)
-    a_len, b_len = a.length, b.length
-    return b_len if a_len.zero?
-    return a_len if b_len.zero?
-    matrix = Array.new(a_len + 1) { Array.new(b_len + 1) }
-    (0..a_len).each { |i| matrix[i][0] = i }
-    (0..b_len).each { |j| matrix[0][j] = j }
-    (1..a_len).each do |i|
-      (1..b_len).each do |j|
-        cost = a[i - 1] == b[j - 1] ? 0 : 1
-        matrix[i][j] = [matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost].min
-      end
+  # PATCH /dynamic_tables/:table_name/columns/:column_name/update_metadata
+  def update_metadata
+    @table_name  = params[:table_name]
+    @column_name = params[:column_name]
+    @metadata    = ColumnMetadata.find_or_initialize_by(
+                     table_name:  @table_name,
+                     column_name: @column_name
+                   )
+
+    if @metadata.update(metadata_params)
+      flash[:success] = "Metadata for “#{@column_name}” saved."
+      redirect_to admin_path(filter_params.merge(table_name: @table_name))
+    else
+      flash.now[:error] = @metadata.errors.full_messages.to_sentence
+      render :edit_metadata
     end
-    matrix[a_len][b_len]
   end
 
+  # GET /admin/ordered_tables
   def ordered_tables
-    subsystem = Subsystem.find(params[:subsystem_id])
-    main_tables = TableDefinition.where(subsystem_id: subsystem.id, parent_table: nil).order(:position)
-    render json: main_tables
+    subsys     = Subsystem.find(params[:subsystem_id])
+    mains      = TableDefinition.where(subsystem_id: subsys.id, parent_table: nil)
+                                 .order(:position)
+    render json: mains
   end
 
+  # POST /admin/create_multiple_tables
   def create_multiple_tables
-    subsystem_id = params[:subsystem_id]
-    raw_table_names = params[:table_names] || []
-    duplicate_tables = []
-    created_tables = []
+    subsystem_id       = params[:subsystem_id]
+    raw_names          = params[:table_names] || []
+    duplicates, created = [], []
 
-    raw_table_names.each do |raw_name|
-      table_name = to_db_name(raw_name)
-      next if table_name.blank?
-
-      if ActiveRecord::Base.connection.table_exists?(table_name)
-        duplicate_tables << table_name
-        next
-      end
-
-      begin
-        ActiveRecord::Migration.create_table(table_name.to_sym, force: :cascade) do |t|
+    raw_names.each do |raw|
+      tbl = to_db_name(raw)
+      next if tbl.blank?
+      if ActiveRecord::Base.connection.table_exists?(tbl)
+        duplicates << tbl
+      else
+        ActiveRecord::Migration.create_table(tbl.to_sym, force: :cascade) do |t|
           t.bigint :subsystem_id, null: false
-          t.bigint :supplier_id, null: false
+          t.bigint :supplier_id,  null: false
           t.timestamps
-          t.index [:subsystem_id], name: "index_#{table_name}_on_subsystem_id"
-          t.index [:supplier_id, :subsystem_id], name: "idx_#{table_name}_sup_sub", unique: true
-          t.index [:supplier_id], name: "index_#{table_name}_on_supplier_id"
+          t.index [:subsystem_id],                                name: "idx_#{tbl}_on_subsystem"
+          t.index [:supplier_id, :subsystem_id], unique: true,     name: "idx_#{tbl}_sup_sub"
+          t.index [:supplier_id],                                  name: "idx_#{tbl}_on_supplier"
         end
-
-        TableDefinition.create!(table_name: table_name, subsystem_id: subsystem_id, parent_table: nil)
-        created_tables << table_name
-      rescue => e
-        Rails.logger.error "❌ Error creating table #{table_name}: #{e.message}"
-        flash[:error] ||= ""
-        flash[:error] += "Failed to create #{table_name}: #{e.message}. "
+        TableDefinition.create!(table_name: tbl,
+                                subsystem_id: subsystem_id,
+                                parent_table: nil)
+        created << tbl
       end
+    rescue => e
+      flash[:error] ||= ""
+      flash[:error] += "Failed #{tbl}: #{e.message}. "
     end
 
-    msg = ""
-    msg += "Tables already exist: #{duplicate_tables.join(', ')}. " if duplicate_tables.any?
-    msg += "Created tables: #{created_tables.join(', ')} successfully." if created_tables.any?
-    flash[created_tables.empty? ? :error : :success] = msg
+    msg = []
+    msg << "Already exist: #{duplicates.join(', ')}." if duplicates.any?
+    msg << "Created: #{created.join(', ')}."               if created.any?
+    flash[created.empty? ? :error : :success] = msg.join(' ')
     redirect_to admin_path(filter_params)
   end
 
+  # POST /admin/create_multiple_sub_tables
   def create_multiple_sub_tables
-    subsystem_id = params[:subsystem_id]
-    raw_sub_table_names = params[:sub_table_names] || []
-    parent_tables = params[:parent_tables] || []
-    duplicate_tables = []
-    created_sub_tables = []
+    subsystem_id     = params[:subsystem_id]
+    raw_names        = params[:sub_table_names] || []
+    parents          = params[:parent_tables]   || []
+    duplicates, created = [], []
 
-    raw_sub_table_names.each_with_index do |raw_name, idx|
-      sub_table_name = to_db_name(raw_name)
-      parent_table = parent_tables[idx]
-      next if sub_table_name.blank?
-      if ActiveRecord::Base.connection.table_exists?(sub_table_name)
-        duplicate_tables << sub_table_name
-        next
-      end
-
-      begin
-        ActiveRecord::Migration.create_table(sub_table_name.to_sym, force: :cascade) do |t|
-          t.references :parent, null: false, foreign_key: { to_table: parent_table }
+    raw_names.each_with_index do |raw, i|
+      tbl    = to_db_name(raw)
+      parent = parents[i]
+      next if tbl.blank?
+      if ActiveRecord::Base.connection.table_exists?(tbl)
+        duplicates << tbl
+      else
+        ActiveRecord::Migration.create_table(tbl.to_sym, force: :cascade) do |t|
+          t.references :parent, null: false, foreign_key: { to_table: parent }
           t.bigint :subsystem_id, null: false
-          t.bigint :supplier_id, null: false
+          t.bigint :supplier_id,  null: false
           t.timestamps
-          t.index [:subsystem_id], name: "index_#{sub_table_name}_on_subsystem_id"
-          t.index [:supplier_id, :subsystem_id], name: "idx_#{sub_table_name}_sup_sub", unique: true
-          t.index [:supplier_id], name: "index_#{sub_table_name}_on_supplier_id"
+          t.index [:subsystem_id],                              name: "idx_#{tbl}_on_subsystem"
+          t.index [:supplier_id, :subsystem_id], unique: true,   name: "idx_#{tbl}_sup_sub"
+          t.index [:supplier_id],                                name: "idx_#{tbl}_on_supplier"
         end
-
-        TableDefinition.create!(table_name: sub_table_name, subsystem_id: subsystem_id, parent_table: parent_table)
-        created_sub_tables << sub_table_name
-      rescue => e
-        Rails.logger.error "❌ Error creating sub-table #{sub_table_name}: #{e.message}"
-        flash[:error] ||= ""
-        flash[:error] += "Failed to create #{sub_table_name}: #{e.message}. "
+        TableDefinition.create!(table_name: tbl,
+                                subsystem_id: subsystem_id,
+                                parent_table: parent)
+        created << tbl
       end
+    rescue => e
+      flash[:error] ||= ""
+      flash[:error] += "Failed #{tbl}: #{e.message}. "
     end
 
-    msg = ""
-    msg += "Sub Tables already exist: #{duplicate_tables.join(', ')}. " if duplicate_tables.any?
-    msg += "Created sub tables: #{created_sub_tables.join(', ')} successfully." if created_sub_tables.any?
-    flash[created_sub_tables.empty? ? :error : :success] = msg
+    msg = []
+    msg << "Already exist: #{duplicates.join(', ')}." if duplicates.any?
+    msg << "Created: #{created.join(', ')}."               if created.any?
+    flash[created.empty? ? :error : :success] = msg.join(' ')
     redirect_to admin_path(filter_params)
   end
 
+  # GET /admin/sub_tables
   def sub_tables
-    parent_table = params[:parent_table]
-    subsystem_id = params[:subsystemId]
-  
-    sub_defs = TableDefinition.where(parent_table: parent_table)
-    sub_defs = sub_defs.where(subsystem_id: subsystem_id) if subsystem_id.present?
-  
-    render json: sub_defs.as_json(only: [:id, :table_name, :parent_table])
+    defs = TableDefinition.where(parent_table: params[:parent_table])
+    defs = defs.where(subsystem_id: params[:subsystemId]) if params[:subsystemId].present?
+    render json: defs.as_json(only: [:id, :table_name, :parent_table])
   end
-  
 
+  # POST /admin/create_multiple_features
   def create_multiple_features
-    table_name            = params[:table_name]
-    feature_names         = params[:feature_names]        || []
-    column_types          = params[:column_types]         || []
-    features              = params[:features]             || []
-    combobox_values_arr   = params[:combobox_values_arr]  || []
-    has_costs             = params[:has_costs]            || []
-    rate_keys             = params[:rate_keys]            || []
-    amount_keys           = params[:amount_keys]          || []
-    notes_keys            = params[:notes_keys]           || []
-    sub_fields            = params[:sub_fields]           || []
-    array_default_empties = params[:array_default_empties] || []
+    table_name          = params[:table_name]
+    names               = params[:feature_names]        || []
+    types               = params[:column_types]         || []
+    front_end_features  = params[:features]             || []
+    combobox_values_arr = params[:combobox_values_arr]  || []
+    has_costs           = params[:has_costs]            || []
+    rate_keys           = params[:rate_keys]            || []
+    amount_keys         = params[:amount_keys]          || []
+    notes_keys          = params[:notes_keys]           || []
+    sub_fields          = params[:sub_fields]           || []
+    array_defaults      = params[:array_default_empties]|| []
 
     created = []
 
-    feature_names.each_with_index do |raw_name, idx|
-      col_name   = to_db_name(raw_name)
-      next if col_name.blank?
+    names.each_with_index do |raw, idx|
+      col = to_db_name(raw)
+      next unless col.present? && %w[string integer boolean decimal text text[] date].include?(types[idx])
 
-      # only allow your permitted types
-      next unless %w[string integer boolean decimal text text[] date].include?(column_types[idx])
+      migration_opts = {}
+      col_type       = if types[idx] == 'text[]'
+                         migration_opts = { array: true, default: (array_defaults[idx]=='1'?[]:nil) }
+                         :text
+                       else
+                         types[idx].to_sym
+                       end
 
-      # migrate the column
-      begin
-        migration_opts = {}
-        if column_types[idx] == 'text[]'
-          migration_opts = {
-            array:   true,
-            default: (array_default_empties[idx] == '1' ? [] : nil)
-          }
-          col_type = :text
-        else
-          col_type = column_types[idx].to_sym
-        end
+      ActiveRecord::Migration.add_column(table_name.to_sym, col.to_sym, col_type, **migration_opts)
 
-        ActiveRecord::Migration.add_column(
-          table_name.to_sym, col_name.to_sym, col_type, **migration_opts
-        )
+      md = ColumnMetadata.create!(
+        table_name:   table_name,
+        column_name:  col,
+        feature:      front_end_features[idx].presence,
+        has_cost:     has_costs[idx].present?,
+        sub_field:    sub_fields[idx],
+        rate_key:     rate_keys[idx],
+        amount_key:   amount_keys[idx],
+        notes_key:    notes_keys[idx],
+        options:      begin
+                        vals = combobox_values_arr[idx].to_s.split(',').map(&:strip)
+                        vals.any? ? { allowed_values: vals } : {}
+                      end
+      )
 
-        # build your metadata row — NO row/col/label_* passed here
-        md = ColumnMetadata.create!(
-          table_name:   table_name,
-          column_name:  col_name,
-          feature:      features[idx].presence,
-          has_cost:     has_costs[idx].present?,
-          sub_field:    sub_fields[idx],
-          rate_key:     rate_keys[idx],
-          amount_key:   amount_keys[idx],
-          notes_key:    notes_keys[idx],
-          options:      begin
-                          vals = combobox_values_arr[idx].to_s.split(',').map(&:strip)
-                          vals.any? ? { allowed_values: vals } : {}
-                        end
-        )
-
-        created << col_name
-      rescue => e
-        Rails.logger.error "Error adding column #{col_name}: #{e.message}"
-        flash[:error] ||= ""
-        flash[:error] += "Failed to add #{col_name}: #{e.message}. "
-      end
+      created << col
+    rescue => e
+      flash[:error] ||= ""
+      flash[:error] += "Failed feature #{col}: #{e.message}. "
     end
 
     if created.any?
-      flash[:success] = "Created features: #{created.join(', ')}"
+      flash[:success] = "Features created: #{created.join(', ')}."
     elsif flash[:error].blank?
       flash[:error] = "No features created."
     end
 
-    redirect_to admin_path(
-      table_name:       table_name,
-      **filter_params
-    )
-  end
-
-  
-  def feature_row
-    render partial: 'feature_row', locals: { idx: params[:idx].to_i }
-  end
-  
-  
-  def add_column
-    table_name = params[:table_name]
-    raw_col_name = params[:column_name]
-    normalized_col_name = to_db_name(raw_col_name) # Normalize for DB safety
-  
-    column_type = params[:column_type]
-    feature = params[:feature]
-    allowed_values = params[:feature_values].to_s.split(',').map(&:strip).reject(&:blank?).uniq
-  
-    # Add DB column
-    ::DynamicTableManager.add_column(table_name, normalized_col_name, column_type)
-  
-    # Add or update metadata
-    metadata = ColumnMetadata.find_or_initialize_by(
-      table_name: table_name,
-      column_name: normalized_col_name
-    )
-    metadata.feature = feature
-    metadata.row = params[:row]
-    metadata.col = params[:col]
-    metadata.label_row = params[:label_row]
-    metadata.label_col = params[:label_col]
-    metadata.options ||= {}
-    metadata.options["allowed_values"] = allowed_values
-    metadata.save!
-  
-    flash[:success] = "Column #{normalized_col_name} added to #{table_name}."
-  
-    # 🧩 Log metadata for debug
-    Rails.logger.info "🧩 Current metadata for #{table_name}:"
-    ColumnMetadata.where(table_name: table_name).each do |meta|
-      Rails.logger.info "  ➤ #{meta.column_name} | Feature: #{meta.feature} | Row: #{meta.row} | Col: #{meta.col} | Label Row: #{meta.label_row} | Label Col: #{meta.label_col} | Allowed Values: #{meta.options&.dig('allowed_values')}"
-    end
-  
-    # 📊 Log actual DB columns
-    db_columns = ActiveRecord::Base.connection.columns(table_name).map(&:name)
-    Rails.logger.info "📊 Actual DB columns for #{table_name}: #{db_columns.join(', ')}"
-  
     redirect_to admin_path(table_name: table_name, **filter_params)
   end
 
+  # GET /admin/feature_row
+  def feature_row
+    render partial: 'feature_row', locals: { idx: params[:idx].to_i }
+  end
 
+  # POST /admin/add_column
+  def add_column
+    tbl  = params[:table_name]
+    raw  = params[:column_name]
+    col  = to_db_name(raw)
+    type = params[:column_type]
+    feat = params[:feature]
+    vals = params[:feature_values].to_s.split(',').map(&:strip).reject(&:blank?)
+
+    ::DynamicTableManager.add_column(tbl, col, type)
+
+    md = ColumnMetadata.find_or_initialize_by(table_name: tbl, column_name: col)
+    md.feature      = feat
+    md.row          = params[:row]
+    md.col          = params[:col]
+    md.label_row    = params[:label_row]
+    md.label_col    = params[:label_col]
+    md.options      ||= {}
+    md.options['allowed_values'] = vals
+    md.save!
+
+    flash[:success] = "Column #{col} added to #{tbl}."
+    redirect_to admin_path(table_name: tbl, **filter_params)
+  end
+
+  # GET /dynamic_tables/:table_name
   def show
-    subsystem_id = params[:subsystemId]
-    table_name = params[:table_name]
-    table_def = TableDefinition.find_by(table_name: table_name)
-  
-    unless table_def
+    subsys = params[:subsystemId]
+    tbl    = params[:table_name]
+    td     = TableDefinition.find_by(table_name: tbl)
+
+    unless td
       return render json: { error: "Invalid table" }, status: :bad_request
     end
-  
-    if table_def.static?
-      model = table_name.classify.constantize
-      records = model.where(subsystem_id: subsystem_id)
-      render json: {
-        columns: records.first&.attributes&.keys,
-        data: records,
-        static: true
-      }
-    else
-      model = table_name.classify.constantize rescue nil
-      records = model&.where(subsystem_id: subsystem_id)
-  
-      render json: {
-        columns: records&.first&.attributes&.keys,
-        data: records,
-        static: false
-      }
-    end
+
+    model = tbl.classify.constantize
+    records = model.where(subsystem_id: subsys)
+    render json: {
+      columns: records.first&.attributes&.keys,
+      data:    records,
+      static:  td.static?
+    }
   rescue NameError
     render json: { error: "Invalid table" }, status: :bad_request
   end
-  
 
   private
+
+  def metadata_params
+    params.require(:column_metadata).permit(
+      :feature,
+      :has_cost,
+      :standard_value,
+      :tolerance,
+      :sub_field,
+      :rate_key,
+      :amount_key,
+      :notes_key,
+      options: [:allowed_values]
+    )
+  end
 
   def filter_params
     params.slice(
@@ -377,11 +360,29 @@ class DynamicTablesController < ApplicationController
     end
   end
 
+  def get_spelling_suggestion(word)
+    dict = %w[fire alarm panel pump system smoke bell sprinkler switch wiring detector access lighting power control emergency network security]
+    distances = dict.map { |w| [w, levenshtein_distance(word.downcase, w)] }
+    best = distances.min_by(&:last)
+    best[0] if best && best[1] <= 2
+  end
+
+  def levenshtein_distance(a, b)
+    (Array.new(a.length+1){|i|i}).tap do |m|
+      (1..b.length).each{|j| m[0,j]=j }
+      (1..a.length).each do |i|
+        (1..b.length).each do |j|
+          cost = a[i-1]==b[j-1] ? 0 : 1
+          m[i,j] = [m[i-1,j]+1, m[i,j-1]+1, m[i-1,j-1]+cost].min
+        end
+      end
+    end[a.length, b.length]
+  end
+
   def to_db_name(name)
     name.to_s
-        .parameterize(separator: '_') # handles spaces, camelCase, PascalCase, symbols, etc.
-        .gsub(/__+/, '_')             # collapse double underscores
-        .gsub(/^_+|_+$/, '')          # remove leading/trailing
+        .parameterize(separator: '_')
+        .gsub(/__+/, '_')
+        .gsub(/^_+|_+$/, '')
   end
-  
 end

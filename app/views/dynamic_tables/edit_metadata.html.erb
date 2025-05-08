@@ -1,25 +1,50 @@
 <h1>Edit Metadata for <%= @column_name %> in <%= @table_name %></h1>
 
-<%= form_with model: @metadata, url: update_metadata_dynamic_tables_path(table_name: @table_name, column_name: @column_name), method: :patch do |f| %>
+<%= form_with model: @metadata,
+              url: update_metadata_dynamic_tables_path(
+                     table_name:  @table_name,
+                     column_name: @column_name
+                   ),
+              method: :patch,
+              local: true do |f| %>
+
   <div>
-    <%= f.label :feature, "Feature" %>
-    <%= f.select :feature, options_for_select(['text', 'number', 'combobox', 'checkboxes', 'checkbox'], @metadata.feature), include_blank: true %>
+    <%= f.label :feature, "Feature" %><br>
+    <%= f.select :feature,
+                 options_for_select(
+                   ['text','number','combobox','checkboxes','checkbox'],
+                   @metadata.feature
+                 ),
+                 include_blank: true %>
   </div>
 
   <div>
-    <%= f.label :has_cost, "Has Cost" %>
+    <%= f.label :has_cost, "Has Cost" %><br>
     <%= f.check_box :has_cost %>
   </div>
 
   <div>
-    <%= f.label "options[values]", "Combobox/Checkbox Values (comma-separated)" %>
-    <%= f.text_field :options, value: @metadata.options&.dig(:values)&.join(', '), name: 'column_metadata[options][values]' %>
+    <%= f.label :standard_value, "Standard Value" %><br>
+    <%= f.number_field :standard_value, step: :any %>
   </div>
 
-  <!-- Add more fields as needed for sub_field, rate_key, etc. -->
   <div>
-    <%= f.submit "Save Metadata" %>
+    <%= f.label :tolerance, "Tolerance (%)" %><br>
+    <%= f.number_field :tolerance, step: :any %>
+  </div>
+
+  <div>
+    <%= f.label "options[values]", "Combobox/Checkbox Values (comma-separated)" %><br>
+    <%= f.text_field :options,
+          value: @metadata.options.dig("values")&.join(", "),
+          name: 'column_metadata[options][values]' %>
+  </div>
+
+  <!-- other metadata fields (sub_field, rate_key, etc.) can stay here -->
+
+  <div>
+    <%= f.submit "Save Metadata", class: "btn btn-primary mt-4" %>
   </div>
 <% end %>
 
-<%= link_to 'Back', admin_path(table_name: @table_name) %>
+<%= link_to 'Back', admin_path(table_name: @table_name, **filter_params), class: "btn btn-link mt-2" %>

@@ -2,6 +2,7 @@
 class DynamicTablesController < ApplicationController
   require 'did_you_mean'
   require_dependency 'dynamic_table_manager'
+  helper_method :filter_params
 
   before_action :set_table_name, only: [:add_column]
 

@@ -1,4 +1,3 @@
-<!-- app/views/dynamic_tables/admin.html.erb -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -8,7 +7,6 @@
   </head>
   <body class="bg-gray-50 min-h-screen font-sans antialiased">
     <div class="max-w-5xl mx-auto py-12 px-4">
-
       <!-- Flash Messages -->
       <% if flash[:success] %>
         <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500">
@@ -22,9 +20,11 @@
 
       <h1 class="text-3xl font-bold mb-6">Database Management - Admin Panel</h1>
 
-      <!-- 1. Filter -->
+      <!-- 1. FILTERS (Project / Discipline / System / Subsystem) -->
       <section class="mb-8">
-        <h2 class="text-xl font-semibold">1. Select Project / Discipline / System / Subsystem</h2>
+        <h2 class="text-xl font-semibold">
+          1. Select Project / Discipline / System / Subsystem
+        </h2>
         <form action="/admin" method="get" class="space-y-6 mt-4">
           <!-- Project -->
           <div>
@@ -36,6 +36,7 @@
               <% end %>
             </select>
           </div>
+
           <!-- Discipline -->
           <% if @project_filter.present? %>
             <div>
@@ -43,11 +44,12 @@
               <select id="project_scope_filter" name="project_scope_filter" onchange="this.form.submit()" class="mt-1 block w-full">
                 <option value="">-- Choose a Project Discipline --</option>
                 <% @project_scopes.each do |name, id| %>
-                  <option value="<%= id %>" <%= "selected" if params[:project_scope_filter] == id.to_s %>><%= name %></option>
+                  <option value="<%= id %>" <%= "selected" if @project_scope_filter == id.to_s %>><%= name %></option>
                 <% end %>
               </select>
             </div>
           <% end %>
+
           <!-- System -->
           <% if @project_scope_filter.present? %>
             <div>
@@ -55,11 +57,12 @@
               <select id="system_filter" name="system_filter" onchange="this.form.submit()" class="mt-1 block w-full">
                 <option value="">-- Choose a System --</option>
                 <% @systems.each do |name, id| %>
-                  <option value="<%= id %>" <%= "selected" if params[:system_filter] == id.to_s %>><%= name %></option>
+                  <option value="<%= id %>" <%= "selected" if @system_filter == id.to_s %>><%= name %></option>
                 <% end %>
               </select>
             </div>
           <% end %>
+
           <!-- Subsystem -->
           <% if @system_filter.present? %>
             <div>
@@ -67,7 +70,7 @@
               <select id="subsystem_filter" name="subsystem_filter" onchange="this.form.submit()" class="mt-1 block w-full">
                 <option value="">-- Choose a Subsystem --</option>
                 <% @subsystems.each do |name, id| %>
-                  <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
+                  <option value="<%= id %>" <%= "selected" if @subsystem_filter == id.to_s %>><%= name %></option>
                 <% end %>
               </select>
             </div>
@@ -76,8 +79,8 @@
       </section>
 
       <% if @subsystem_filter.present? %>
-
-        <!-- 2. Order Main Tables -->
+        
+           <!-- 2. Order Main Tables -->
         <section class="mb-8">
           <h2 class="text-xl font-semibold">2. Order Main Tables</h2>
           <% if @main_tables.any? %>
@@ -236,66 +239,67 @@
               Submit All Features
             </button>
           </form>
-        </section>
+     
 
-        <!-- 6. Existing Features Table -->
+        <!-- 5. Existing Features Table -->
         <% if @table_name.present? %>
-  <section class="mb-8">
-    <h3 class="text-lg font-semibold">
-      Existing Features in <%= @table_name.humanize %>
-    </h3>
-    <% if @existing_columns.any? %>
-      <table class="min-w-full mt-4">
-        <thead class="bg-indigo-600 text-white">
-          <tr>
-            <th class="px-6 py-3">Feature Name</th>
-            <th class="px-6 py-3">Type</th>
-            <th class="px-6 py-3">Standard Value</th>
-            <th class="px-6 py-3">Tolerance (%)</th>
-            <th class="px-6 py-3">Metadata Set?</th>
-            <th class="px-6 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white">
-          <% @existing_columns.each do |col| %>
-            <% md = col[:metadata] %>
-            <tr>
-              <td class="px-6 py-4"><%= col[:name] %></td>
-              <td class="px-6 py-4"><%= col[:type] %></td>
-              <td class="px-6 py-4"><%= md&.standard_value || '—' %></td>
-              <td class="px-6 py-4"><%= md&.tolerance      || '—' %></td>
-              <td class="px-6 py-4"><%= md ? "Yes" : "No" %></td>
-              <td class="px-6 py-4">
-                <%= link_to "Edit Metadata",
-                      edit_metadata_dynamic_tables_path(
-                        table_name:            @table_name,
-                        column_name:           col[:name],
-                        project_filter:        @project_filter,
-                        project_scope_filter:  @project_scope_filter,
-                        system_filter:         @system_filter,
-                        subsystem_filter:      @subsystem_filter
-                      ),
-                      class: "text-indigo-600 hover:underline" %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    <% else %>
-      <p class="text-sm mt-4">No columns found for this table.</p>
-    <% end %>
-  </section>
-<% end %>
+          <section class="mb-8">
+            <h3 class="text-lg font-semibold">
+              Existing Features in <%= @table_name.humanize %>
+            </h3>
+
+            <% if @existing_columns.any? %>
+              <table class="min-w-full mt-4">
+                <thead class="bg-indigo-600 text-white">
+                  <tr>
+                    <th class="px-6 py-3">Feature Name</th>
+                    <th class="px-6 py-3">Type</th>
+                    <th class="px-6 py-3">Standard Value</th>
+                    <th class="px-6 py-3">Tolerance (%)</th>
+                    <th class="px-6 py-3">Metadata Set?</th>
+                    <th class="px-6 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white">
+                  <% @existing_columns.each do |col| %>
+                    <% md = col[:metadata] %>
+                    <tr>
+                      <td class="px-6 py-4"><%= col[:name] %></td>
+                      <td class="px-6 py-4"><%= col[:type] %></td>
+                      <td class="px-6 py-4"><%= md&.standard_value || '—' %></td>
+                      <td class="px-6 py-4"><%= md&.tolerance      || '—' %></td>
+                      <td class="px-6 py-4"><%= md ? "Yes" : "No" %></td>
+                      <td class="px-6 py-4">
+                        <%= link_to "Edit Metadata",
+                              edit_metadata_dynamic_tables_path(
+                                table_name:            @table_name,
+                                column_name:           col[:name],
+                                project_filter:        @project_filter,
+                                project_scope_filter:  @project_scope_filter,
+                                system_filter:         @system_filter,
+                                subsystem_filter:      @subsystem_filter
+                              ),
+                              class: "text-indigo-600 hover:underline" %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="text-sm mt-4">No columns found for this table.</p>
+            <% end %>
+          </section>
+        <% end %>
 
       <% else %>
+        <!-- Prompt if no subsystem is selected -->
         <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
           <p>Please select a Project, Discipline, System, and Subsystem first.</p>
         </div>
       <% end %>
-
     </div>
 
-    <script>
+     <script>
       let rowIndex = 1, subTableRowIndex = 1, featureIndex = 0;
 
       function toggleSection(id) { document.getElementById(id).classList.toggle("hidden"); }

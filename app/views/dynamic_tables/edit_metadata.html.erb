@@ -2,10 +2,13 @@
 
 <%= form_with model: @metadata,
               url: update_metadata_dynamic_tables_path(
-                table_name:   @table_name,
-                column_name:  @column_name,
-                **filter_params
-              ),
+        table_name:             @table_name,
+        column_name:            @column_name,
+        project_filter:         params[:project_filter],
+        project_scope_filter:   params[:project_scope_filter],
+        system_filter:          params[:system_filter],
+        subsystem_filter:       params[:subsystem_filter]
+      ),
               method: :patch,
               local: true do |f| %>
 

@@ -8,6 +8,7 @@
   </head>
   <body class="bg-gray-50 min-h-screen font-sans antialiased">
     <div class="max-w-5xl mx-auto py-12 px-4">
+
       <!-- Flash Messages -->
       <% if flash[:success] %>
         <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500">
@@ -21,107 +22,52 @@
 
       <h1 class="text-3xl font-bold mb-6">Database Management - Admin Panel</h1>
 
-      <!-- Step 1: Filter (Project, Discipline, System, Subsystem) -->
+      <!-- 1. Filter -->
       <section class="mb-8">
-        <h2 class="text-xl font-semibold">
-          1. Select Project / Discipline / System / Subsystem
-        </h2>
+        <h2 class="text-xl font-semibold">1. Select Project / Discipline / System / Subsystem</h2>
         <form action="/admin" method="get" class="space-y-6 mt-4">
-          <!-- Project Filter -->
+          <!-- Project -->
           <div>
-            <label for="project_filter" class="block text-sm font-medium"
-              >Project</label
-            >
-            <select
-              id="project_filter"
-              name="project_filter"
-              onchange="this.form.submit()"
-              class="mt-1 block w-full"
-            >
+            <label for="project_filter" class="block text-sm font-medium">Project</label>
+            <select id="project_filter" name="project_filter" onchange="this.form.submit()" class="mt-1 block w-full">
               <option value="">-- Choose a Project --</option>
               <% @projects.each do |name, id| %>
-                <option
-                  value="<%= id %>"
-                  <%= "selected" if params[:project_filter] == id.to_s %>
-                >
-                  <%= name %>
-                </option>
+                <option value="<%= id %>" <%= "selected" if params[:project_filter] == id.to_s %>><%= name %></option>
               <% end %>
             </select>
           </div>
-
-          <!-- Project Discipline Filter -->
+          <!-- Discipline -->
           <% if @project_filter.present? %>
             <div>
-              <label
-                for="project_scope_filter"
-                class="block text-sm font-medium"
-                >Project Discipline</label
-              >
-              <select
-                id="project_scope_filter"
-                name="project_scope_filter"
-                onchange="this.form.submit()"
-                class="mt-1 block w-full"
-              >
+              <label for="project_scope_filter" class="block text-sm font-medium">Project Discipline</label>
+              <select id="project_scope_filter" name="project_scope_filter" onchange="this.form.submit()" class="mt-1 block w-full">
                 <option value="">-- Choose a Project Discipline --</option>
                 <% @project_scopes.each do |name, id| %>
-                  <option
-                    value="<%= id %>"
-                    <%= "selected" if @project_scope_filter == id.to_s %>
-                  >
-                    <%= name %>
-                  </option>
+                  <option value="<%= id %>" <%= "selected" if params[:project_scope_filter] == id.to_s %>><%= name %></option>
                 <% end %>
               </select>
             </div>
           <% end %>
-
-          <!-- System Filter -->
+          <!-- System -->
           <% if @project_scope_filter.present? %>
             <div>
-              <label for="system_filter" class="block text-sm font-medium"
-                >System</label
-              >
-              <select
-                id="system_filter"
-                name="system_filter"
-                onchange="this.form.submit()"
-                class="mt-1 block w-full"
-              >
+              <label for="system_filter" class="block text-sm font-medium">System</label>
+              <select id="system_filter" name="system_filter" onchange="this.form.submit()" class="mt-1 block w-full">
                 <option value="">-- Choose a System --</option>
                 <% @systems.each do |name, id| %>
-                  <option
-                    value="<%= id %>"
-                    <%= "selected" if @system_filter == id.to_s %>
-                  >
-                    <%= name %>
-                  </option>
+                  <option value="<%= id %>" <%= "selected" if params[:system_filter] == id.to_s %>><%= name %></option>
                 <% end %>
               </select>
             </div>
           <% end %>
-
-          <!-- Subsystem Filter -->
+          <!-- Subsystem -->
           <% if @system_filter.present? %>
             <div>
-              <label for="subsystem_filter" class="block text-sm font-medium"
-                >Subsystem</label
-              >
-              <select
-                id="subsystem_filter"
-                name="subsystem_filter"
-                onchange="this.form.submit()"
-                class="mt-1 block w-full"
-              >
+              <label for="subsystem_filter" class="block text-sm font-medium">Subsystem</label>
+              <select id="subsystem_filter" name="subsystem_filter" onchange="this.form.submit()" class="mt-1 block w-full">
                 <option value="">-- Choose a Subsystem --</option>
                 <% @subsystems.each do |name, id| %>
-                  <option
-                    value="<%= id %>"
-                    <%= "selected" if @subsystem_filter == id.to_s %>
-                  >
-                    <%= name %>
-                  </option>
+                  <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
                 <% end %>
               </select>
             </div>
@@ -130,36 +76,33 @@
       </section>
 
       <% if @subsystem_filter.present? %>
-        <!-- 2. Order Main Tables (Parent Tables) -->
+
+        <!-- 2. Order Main Tables -->
         <section class="mb-8">
-          <h2 class="text-xl font-semibold">Order Main Tables</h2>
+          <h2 class="text-xl font-semibold">2. Order Main Tables</h2>
           <% if @main_tables.any? %>
             <ul class="list-disc pl-6">
-              <% @main_tables.each do |table_def| %>
+              <% @main_tables.each do |td| %>
                 <li class="mb-2 flex items-center">
-                  <span class="mr-4"><%= table_def.table_name.humanize %></span>
-                  <%=
-                    link_to "Move Up", move_table_dynamic_tables_path(
-                      id: table_def.id,
-                      direction: 'up',
-                      table_name: @table_name,
-                      project_filter: @project_filter,
-                      project_scope_filter: @project_scope_filter,
-                      system_filter: @system_filter,
-                      subsystem_filter: @subsystem_filter
-                    ), method: :post, class: "text-blue-600 mr-2"
-                  %>
-                  <%=
-                    link_to "Move Down", move_table_dynamic_tables_path(
-                      id: table_def.id,
-                      direction: 'down',
-                      table_name: @table_name,
-                      project_filter: @project_filter,
-                      project_scope_filter: @project_scope_filter,
-                      system_filter: @system_filter,
-                      subsystem_filter: @subsystem_filter
-                    ), method: :post, class: "text-blue-600"
-                  %>
+                  <span class="mr-4"><%= td.table_name.humanize %></span>
+                  <%= link_to "Move Up",
+                              move_table_dynamic_tables_path(id: td.id,
+                                                              direction: 'up',
+                                                              table_name: @table_name,
+                                                              project_filter: @project_filter,
+                                                              project_scope_filter: @project_scope_filter,
+                                                              system_filter: @system_filter,
+                                                              subsystem_filter: @subsystem_filter),
+                              method: :post, class: "text-blue-600 mr-2" %>
+                  <%= link_to "Move Down",
+                              move_table_dynamic_tables_path(id: td.id,
+                                                              direction: 'down',
+                                                              table_name: @table_name,
+                                                              project_filter: @project_filter,
+                                                              project_scope_filter: @project_scope_filter,
+                                                              system_filter: @system_filter,
+                                                              subsystem_filter: @subsystem_filter),
+                              method: :post, class: "text-blue-600" %>
                 </li>
               <% end %>
             </ul>
@@ -170,339 +113,133 @@
 
         <!-- 3. Create Main Table(s) -->
         <section class="mb-8">
-          <h2
-            class="text-xl font-semibold cursor-pointer mb-2"
-            onclick="toggleSection('create-main-table-form')"
-          >
+          <h2 class="text-xl font-semibold cursor-pointer mb-2" onclick="toggleSection('create-main-table-form')">
             Create New Main Table(s)
           </h2>
-          <div
-            id="create-main-table-form"
-            class="hidden p-6 bg-white rounded shadow"
-          >
-            <form
-              action="/admin/create_multiple_tables"
-              method="post"
-              class="space-y-4"
-            >
-              <!-- Preserve filter parameters -->
-              <input
-                type="hidden"
-                name="project_filter"
-                value="<%= @project_filter %>"
-              />
-              <input
-                type="hidden"
-                name="project_scope_filter"
-                value="<%= @project_scope_filter %>"
-              />
-              <input
-                type="hidden"
-                name="system_filter"
-                value="<%= @system_filter %>"
-              />
-              <input
-                type="hidden"
-                name="subsystem_filter"
-                value="<%= @subsystem_filter %>"
-              />
-
-              <!-- Subsystem selection -->
-              <div>
-                <label
-                  for="subsystem_id_main"
-                  class="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Subsystem
-                </label>
-                <select
-                  id="subsystem_id_main"
-                  name="subsystem_id"
-                  class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                  required
-                >
-                  <% @subsystems.each do |name, id| %>
-                    <option
-                      value="<%= id %>"
-                      <%= "selected" if @subsystem_filter == id.to_s %>
-                    >
-                      <%= name %>
-                    </option>
-                  <% end %>
-                </select>
-              </div>
-
-              <!-- Container for multiple table name inputs -->
-              <div id="main-tables-container" class="space-y-4">
-                <div
-                  class="table-row flex flex-col sm:flex-row sm:items-center sm:space-x-4"
-                >
-                  <label
-                    class="block text-sm font-medium text-gray-700 sm:w-1/4"
-                    >Table Name</label
-                  >
-                  <div class="w-full">
-                    <input
-                      type="text"
-                      name="table_names[]"
-                      placeholder="e.g. product_data"
-                      class="mt-1 sm:mt-0 w-full border-gray-300 rounded shadow-sm"
-                      required
-                      oninput="checkTableNameAvailability(this, 0)"
-                    />
-                    <div
-                      id="table-suggestions-0"
-                      class="text-sm text-red-600 mt-1"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
-                onclick="addTableRow()"
-              >
-                + Add New Table
-              </button>
-
-              <!-- Submit button -->
-              <button
-                type="submit"
-                class="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
-              >
-                Create Main Table(s)
-              </button>
-            </form>
-          </div>
-        </section>
-
-        <!-- 3. Create Sub Tables -->
-        <section class="mb-8">
-          <h2
-            class="text-xl font-semibold cursor-pointer"
-            onclick="toggleSection('create-sub-table-form')"
-          >
-            Create New Sub Tables
-          </h2>
-          <div
-            id="create-sub-table-form"
-            class="hidden mt-2 p-4 bg-white rounded shadow"
-          >
-            <form action="/admin/create_multiple_sub_tables" method="post">
-              <!-- Preserve filter params -->
+          <div id="create-main-table-form" class="hidden p-6 bg-white rounded shadow">
+            <form action="/admin/create_multiple_tables" method="post" class="space-y-4">
+              <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
               <%= hidden_field_tag :project_filter, @project_filter %>
               <%= hidden_field_tag :project_scope_filter, @project_scope_filter %>
               <%= hidden_field_tag :system_filter, @system_filter %>
               <%= hidden_field_tag :subsystem_filter, @subsystem_filter %>
 
               <div>
-                <label class="block text-sm font-medium">Subsystem</label>
-                <select
-                  name="subsystem_id"
-                  id="subsystem_id_sub"
-                  class="mt-1 block w-full"
-                  required
-                >
+                <label for="subsystem_id_main" class="block text-sm font-medium">Subsystem</label>
+                <select id="subsystem_id_main" name="subsystem_id" required class="mt-1 block w-full border-gray-300 rounded">
                   <% @subsystems.each do |name, id| %>
-                    <option
-                      value="<%= id %>"
-                      <%= "selected" if @subsystem_filter == id.to_s %>
-                    >
-                      <%= name %>
-                    </option>
+                    <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
                   <% end %>
                 </select>
               </div>
 
-              <div id="sub-tables-container" class="mt-4 space-y-4">
-                <div class="sub-table-row">
-                  <label class="block text-sm font-medium mb-1"
-                    >Select Parent Table</label
-                  >
-                  <select name="parent_tables[]" class="block w-full mb-2">
-                    <% @main_tables.each do |td| %>
-                      <option value="<%= td.table_name %>">
-                        <%= td.table_name.humanize %>
-                      </option>
-                    <% end %>
-                  </select>
-
-                  <input
-                    type="text"
-                    name="sub_table_names[]"
-                    placeholder="e.g., module_variants"
-                    class="block w-full border-gray-300 rounded shadow-sm"
-                    required
-                    oninput="checkSubTableName(this, 0)"
-                  />
-                  <div
-                    id="sub-table-suggestions-0"
-                    class="text-sm text-red-600 mt-1"
-                  ></div>
+              <div id="main-tables-container" class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+                  <label class="block text-sm font-medium sm:w-1/4">Table Name</label>
+                  <div class="w-full">
+                    <input type="text" name="table_names[]" required placeholder="e.g. product_data"
+                           class="mt-1 sm:mt-0 w-full border-gray-300 rounded"
+                           oninput="checkTableNameAvailability(this,0)" />
+                    <div id="table-suggestions-0" class="text-sm text-red-600 mt-1"></div>
+                  </div>
                 </div>
               </div>
 
-              <button
-                type="button"
-                class="mt-2 bg-blue-200 px-3 py-1 rounded"
-                onclick="addSubTableRow()"
-              >
+              <button type="button" class="px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+                      onclick="addTableRow()">+ Add New Table</button>
+              <button type="submit" class="w-full mt-4 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+                Create Main Table(s)
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- 4. Create Sub Tables -->
+        <section class="mb-8">
+          <h2 class="text-xl font-semibold cursor-pointer" onclick="toggleSection('create-sub-table-form')">
+            Create New Sub Tables
+          </h2>
+          <div id="create-sub-table-form" class="hidden p-6 bg-white rounded shadow">
+            <form action="/admin/create_multiple_sub_tables" method="post">
+              <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+              <%= hidden_field_tag :project_filter, @project_filter %>
+              <%= hidden_field_tag :project_scope_filter, @project_scope_filter %>
+              <%= hidden_field_tag :system_filter, @system_filter %>
+              <%= hidden_field_tag :subsystem_filter, @subsystem_filter %>
+
+              <div>
+                <label for="subsystem_id_sub" class="block text-sm font-medium">Subsystem</label>
+                <select id="subsystem_id_sub" name="subsystem_id" required class="mt-1 block w-full border-gray-300 rounded">
+                  <% @subsystems.each do |name, id| %>
+                    <option value="<%= id %>" <%= "selected" if params[:subsystem_filter] == id.to_s %>><%= name %></option>
+                  <% end %>
+                </select>
+              </div>
+
+              <div id="sub-tables-container" class="space-y-4 mt-4">
+                <div class="sub-table-row">
+                  <label class="block text-sm font-medium mb-1">Select Parent Table</label>
+                  <select name="parent_tables[]" class="block w-full mb-2">
+                    <% @main_tables.each do |td| %>
+                      <option value="<%= td.table_name %>"><%= td.table_name.humanize %></option>
+                    <% end %>
+                  </select>
+                  <input type="text" name="sub_table_names[]" required placeholder="e.g. module_variants"
+                         class="block w-full border-gray-300 rounded"
+                         oninput="checkSubTableName(this,0)" />
+                  <div id="sub-table-suggestions-0" class="text-sm text-red-600 mt-1"></div>
+                </div>
+              </div>
+
+              <button type="button" class="mt-2 px-3 py-1 bg-blue-200 rounded" onclick="addSubTableRow()">
                 + Add Sub Table
               </button>
-              <button
-                type="submit"
-                class="mt-4 w-full bg-indigo-600 text-white py-2 rounded"
-              >
+              <button type="submit" class="w-full mt-4 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
                 Create Sub Tables
               </button>
             </form>
           </div>
         </section>
 
-        <!-- 4. Add Column / Feature -->
-<section class="mb-8 p-4 bg-white rounded shadow">
-  <h2 class="text-xl font-semibold mb-2">
-    Add New Feature(s)
-  </h2>
+        <!-- 5. Add New Features -->
+        <section class="mb-8 p-4 bg-white rounded shadow">
+          <h2 class="text-xl font-semibold mb-2">Add New Feature(s)</h2>
+          <form action="/admin/create_multiple_features" method="post" class="space-y-4" onsubmit="syncFinalTableName()">
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <input type="hidden" id="final_table_name" name="table_name" value="" />
 
-  <form action="/admin/create_multiple_features" method="post" class="space-y-4" onsubmit="syncFinalTableName()">
-    <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <!-- Main / Sub Table Selectors -->
+            <div>
+              <label for="parent_table_select" class="block text-sm font-medium">Select Main Table</label>
+              <select id="parent_table_select" class="mt-1 block w-full border-gray-300 rounded"
+                      onchange="loadSubTables(this.value); syncFinalTableName()">
+                <option value="">-- Choose a Main Table --</option>
+                <% @main_tables.each do |td| %>
+                  <option value="<%= td.table_name %>"><%= td.table_name.humanize %></option>
+                <% end %>
+              </select>
+            </div>
+            <div>
+              <label for="sub_table_select" class="block text-sm font-medium">Select Sub Table (optional)</label>
+              <select id="sub_table_select" class="mt-1 block w-full border-gray-300 rounded" disabled onchange="syncFinalTableName()">
+                <option value="">-- Choose a Sub Table --</option>
+              </select>
+            </div>
 
-    <!-- Hidden field to carry the actual table name -->
-    <input type="hidden" id="final_table_name" name="table_name" value="" />
+            <div id="features-container" class="space-y-6 mt-6">
+              <script>document.addEventListener("DOMContentLoaded", () => addFeatureRow());</script>
+            </div>
 
-    <!-- 1) Main Table Selector -->
-    <div>
-      <label for="parent_table_select" class="block text-sm font-medium">Select Main Table</label>
-      <select id="parent_table_select" class="mt-1 block w-full border-gray-300 rounded"
-              onchange="loadSubTables(this.value); syncFinalTableName();">
-        <option value="">-- Choose a Main Table --</option>
-        <% @main_tables.each do |td| %>
-          <option value="<%= td.table_name %>"><%= td.table_name.humanize %></option>
-        <% end %>
-      </select>
-    </div>
+            <button type="button" class="px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+                    onclick="addFeatureRow()">+ Add Another Feature</button>
+            <button type="submit" class="w-full mt-4 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+              Submit All Features
+            </button>
+          </form>
+        </section>
 
-    <!-- 2) Sub Table Selector (optional) -->
-    <div>
-      <label for="sub_table_select" class="block text-sm font-medium">Select Sub Table (optional)</label>
-      <select id="sub_table_select" class="mt-1 block w-full border-gray-300 rounded" disabled
-              onchange="syncFinalTableName()">
-        <option value="">-- Choose a Sub Table --</option>
-      </select>
-    </div>
-
-    <!-- 3) Dynamic Features Container -->
-    <div id="features-container" class="space-y-6 mt-6">
-      <script>
-        document.addEventListener("DOMContentLoaded", () => addFeatureRow());
-      </script>
-    </div>
-
-    <!-- Button to add another feature row -->
-    <button type="button"
-            class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
-            onclick="addFeatureRow()">
-      + Add Another Feature
-    </button>
-
-    <!-- Submit all features -->
-    <button type="submit"
-            class="mt-4 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
-            onclick="syncFinalTableName()">
-      Submit All Features
-    </button>
-  </form>
-</section>
-
-<script>
-  let featureIndex = 0;
-
-  function addFeatureRow() {
-    const idx = featureIndex++;
-    const container = document.getElementById("features-container");
-    const row = document.createElement("div");
-    row.className = "p-4 bg-gray-50 rounded border";
-
-    row.innerHTML = `
-      <h3 class="font-medium mb-2">Feature #${idx + 1}</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium">Feature Name</label>
-          <input type="text" name="feature_names[]" required
-                 class="mt-1 block w-full border-gray-300 rounded"
-                 placeholder="e.g. category" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Column Type</label>
-          <select name="column_types[]" class="mt-1 block w-full border-gray-300 rounded">
-            <option value="string">String</option>
-            <option value="integer">Integer</option>
-            <option value="boolean">Boolean</option>
-            <option value="decimal">Decimal</option>
-            <option value="text">Text</option>
-            <option value="text[]">Text Array</option>
-            <option value="date">Date</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-        <div>
-          <label class="block text-sm font-medium">Front-end Feature</label>
-          <select name="features[]" onchange="toggleValuesInput(${idx}, this.value)"
-                  class="mt-1 block w-full border-gray-300 rounded">
-            <option value="">None</option>
-            <option value="combobox">Combobox</option>
-            <option value="checkboxes">Checkboxes</option>
-          </select>
-        </div>
-        <div id="values-container-${idx}" class="hidden">
-          <label class="block text-sm font-medium">Allowed Values</label>
-          <input type="text" name="combobox_values_arr[]" 
-                 class="mt-1 block w-full border-gray-300 rounded"
-                 placeholder="comma-separated values" />
-        </div>
-      </div>
-    `;
-
-    container.appendChild(row);
-  }
-
-  function toggleValuesInput(idx, featureType) {
-    const cont = document.getElementById(`values-container-${idx}`);
-    cont.classList.toggle("hidden", !(featureType === "combobox" || featureType === "checkboxes"));
-  }
-
-  function syncFinalTableName() {
-    const main = document.getElementById("parent_table_select").value;
-    const sub  = document.getElementById("sub_table_select").value;
-    document.getElementById("final_table_name").value = sub || main;
-  }
-
-  function loadSubTables(parent) {
-    const sel = document.getElementById("sub_table_select");
-    sel.innerHTML = '<option value="">-- Choose a Sub Table --</option>';
-    sel.disabled = true;
-    if (!parent) return;
-
-    fetch(`/admin/sub_tables?parent_table=${encodeURIComponent(parent)}`)
-      .then(r => r.json())
-      .then(data => {
-        data.forEach(td => {
-          const opt = document.createElement("option");
-          opt.value = td.table_name;
-          opt.text  = td.table_name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-          sel.appendChild(opt);
-        });
-        sel.disabled = data.length === 0;
-      });
-  }
-</script>
-
-
-        <!-- Existing Features Table -->
-<% if @table_name.present? %>
+        <!-- 6. Existing Features Table -->
+        <% if @table_name.present? %>
   <section class="mb-8">
     <h3 class="text-lg font-semibold">
       Existing Features in <%= @table_name.humanize %>
@@ -526,17 +263,17 @@
               <td class="px-6 py-4"><%= col[:name] %></td>
               <td class="px-6 py-4"><%= col[:type] %></td>
               <td class="px-6 py-4"><%= md&.standard_value || '—' %></td>
-              <td class="px-6 py-4"><%= md&.tolerance || '—' %></td>
+              <td class="px-6 py-4"><%= md&.tolerance      || '—' %></td>
               <td class="px-6 py-4"><%= md ? "Yes" : "No" %></td>
               <td class="px-6 py-4">
                 <%= link_to "Edit Metadata",
                       edit_metadata_dynamic_tables_path(
-                        table_name: @table_name,
-                        column_name: col[:name],
-                        project_filter: @project_filter,
-                        project_scope_filter: @project_scope_filter,
-                        system_filter: @system_filter,
-                        subsystem_filter: @subsystem_filter
+                        table_name:            @table_name,
+                        column_name:           col[:name],
+                        project_filter:        @project_filter,
+                        project_scope_filter:  @project_scope_filter,
+                        system_filter:         @system_filter,
+                        subsystem_filter:      @subsystem_filter
                       ),
                       class: "text-indigo-600 hover:underline" %>
               </td>
@@ -549,219 +286,155 @@
     <% end %>
   </section>
 <% end %>
+
       <% else %>
-        <!-- Prompt if no subsystem is selected -->
-        <div
-          class="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700"
-        >
-          <p>
-            Please select a Project, Discipline, System, and Subsystem first.
-          </p>
+        <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+          <p>Please select a Project, Discipline, System, and Subsystem first.</p>
         </div>
       <% end %>
+
     </div>
 
-    <!-- JavaScript Functions -->
     <script>
-      let rowIndex = 1;
-      let subTableRowIndex = 1;
+      let rowIndex = 1, subTableRowIndex = 1, featureIndex = 0;
 
-      // Toggle section visibility
-      function toggleSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        section.classList.toggle("hidden");
-      }
+      function toggleSection(id) { document.getElementById(id).classList.toggle("hidden"); }
 
-      // Add new Main Table input row
       function addTableRow() {
+        const idx = rowIndex++;
         const container = document.getElementById("main-tables-container");
-        const thisIndex = rowIndex++;
-        const newRow = document.createElement("div");
-        newRow.className =
-          "table-row flex flex-col sm:flex-row sm:items-center sm:space-x-4";
-        newRow.innerHTML = `
-    <label class="block text-sm font-medium text-gray-700 sm:w-1/4">Table Name</label>
-    <div class="w-full">
-      <input type="text" name="table_names[]" placeholder="e.g. product_data"
-             class="mt-1 sm:mt-0 w-full border-gray-300 rounded shadow-sm"
-             required oninput="checkTableNameAvailability(this, ${thisIndex})" />
-      <div id="table-suggestions-${thisIndex}" class="text-sm text-red-600 mt-1"></div>
-    </div>
-  `;
-        container.appendChild(newRow);
+        const div = document.createElement("div");
+        div.className = "flex flex-col sm:flex-row sm:items-center sm:space-x-4";
+        div.innerHTML = `
+          <label class="block text-sm font-medium sm:w-1/4">Table Name</label>
+          <div class="w-full">
+            <input type="text" name="table_names[]" required placeholder="e.g. product_data"
+                   class="mt-1 sm:mt-0 w-full border-gray-300 rounded"
+                   oninput="checkTableNameAvailability(this,${idx})" />
+            <div id="table-suggestions-${idx}" class="text-sm text-red-600 mt-1"></div>
+          </div>`;
+        container.appendChild(div);
       }
 
-      // Add new Sub Table row
       function addSubTableRow() {
-        const container = document.getElementById("sub-tables-container");
         const idx = subTableRowIndex++;
-
-        const newRow = document.createElement("div");
-        newRow.className = "sub-table-row mt-4";
-
-        const parentOptions = Array.from(
-          document.querySelectorAll('select[name="parent_tables[]"] option')
-        )
-          .map(
-            (opt) => `<option value="${opt.value}">${opt.textContent}</option>`
-          )
-          .join("");
-
-        newRow.innerHTML = `
-    <label class="block text-sm font-medium mb-1">Select Parent Table</label>
-    <select name="parent_tables[]" class="block w-full mb-2">
-      ${parentOptions}
-    </select>
-
-    <input type="text" name="sub_table_names[]" placeholder="e.g., module_variants"
-           class="block w-full border-gray-300 rounded shadow-sm"
-           required oninput="checkSubTableName(this, ${idx})">
-    <div id="sub-table-suggestions-${idx}" class="text-sm text-red-600 mt-1"></div>
-  `;
-
-        container.appendChild(newRow);
+        const container = document.getElementById("sub-tables-container");
+        const div = document.createElement("div");
+        const opts = Array.from(document.querySelectorAll('select[name="parent_tables[]"] option'))
+                          .map(o=>`<option value="${o.value}">${o.textContent}</option>`).join("");
+        div.className = "sub-table-row";
+        div.innerHTML = `
+          <label class="block text-sm font-medium mb-1">Select Parent Table</label>
+          <select name="parent_tables[]" class="block w-full mb-2">${opts}</select>
+          <input type="text" name="sub_table_names[]" required placeholder="e.g. module_variants"
+                 class="block w-full border-gray-300 rounded"
+                 oninput="checkSubTableName(this,${idx})"/>
+          <div id="sub-table-suggestions-${idx}" class="text-sm text-red-600 mt-1"></div>`;
+        container.appendChild(div);
       }
 
-      // Check Main Table availability + suggest correction
-      function checkTableNameAvailability(input, index = 0) {
+      function checkTableNameAvailability(input, idx) {
         const name = input.value.trim();
-        const subsystemName =
-          document.getElementById("subsystem_id_main")?.selectedOptions[0]
-            ?.text || "";
-        const suggestionEl = document.getElementById(
-          `table-suggestions-${index}`
-        );
-        if (!name) {
-          suggestionEl.innerHTML = "";
-          return;
-        }
-
-        fetch(
-          `/admin/check_table_name?name=${encodeURIComponent(
-            name
-          )}&subsystem_name=${encodeURIComponent(subsystemName)}`
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            let html = "";
-            if (data.exists) {
-              html += `❗ Table already exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSuggested(this, ${index})">${data.suggested}</span>`;
-            } else if (
-              data.spelling_suggestion &&
-              data.spelling_suggestion !== name
-            ) {
-              html += `💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSuggested(this, ${index})">${data.spelling_suggestion}</span>?`;
-            }
-            suggestionEl.innerHTML = html;
+        if (!name) return document.getElementById(`table-suggestions-${idx}`).innerHTML = "";
+        const subsys = document.getElementById("subsystem_id_main")?.selectedOptions[0]?.text || "";
+        fetch(`/admin/check_table_name?name=${encodeURIComponent(name)}&subsystem_name=${encodeURIComponent(subsys)}`)
+          .then(r=>r.json()).then(data=>{
+            let html="";
+            if (data.exists) html=`❗ Table exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSuggested(this,${idx})">${data.suggested}</span>`;
+            else if(data.spelling_suggestion&&data.spelling_suggestion!==name) html=`💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSuggested(this,${idx})">${data.spelling_suggestion}</span>?`;
+            document.getElementById(`table-suggestions-${idx}`).innerHTML=html;
           });
       }
 
-      // Check Sub Table availability + suggest correction
-      function checkSubTableName(input, index = 0) {
+      function checkSubTableName(input, idx) {
         const name = input.value.trim();
-        const subsystemName =
-          document.getElementById("subsystem_id_sub")?.selectedOptions[0]
-            ?.text || "";
-        const suggestionEl = document.getElementById(
-          `sub-table-suggestions-${index}`
-        );
-        if (!name) {
-          suggestionEl.innerHTML = "";
-          return;
-        }
-
-        fetch(
-          `/admin/check_table_name?name=${encodeURIComponent(
-            name
-          )}&subsystem_name=${encodeURIComponent(subsystemName)}`
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            let html = "";
-            if (data.exists) {
-              html += `❗ Table already exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion(this, ${index})">${data.suggested}</span>`;
-            } else if (
-              data.spelling_suggestion &&
-              data.spelling_suggestion !== name
-            ) {
-              html += `💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion(this, ${index})">${data.spelling_suggestion}</span>?`;
-            }
-            suggestionEl.innerHTML = html;
+        if (!name) return document.getElementById(`sub-table-suggestions-${idx}`).innerHTML = "";
+        const subsys = document.getElementById("subsystem_id_sub")?.selectedOptions[0]?.text || "";
+        fetch(`/admin/check_table_name?name=${encodeURIComponent(name)}&subsystem_name=${encodeURIComponent(subsys)}`)
+          .then(r=>r.json()).then(data=>{
+            let html="";
+            if (data.exists) html=`❗ Table exists. Try: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion(this,${idx})">${data.suggested}</span>`;
+            else if(data.spelling_suggestion&&data.spelling_suggestion!==name) html=`💡 Did you mean: <span class="underline text-blue-600 cursor-pointer" onclick="fillSubSuggestion(this,${idx})">${data.spelling_suggestion}</span>?`;
+            document.getElementById(`sub-table-suggestions-${idx}`).innerHTML=html;
           });
       }
 
-      // Autofill suggestion for main table
-      function fillSuggested(el, index) {
-        const suggestion = el.textContent;
-        const inputField = document.querySelectorAll(
-          'input[name="table_names[]"]'
-        )[index];
-        inputField.value = suggestion;
-        checkTableNameAvailability(inputField, index);
+      function fillSuggested(el, idx) {
+        document.querySelectorAll('input[name="table_names[]"]')[idx].value = el.textContent;
+        checkTableNameAvailability(document.querySelectorAll('input[name="table_names[]"]')[idx], idx);
       }
 
-      // Autofill suggestion for sub table
-      function fillSubSuggestion(el, index) {
-        const suggestion = el.textContent;
-        const inputField = document.querySelectorAll(
-          'input[name="sub_table_names[]"]'
-        )[index];
-        inputField.value = suggestion;
-        checkSubTableName(inputField, index);
+      function fillSubSuggestion(el, idx) {
+        document.querySelectorAll('input[name="sub_table_names[]"]')[idx].value = el.textContent;
+        checkSubTableName(document.querySelectorAll('input[name="sub_table_names[]"]')[idx], idx);
       }
 
-      // Load sub-tables (for feature selection)
-      function loadSubTables(parentTableName) {
-        const subTableSelect = document.getElementById("sub_table_select");
-        subTableSelect.innerHTML =
-          '<option value="">-- Choose a Sub Table --</option>';
-        subTableSelect.disabled = true;
-
-        if (!parentTableName) return;
-
-        fetch(
-          `/admin/sub_tables?parent_table=${encodeURIComponent(
-            parentTableName
-          )}`
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            data.forEach((tableDef) => {
-              const option = document.createElement("option");
-              option.value = tableDef.table_name;
-              option.text = tableDef.table_name
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase());
-              subTableSelect.appendChild(option);
+      function loadSubTables(parent) {
+        const sel = document.getElementById("sub_table_select");
+        sel.innerHTML = '<option value="">-- Choose a Sub Table --</option>'; sel.disabled = true;
+        if (!parent) return;
+        fetch(`/admin/sub_tables?parent_table=${encodeURIComponent(parent)}`)
+          .then(r=>r.json()).then(data=>{
+            data.forEach(td=>{
+              const o = document.createElement("option");
+              o.value = td.table_name; o.text = td.table_name.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+              sel.appendChild(o);
             });
-            if (data.length > 0) {
-              subTableSelect.disabled = false;
-            }
-          })
-          .catch((error) => console.error("Error loading sub-tables:", error));
+            sel.disabled = data.length===0;
+          });
       }
 
-      // Sync final table name before adding feature
+      function addFeatureRow() {
+        const idx = featureIndex++;
+        const container = document.getElementById("features-container");
+        const div = document.createElement("div");
+        div.className = "p-4 bg-gray-50 rounded border";
+        div.innerHTML = `
+          <h3 class="font-medium mb-2">Feature #${idx+1}</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium">Feature Name</label>
+              <input type="text" name="feature_names[]" required class="mt-1 block w-full border-gray-300 rounded" placeholder="e.g. category"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium">Column Type</label>
+              <select name="column_types[]" class="mt-1 block w-full border-gray-300 rounded">
+                <option value="string">String</option>
+                <option value="integer">Integer</option>
+                <option value="boolean">Boolean</option>
+                <option value="decimal">Decimal</option>
+                <option value="text">Text</option>
+                <option value="text[]">Text Array</option>
+                <option value="date">Date</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label class="block text-sm font-medium">Front-end Feature</label>
+              <select name="features[]" onchange="toggleValuesInput(${idx}, this.value)" class="mt-1 block w-full border-gray-300 rounded">
+                <option value="">None</option>
+                <option value="combobox">Combobox</option>
+                <option value="checkboxes">Checkboxes</option>
+              </select>
+            </div>
+            <div id="values-container-${idx}" class="hidden">
+              <label class="block text-sm font-medium">Allowed Values</label>
+              <input type="text" name="combobox_values_arr[]" class="mt-1 block w-full border-gray-300 rounded" placeholder="comma-separated values"/>
+            </div>
+          </div>`;
+        container.appendChild(div);
+      }
+
+      function toggleValuesInput(idx, val) {
+        document.getElementById(`values-container-${idx}`)
+                .classList.toggle("hidden", !(val==="combobox"||val==="checkboxes"));
+      }
+
       function syncFinalTableName() {
-        const parentTableSelect = document.getElementById(
-          "parent_table_select"
-        );
-        const subTableSelect = document.getElementById("sub_table_select");
-        const finalTableInput = document.getElementById("final_table_name");
-        finalTableInput.value = subTableSelect.value || parentTableSelect.value;
-      }
-
-      // Show/hide feature values input
-      function toggleFeatureValues() {
-        const featureSelect = document.getElementById("feature");
-        const container = document.getElementById("feature_values_container");
-        container.classList.toggle(
-          "hidden",
-          !(
-            featureSelect.value === "combobox" ||
-            featureSelect.value === "checkboxes"
-          )
-        );
+        const main = document.getElementById("parent_table_select").value;
+        const sub  = document.getElementById("sub_table_select").value;
+        document.getElementById("final_table_name").value = sub||main;
       }
     </script>
   </body>

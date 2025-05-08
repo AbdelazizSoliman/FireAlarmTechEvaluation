@@ -1,59 +1,61 @@
-<h1>Edit Metadata for <%= @column_name %> in <%= @table_name.humanize %></h1>
+<h1>Edit Metadata for <%= @column_name %> in <%= @table_name %></h1>
 
 <%= form_with model: @metadata,
               url: update_metadata_dynamic_tables_path(
-                     table_name:    @table_name,
-                     column_name:   @column_name
-                   ),
-              method: :patch do |f| %>
+                table_name:   @table_name,
+                column_name:  @column_name,
+                **filter_params
+              ),
+              method: :patch,
+              local: true do |f| %>
 
-  <div>
-    <%= f.label :feature, "Feature" %>
+  <div class="mb-4">
+    <%= f.label :feature, "Feature" %><br>
     <%= f.select :feature,
-          options_for_select(
-            ['text','number','combobox','checkboxes','checkbox'],
-            @metadata.feature
-          ),
-          include_blank: true %>
+                 options_for_select(
+                   ['text', 'number', 'combobox', 'checkboxes', 'checkbox'],
+                   @metadata.feature
+                 ),
+                 include_blank: true,
+                 class: "mt-1 block w-full" %>
   </div>
 
-  <div>
-    <%= f.label :has_cost, "Has Cost" %>
+  <div class="mb-4">
+    <%= f.label :has_cost, "Has Cost" %><br>
     <%= f.check_box :has_cost %>
   </div>
 
-  <!-- NEW: Standard Value & Tolerance -->
-  <div>
-    <%= f.label :standard_value, "Standard Value" %>
-    <%= f.number_field :standard_value, step: :any %>
+  <div class="mb-4">
+    <%= f.label :standard_value, "Standard Value" %><br>
+    <%= f.number_field :standard_value,
+                       step: :any,
+                       class: "mt-1 block w-full" %>
   </div>
 
-  <div>
-    <%= f.label :tolerance, "Tolerance (%)" %>
-    <%= f.number_field :tolerance, step: :any %>
+  <div class="mb-4">
+    <%= f.label :tolerance, "Tolerance (%)" %><br>
+    <%= f.number_field :tolerance,
+                       step: :any,
+                       class: "mt-1 block w-full" %>
   </div>
 
-  <div>
-    <%= f.label "options[values]", "Combobox/Checkbox Values (comma-separated)" %>
+  <div class="mb-4">
+    <%= f.label "options[values]", "Combobox/Checkbox Values (comma-separated)" %><br>
     <%= f.text_field :options,
-          value: @metadata.options&.dig("values")&.join(','),
-          name: 'column_metadata[options][values]' %>
+                     value: @metadata.options&.dig("values")&.join(", "),
+                     name: 'column_metadata[options][values]',
+                     class: "mt-1 block w-full" %>
   </div>
 
-  <!-- (additional metadata fields here if you need…) -->
+  <!-- any other metadata fields you want to expose... -->
 
-  <div class="mt-4">
-    <%= f.submit "Save Metadata", class: "btn btn-primary" %>
-    <%= link_to "Back", admin_path(table_name: @table_name,
-                                   project_filter:       params[:project_filter],
-                                   project_scope_filter: params[:project_scope_filter],
-                                   system_filter:        params[:system_filter],
-                                   subsystem_filter:     params[:subsystem_filter]),
-                    class: "ml-4 text-gray-600 hover:underline" %>
+  <div class="mt-6">
+    <%= f.submit "Save Metadata",
+                 class: "px-4 py-2 bg-indigo-600 text-white rounded" %>
+    <%= link_to "Cancel", admin_path(table_name: @table_name, **filter_params),
+                class: "ml-4 text-gray-600 hover:underline" %>
   </div>
 <% end %>
-<br/>
-
 <%= link_to '← Back to Admin',
     admin_path(
       project_filter:       params[:project_filter],

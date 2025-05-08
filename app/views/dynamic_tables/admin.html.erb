@@ -388,47 +388,72 @@
           });
       }
 
-      function addFeatureRow() {
-        const idx = featureIndex++;
-        const container = document.getElementById("features-container");
-        const div = document.createElement("div");
-        div.className = "p-4 bg-gray-50 rounded border";
-        div.innerHTML = `
-          <h3 class="font-medium mb-2">Feature #${idx+1}</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium">Feature Name</label>
-              <input type="text" name="feature_names[]" required class="mt-1 block w-full border-gray-300 rounded" placeholder="e.g. category"/>
-            </div>
-            <div>
-              <label class="block text-sm font-medium">Column Type</label>
-              <select name="column_types[]" class="mt-1 block w-full border-gray-300 rounded">
-                <option value="string">String</option>
-                <option value="integer">Integer</option>
-                <option value="boolean">Boolean</option>
-                <option value="decimal">Decimal</option>
-                <option value="text">Text</option>
-                <option value="text[]">Text Array</option>
-                <option value="date">Date</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <div>
-              <label class="block text-sm font-medium">Front-end Feature</label>
-              <select name="features[]" onchange="toggleValuesInput(${idx}, this.value)" class="mt-1 block w-full border-gray-300 rounded">
-                <option value="">None</option>
-                <option value="combobox">Combobox</option>
-                <option value="checkboxes">Checkboxes</option>
-              </select>
-            </div>
-            <div id="values-container-${idx}" class="hidden">
-              <label class="block text-sm font-medium">Allowed Values</label>
-              <input type="text" name="combobox_values_arr[]" class="mt-1 block w-full border-gray-300 rounded" placeholder="comma-separated values"/>
-            </div>
-          </div>`;
-        container.appendChild(div);
-      }
+    function addFeatureRow() {
+  const idx = featureIndex++;
+  const container = document.getElementById("features-container");
+  const div = document.createElement("div");
+  div.className = "p-4 bg-gray-50 rounded border";
+  div.innerHTML = `
+    <h3 class="font-medium mb-2">Feature #${idx+1}</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium">Feature Name</label>
+        <input type="text" name="feature_names[]" required
+               class="mt-1 block w-full border-gray-300 rounded"
+               placeholder="e.g. category"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Column Type</label>
+        <select name="column_types[]" class="mt-1 block w-full border-gray-300 rounded">
+          <option value="string">String</option>
+          <option value="integer">Integer</option>
+          <option value="boolean">Boolean</option>
+          <option value="decimal">Decimal</option>
+          <option value="text">Text</option>
+          <option value="text[]">Text Array</option>
+          <option value="date">Date</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- your front-end feature selector as before -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+      <div>
+        <label class="block text-sm font-medium">Front-end Feature</label>
+        <select name="features[]" onchange="toggleValuesInput(${idx}, this.value)"
+                class="mt-1 block w-full border-gray-300 rounded">
+          <option value="">None</option>
+          <option value="combobox">Combobox</option>
+          <option value="checkboxes">Checkboxes</option>
+        </select>
+      </div>
+      <div id="values-container-${idx}" class="hidden">
+        <label class="block text-sm font-medium">Allowed Values</label>
+        <input type="text" name="combobox_values_arr[]"
+               class="mt-1 block w-full border-gray-300 rounded"
+               placeholder="comma-separated values"/>
+      </div>
+    </div>
+
+    <!-- NEW: Standard & Tolerance -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+      <div>
+        <label class="block text-sm font-medium">Standard Value</label>
+        <input type="number" name="standard_values[]" step="any"
+               class="mt-1 block w-full border-gray-300 rounded"
+               placeholder="e.g. 42.0"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Tolerance (%)</label>
+        <input type="number" name="tolerances[]" step="any"
+               class="mt-1 block w-full border-gray-300 rounded"
+               placeholder="e.g. 5.0"/>
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
 
       function toggleValuesInput(idx, val) {
         document.getElementById(`values-container-${idx}`)

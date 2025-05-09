@@ -16,52 +16,58 @@ class EvaluationResultsController < ApplicationController
     # Recompute all attributes for this supplier+subsystem
     # (you might clear out old ones first if you like)
     TableDefinition
-      .where(subsystem_id: subsystem.id)
-      .pluck(:table_name)
-      .each do |table_name|
-        model = table_name.classify.constantize
-        record = model.find_by(supplier_id: supplier.id, subsystem_id: subsystem.id)
-        next unless record
+  .where(subsystem_id: subsystem.id)
+  .pluck(:table_name)
+  .each do |table_name|
+    # build a dynamic AR model:
+    model = Class.new(ActiveRecord::Base) do
+      self.table_name         = table_name
+      self.inheritance_column = :_type_disabled
+    end
 
-        record.attributes.each do |column, submitted|
-          next if %w[id supplier_id subsystem_id created_at updated_at].include?(column)
+    record = model.find_by(supplier_id: supplier.id,
+                           subsystem_id: subsystem.id)
+    next unless record
 
-          meta = ColumnMetadata.find_by(
-            table_name:  table_name,
-            column_name: column
-          )
+    record.attributes.each do |column, submitted|
+      next if %w[id supplier_id subsystem_id created_at updated_at].include?(column)
 
-          next unless meta&.standard_value && meta.tolerance
+      meta = ColumnMetadata.find_by(
+        table_name:  table_name,
+        column_name: column
+      )
+      next unless meta&.standard_value && meta.tolerance
 
-          standard = meta.standard_value
-          tol      = meta.tolerance
-          min_ok   = standard - (standard * tol / 100.0)
+      standard = meta.standard_value.to_f
+      tol      = meta.tolerance.to_f
+      min_ok   = standard * (1 - tol / 100.0)
 
-          degree, status =
-            if submitted.to_f >= standard
-              [1.0, "pass"]
-            elsif submitted.to_f >= min_ok
-              [0.5, "pass"]
-            else
-              [0.0, "fail"]
-            end
-
-          EvaluationResult
-            .find_or_initialize_by(
-              table_name:  table_name,
-              column_name: column,
-              supplier:    supplier,
-              subsystem:   subsystem
-            )
-            .update!(
-              submitted_value: submitted,
-              standard_value:  standard,
-              tolerance:       tol,
-              degree:          degree,
-              status:          status
-            )
+      degree, status =
+        if submitted.to_f >= standard
+          [1.0, "pass"]
+        elsif submitted.to_f >= min_ok
+          [0.5, "pass"]
+        else
+          [0.0, "fail"]
         end
-      end
+
+      EvaluationResult
+        .find_or_initialize_by(
+          table_name:   table_name,
+          column_name:  column,
+          supplier_id:  supplier.id,
+          subsystem_id: subsystem.id
+        )
+        .update!(
+          submitted_value: submitted,
+          standard_value:  standard,
+          tolerance:       tol,
+          degree:          degree,
+          status:          status
+        )
+    end
+  end
+
 
     redirect_to evaluation_results_path(
       supplier_id:   supplier.id,

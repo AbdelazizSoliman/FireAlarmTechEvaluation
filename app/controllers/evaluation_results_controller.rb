@@ -2,9 +2,10 @@ class EvaluationResultsController < ApplicationController
   def index
     @supplier  = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-    @results   = EvaluationResult
-                   .where(supplier: @supplier, subsystem: @subsystem)
-                   .order(:table_name, :column_name)
+    @results    = EvaluationResult
+    .where(supplier_id:  @supplier.id,
+           subsystem_id: @subsystem.id)
+    .order(:table_name, :column_name)
   end
 
   # POST /evaluation_results/evaluate

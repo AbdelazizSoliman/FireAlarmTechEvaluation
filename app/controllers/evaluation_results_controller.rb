@@ -18,53 +18,34 @@ class EvaluationResultsController < ApplicationController
     TableDefinition
   .where(subsystem_id: subsystem.id)
   .pluck(:table_name)
-  .each do |table_name|
-    # build a dynamic AR model:
-    model = Class.new(ActiveRecord::Base) do
-      self.table_name         = table_name
-      self.inheritance_column = :_type_disabled
-    end
-
-    record = model.find_by(supplier_id: supplier.id,
-                           subsystem_id: subsystem.id)
+  each do |table_name|
+    model  = Class.new(ActiveRecord::Base) { … }
+    record = model.find_by(…)
     next unless record
-
+  
     record.attributes.each do |column, submitted|
-      next if %w[id supplier_id subsystem_id created_at updated_at].include?(column)
-
-      meta = ColumnMetadata.find_by(
-        table_name:  table_name,
-        column_name: column
-      )
+      …
+      meta = ColumnMetadata.find_by(…)
       next unless meta&.standard_value && meta.tolerance
-
-      standard = meta.standard_value.to_f
-      tol      = meta.tolerance.to_f
-      min_ok   = standard * (1 - tol / 100.0)
-
-      degree, status =
-        if submitted.to_f >= standard
-          [1.0, "pass"]
-        elsif submitted.to_f >= min_ok
-          [0.5, "pass"]
-        else
-          [0.0, "fail"]
-        end
-
-      EvaluationResult
-        .find_or_initialize_by(
-          table_name:   table_name,
-          column_name:  column,
-          supplier_id:  supplier.id,
-          subsystem_id: subsystem.id
-        )
-        .update!(
-          submitted_value: submitted,
-          standard_value:  standard,
-          tolerance:       tol,
-          degree:          degree,
-          status:          status
-        )
+  
+      degree, status = … # your logic
+  
+      # ⚡️ Associate the metadata here:
+      er = EvaluationResult.find_or_initialize_by(
+        supplier_id:          supplier.id,
+        subsystem_id:         subsystem.id,
+        table_name:           table_name,
+        column_name:          column,
+        column_metadata_id:   meta.id
+      )
+  
+      er.update!(
+        submitted_value: submitted,
+        standard_value:  standard,
+        tolerance:       tol,
+        degree:          degree,
+        status:          status
+      )
     end
   end
 

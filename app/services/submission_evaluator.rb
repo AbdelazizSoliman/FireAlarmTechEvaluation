@@ -30,9 +30,9 @@ class SubmissionEvaluator
     return unless row
 
     ColumnMetadata
-      .where(table_name: table_name)
-      .where.not(standard_value: nil)
-      .find_each do |meta|
+    .where(table_name: table_name)
+    .where.not(standard_value: nil)
+    .find_each do |meta|
 
       subm = row.send(meta.column_name)&.to_f
       std  = meta.standard_value.to_f
@@ -49,15 +49,16 @@ class SubmissionEvaluator
       end
 
       EvaluationResult.create!(
-        supplier:        @supplier,
-        subsystem:       @subsystem,
-        table_name:      table_name,
-        column_name:     meta.column_name,
-        submitted_value: subm,
-        standard_value:  std,
-        tolerance:       tol,
-        degree:          degree,
-        status:          status
+        supplier_id:        @supplier.id,
+        subsystem_id:       @subsystem.id,
+        table_name:         table_name,
+        column_name:        meta.column_name,
+        column_metadata_id: meta.id,        # ← here
+        submitted_value:    subm,
+        standard_value:     std,
+        tolerance:          tol,
+        degree:             degree,
+        status:             status
       )
     end
   end

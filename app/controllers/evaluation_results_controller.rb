@@ -89,16 +89,19 @@ class EvaluationResultsController < ApplicationController
                    .order(:table_name, :column_name)
 
     package = Axlsx::Package.new
-    package.workbook.add_worksheet(
-      name: "Eval #{@supplier.supplier_name} / #{@subsystem.name}"
-    ) do |sheet|
+    raw_name = "Eval #{@supplier.supplier_name} - #{@subsystem.name}"
+    safe_name = raw_name
+                  .gsub(/[\\\/\?\*\[\]]/, '-')   # replace invalid chars with hyphens
+                  .slice(0, 31)                  # Excel limits sheet names to 31 characters
+
+    package.workbook.add_worksheet(name: safe_name) do |sheet|
       sheet.add_row [
-        'Attribute',
-        'Submitted Value',
-        'Standard Value',
-        'Tolerance (%)',
-        'Degree',
-        'Status'
+        "Attribute",
+        "Submitted Value",
+        "Standard Value",
+        "Tolerance (%)",
+        "Degree",
+        "Status"
       ]
       @results.each do |r|
         sheet.add_row [
@@ -111,7 +114,6 @@ class EvaluationResultsController < ApplicationController
         ]
       end
     end
-
     tmp = Tempfile.new(['evaluation', '.xlsx'])
     package.serialize(tmp.path)
 

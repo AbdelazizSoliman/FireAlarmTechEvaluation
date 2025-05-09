@@ -1,0 +1,46 @@
+<!-- app/views/evaluation_results/index.html.erb -->
+<h1>
+  Evaluation for
+  <%= @supplier.supplier_name %> /
+  <%= @subsystem.name %>
+</h1>
+
+<%= button_to "Re-Evaluate Now",
+              evaluate_evaluation_results_path(
+                supplier_id:  @supplier,
+                subsystem_id: @subsystem
+              ),
+              method: :post,
+              class: "btn btn-primary" %>
+
+<%= link_to "Download Excel",
+            download_evaluation_results_path(
+              supplier_id:  @supplier,
+              subsystem_id: @subsystem
+            ),
+            class: "btn btn-secondary ml-2" %>
+
+<table class="table mt-4">
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Submitted</th>
+      <th>Standard</th>
+      <th>Tolerance (%)</th>
+      <th>Degree</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @results.each do |r| %>
+      <tr>
+        <td><%= r.column_name.humanize %></td>
+        <td><%= r.submitted_value %></td>
+        <td><%= r.standard_value %></td>
+        <td><%= r.tolerance %></td>
+        <td><%= r.degree %></td>
+        <td><%= r.status.humanize %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

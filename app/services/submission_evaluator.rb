@@ -1,59 +1,64 @@
 # app/services/submission_evaluator.rb
 class SubmissionEvaluator
   def initialize(supplier:, subsystem:)
-    @supplier   = supplier
-    @subsystem  = subsystem
-    @criteria   = ColumnMetadata
-                    .where(table_name: TableDefinition.where(subsystem_id: subsystem.id).pluck(:table_name))
-                    .index_by(&:id)
+    @supplier  = supplier
+    @subsystem = subsystem
   end
 
-  # Returns a hash of { column_metadata_id => { degree, status } }
-  def run
-    results = {}
+  # wipes old results for this pair, then re‐evaluates
+  def run!
+    EvaluationResult.where(supplier: @supplier, subsystem: @subsystem).delete_all
 
-    @criteria.each do |col_meta_id, crit|
-      raw = fetch_supplier_value(crit)
-      next if raw.nil?
-
-      score = evaluate_numeric_or_choices(raw, crit)
-      status = score >= 1.0 ? "pass" : "fail"
-
-      # Persist into evaluation_results
-      er = EvaluationResult.find_or_initialize_by(
-        supplier:        @supplier,
-        column_metadata: crit
-      )
-      er.degree = score
-      er.status = status
-      er.save!
-
-      results[col_meta_id] = { degree: score, status: status }
-    end
-
-    results
+    TableDefinition
+      .where(subsystem: @subsystem)
+      .pluck(:table_name)
+      .each { |tbl| evaluate_table(tbl) }
   end
 
   private
 
-  def fetch_supplier_value(crit)
-    # spin up the AR model for crit.table_name and get the column crit.column_name
+  def evaluate_table(table_name)
     model = Class.new(ActiveRecord::Base) do
-      self.table_name        = crit.table_name
+      self.table_name         = table_name
       self.inheritance_column = :_type_disabled
     end
-    rec = model.find_by(supplier_id: @supplier.id, subsystem_id: @subsystem.id)
-    rec&.public_send(crit.column_name)
-  end
 
-  def evaluate_numeric_or_choices(raw, crit)
-    std   = crit.standard_value.to_f
-    tol   = crit.tolerance.to_f / 100.0
-    min   = std * (1 - tol)
-    max   = std * (1 + tol)
-    val   = raw.to_f
+    row = model.find_by(
+      supplier_id:  @supplier.id,
+      subsystem_id: @subsystem.id
+    )
+    return unless row
 
-    # 1.0 if within [min,max], otherwise 0.0
-    (val >= min && val <= max) ? 1.0 : 0.0
+    ColumnMetadata
+      .where(table_name: table_name)
+      .where.not(standard_value: nil)
+      .find_each do |meta|
+
+      subm = row.send(meta.column_name)&.to_f
+      std  = meta.standard_value.to_f
+      tol  = meta.tolerance.to_f
+
+      min_ok = std * (1 - tol / 100.0)
+
+      if subm >= std
+        degree = 1.0; status = "pass"
+      elsif subm >= min_ok
+        degree = 0.5; status = "pass_within_tolerance"
+      else
+        degree = 0.0; status = "fail"
+      end
+
+      EvaluationResult.create!(
+        supplier:        @supplier,
+        subsystem:       @subsystem,
+        table_name:      table_name,
+        column_name:     meta.column_name,
+        submitted_value: subm,
+        standard_value:  std,
+        tolerance:       tol,
+        degree:          degree,
+        status:          status
+      )
+    end
   end
 end

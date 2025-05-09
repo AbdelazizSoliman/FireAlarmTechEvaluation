@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_05_08_095232) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_09_190457) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -267,11 +267,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_08_095232) do
   create_table "evaluation_results", force: :cascade do |t|
     t.string "table_name", null: false
     t.string "column_name", null: false
-    t.decimal "score", precision: 12, scale: 4, null: false
     t.bigint "supplier_id", null: false
     t.bigint "subsystem_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "submitted_value", precision: 12, scale: 4
+    t.decimal "standard_value", precision: 12, scale: 4
+    t.decimal "tolerance", precision: 5, scale: 2
+    t.decimal "degree", precision: 3, scale: 1
+    t.string "status"
     t.index ["subsystem_id"], name: "index_evaluation_results_on_subsystem_id"
     t.index ["supplier_id"], name: "index_evaluation_results_on_supplier_id"
   end

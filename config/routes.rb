@@ -129,6 +129,13 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :evaluation_results, only: [:index] do
+    collection do
+      post :evaluate     # kicks off the service
+      get  :download     # streams Excel
+    end
+  end
+
   resources :project_scopes, only: [:index, :show, :new, :create]
   resources :systems,        only: [:index, :show, :new, :create]
   resources :subsystems,     only: [:index, :show, :new, :create]

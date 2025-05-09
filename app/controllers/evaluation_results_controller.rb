@@ -18,7 +18,7 @@ class EvaluationResultsController < ApplicationController
     TableDefinition
   .where(subsystem_id: subsystem.id)
   .pluck(:table_name)
-  each do |table_name|
+  .each do |table_name|
     model  = Class.new(ActiveRecord::Base) { … }
     record = model.find_by(…)
     next unless record

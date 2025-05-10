@@ -64,16 +64,24 @@
           </div>
 
           <!-- Requirement (unchanged) -->
-          <div>
-            <%= label_tag "column_metadata[options][combo_standards][#{val}][requirement]", "Requirement" %>
-            <%= select_tag "column_metadata[options][combo_standards][#{val}][requirement]",
-                  options_for_select(
-                    [["Not Required","not_required"], ["Required","required"]],
-                    std["requirement"]
-                  ),
-                  include_blank: false,
-                  class: "mt-1 block w-full border-gray-300 rounded" %>
-          </div>
+         <div>
+  <%= label_tag "column_metadata[options][combo_standards][#{val}][requirement]", "Requirement" %>
+  <%= select_tag "column_metadata[options][combo_standards][#{val}][requirement]",
+        options_for_select(
+          [
+            ["Not Required/Not Comply",    "not required/not comply"],
+            ["Not Required",               "not required"],
+            ["Above Required",             "above required"],
+            ["Required/Comply",            "required/comply"],
+            ["Above Required/Extra Grade", "above required/extra grade"],
+            ["Above Required/No Need",     "above required/no need"]
+          ],
+          std["requirement"]
+        ),
+        include_blank: false,
+        class: "mt-1 block w-full border-gray-300 rounded" %>
+</div>
+
 
           <!-- Case: updated to use a select with your 4-case options -->
           <div>

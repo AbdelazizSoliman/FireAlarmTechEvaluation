@@ -43,14 +43,56 @@
   </div>
 
   <div class="mb-4">
-    <%= f.label "options[values]", "Combobox/Checkbox Values (comma-separated)" %><br>
+    <%= f.label "options[allowed_values]", "Combobox/Checkbox Values (comma-separated)" %><br>
     <%= f.text_field :options,
-                     value: @metadata.options&.dig("values")&.join(", "),
-                     name: 'column_metadata[options][values]',
+                     value: @metadata.options&.dig("allowed_values")&.join(", "),
+                     name: 'column_metadata[options][allowed_values]',
                      class: "mt-1 block w-full" %>
   </div>
 
   <!-- any other metadata fields you want to expose... -->
+
+<% if @metadata.feature == "combobox" %>
+  <fieldset class="mt-6 p-4 border rounded bg-gray-50">
+    <legend class="font-semibold">Combo-box Standards</legend>
+
+    <% (@metadata.options["allowed_values"] || []).each do |val| %>
+      <% std = (@metadata.options.dig("combo_standards", val) || {}) %>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4 items-end">
+        <div>
+          <label class="block text-sm font-medium">Answer</label>
+          <div class="mt-1"><%= val %></div>
+        </div>
+
+        <div>
+          <%= label_tag "column_metadata[options][combo_standards][#{val}][requirement]", "Requirement" %>
+          <%= select_tag "column_metadata[options][combo_standards][#{val}][requirement]",
+                options_for_select(
+                  [["Not Required","not_required"],["Required","required"]],
+                  std["requirement"]
+                ),
+                include_blank: false,
+                class: "mt-1 block w-full border-gray-300 rounded" %>
+        </div>
+
+        <div>
+          <%= label_tag "column_metadata[options][combo_standards][#{val}][case]", "Case" %>
+          <%= text_field_tag "column_metadata[options][combo_standards][#{val}][case]",
+                std["case"],
+                class: "mt-1 block w-full border-gray-300 rounded" %>
+        </div>
+
+        <div>
+          <%= label_tag "column_metadata[options][combo_standards][#{val}][logic]", "Condition/Logic" %>
+          <%= text_field_tag "column_metadata[options][combo_standards][#{val}][logic]",
+                std["logic"],
+                class: "mt-1 block w-full border-gray-300 rounded" %>
+        </div>
+      </div>
+    <% end %>
+  </fieldset>
+<% end %>
+
 
   <div class="mt-6">
     <%= f.submit "Save Metadata",

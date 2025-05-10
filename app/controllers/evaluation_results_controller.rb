@@ -3,10 +3,11 @@ class EvaluationResultsController < ApplicationController
   def index
     @supplier  = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-    @results   = EvaluationResult
-                   .where(supplier_id:  @supplier.id,
-                          subsystem_id: @subsystem.id)
-                   .order(:table_name, :column_name)
+    @results   =
+      EvaluationResult
+        .where(supplier_id:  @supplier.id,
+               subsystem_id: @subsystem.id)
+        .order(:table_name, :column_name)
   end
 
   # POST /evaluation_results/evaluate
@@ -35,12 +36,53 @@ class EvaluationResultsController < ApplicationController
           # skip the AR bookkeeping columns
           next if %w[id supplier_id subsystem_id created_at updated_at].include?(column)
 
-          # only evaluate columns with standards
+          # only evaluate columns that actually have metadata
           meta = ColumnMetadata.find_by(
             table_name:  table_name,
             column_name: column
           )
-          next unless meta&.standard_value && meta.tolerance
+          next unless meta
+
+          # --- COMBOBOX HANDLING: if this feature is a combobox, do your combo‐standards logic here ---
+          if meta.feature == 'combobox'
+            # pull your combo-standards hash out of the metadata JSON
+            standards = meta.options['combo_standards'] || {}
+          
+            # look up the rules for whatever the supplier actually chose
+            # (submitted could be a string, symbol, integer etc—convert to the right key)
+            key     = submitted.to_s
+            setting = standards[key] || {}
+          
+            requirement = setting['requirement']  # e.g. "required" / "not_required"
+            kase        = setting['case']         # e.g. "Case 01"
+            logic       = setting['logic']        # e.g. "meets…"
+          
+            # now write those into your EvaluationResult row
+            EvaluationResult
+              .find_or_initialize_by(
+                supplier_id:  supplier.id,
+                subsystem_id: subsystem.id,
+                table_name:   table_name,
+                column_name:  column
+              )
+              .update!(
+                submitted_value:    submitted,
+                standard_value:     nil,           # numeric fields don’t apply
+                tolerance:          nil,
+                degree:             nil,
+                status:             requirement,   # or however you want to record it
+                combo_case:         kase,
+                combo_logic:        logic
+              )
+          
+            # skip the numeric logic entirely
+            next
+          end
+          
+
+          # --- NUMERIC HANDLING (existing logic) ---
+          # only evaluate numeric columns with standard_value + tolerance defined
+          next unless meta.standard_value && meta.tolerance
 
           standard = meta.standard_value.to_f
           tol      = meta.tolerance.to_f
@@ -83,18 +125,20 @@ class EvaluationResultsController < ApplicationController
   def download
     @supplier  = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-    @results   = EvaluationResult
-                   .where(supplier_id:  @supplier.id,
-                          subsystem_id: @subsystem.id)
-                   .order(:table_name, :column_name)
+    @results   =
+      EvaluationResult
+        .where(supplier_id:  @supplier.id,
+               subsystem_id: @subsystem.id)
+        .order(:table_name, :column_name)
 
     package = Axlsx::Package.new
-    raw_name = "Eval #{@supplier.supplier_name} - #{@subsystem.name}"
-    safe_name = raw_name
-                  .gsub(/[\\\/\?\*\[\]]/, '-')   # replace invalid chars with hyphens
-                  .slice(0, 31)                  # Excel limits sheet names to 31 characters
+    raw_name  = "Eval #{@supplier.supplier_name} – #{@subsystem.name}"
+    sheet_name =
+      raw_name
+        .gsub(/[\\\/\?\*\[\]]/, '-') # Excel-invalid chars → hyphen
+        .slice(0, 31)                # max 31 chars
 
-    package.workbook.add_worksheet(name: safe_name) do |sheet|
+    package.workbook.add_worksheet(name: sheet_name) do |sheet|
       sheet.add_row [
         "Attribute",
         "Submitted Value",
@@ -114,6 +158,7 @@ class EvaluationResultsController < ApplicationController
         ]
       end
     end
+
     tmp = Tempfile.new(['evaluation', '.xlsx'])
     package.serialize(tmp.path)
 

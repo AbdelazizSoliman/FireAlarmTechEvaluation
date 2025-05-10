@@ -125,6 +125,7 @@ class DynamicTablesController < ApplicationController
     end
   end
 
+
   # GET /admin/ordered_tables
   def ordered_tables
     subsys     = Subsystem.find(params[:subsystem_id])
@@ -340,7 +341,7 @@ class DynamicTablesController < ApplicationController
       :rate_key,
       :amount_key,
       :notes_key,
-      options: [:allowed_values]
+      options: [:allowed_values, combo_standards: {}]
     )
   end
 

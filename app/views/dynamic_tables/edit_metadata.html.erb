@@ -42,7 +42,6 @@
                        class: "mt-1 block w-full" %>
   </div>
 
-
   <div class="mb-4">
     <%= f.label :options, "Combobox/Checkbox Values (comma-separated)" %><br>
     <%= f.text_field :options,
@@ -55,7 +54,8 @@
     <fieldset class="mt-6 p-4 border rounded bg-gray-50">
       <legend class="font-semibold">Combo-box Standards</legend>
 
-      <% (@metadata.options["allowed_values"] || []).each do |val| %>
+      <!-- ← here we wrap in Array(...) so it's always an array even if it's a String -->
+      <% Array(@metadata.options["allowed_values"]).each do |val| %>
         <% std = @metadata.options.dig("combo_standards", val) || {} %>
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4 items-end">
           <div>

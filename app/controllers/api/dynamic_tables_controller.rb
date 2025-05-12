@@ -1,12 +1,7 @@
 # app/controllers/api/dynamic_tables_controller.rb
 module Api
   class DynamicTablesController < ApplicationController
-    # disable CSRF for JSON API
     skip_forgery_protection
-
-    # ---------------------------------
-    # Public endpoints
-    # ---------------------------------
 
     # GET /api/subsystems/:subsystem_id/table_order
     def table_order
@@ -37,13 +32,11 @@ module Api
       subsystem_id = params[:subsystem_id]
       payloads     = params.require(:data).to_unsafe_h
 
-      # load definitions in parent→child order
       table_defs = TableDefinition
                      .where(subsystem_id: subsystem_id)
                      .order(Arel.sql("COALESCE(parent_table,'') ASC, position ASC"))
 
       saved = []
-
       table_defs.each do |td|
         tn = td.table_name
         next unless payloads.key?(tn)
@@ -54,12 +47,10 @@ module Api
           self.inheritance_column = :_type_disabled
         end
 
-        # whitelist only actual columns
         allowed = model.column_names
         safe    = raw.slice(*allowed)
                      .except("id", "created_at", "updated_at", "supplier_id", "subsystem_id")
 
-        # if it's a child table, attach parent_id
         if td.parent_table.present?
           parent = Class.new(ActiveRecord::Base) do
             self.table_name        = td.parent_table
@@ -71,7 +62,6 @@ module Api
           safe["parent_id"] = parent.id if parent
         end
 
-        # upsert by supplier+subsystem
         record = model
                    .where(supplier_id:  supplier.id,
                           subsystem_id: subsystem_id)
@@ -85,7 +75,6 @@ module Api
         saved << { table: tn, record_id: record.id }
       end
 
-      # send a single notification if any records saved
       if saved.any?
         subsystem = ::Subsystem.find(subsystem_id)
         Notification.create!(
@@ -109,32 +98,48 @@ module Api
 
     # GET /api/table_metadata/:table_name?subsystem_id=…
     def table_metadata
-      tn        = params[:table_name]
-      table_def = TableDefinition.find_by!(table_name: tn)
+  tn        = params[:table_name]
+  table_def = TableDefinition.find_by!(table_name: tn)
 
-      meta = ColumnMetadata
-               .where(table_name: tn)
-               .each_with_object({}) do |m, h|
-                 h[m.column_name] = {
-                   feature:   m.feature,
-                   options:   m.options,
-                   row:       m.row,
-                   col:       m.col,
-                   label_row: m.label_row,
-                   label_col: m.label_col
-                 }
-               end
+  meta = ColumnMetadata
+           .where(table_name: tn)
+           .each_with_object({}) do |m,h|
+             opts     = m.options || {}
+             raw_vals = opts["allowed_values"]
+             # ensure allowed_values is always an Array
+             allowed = if raw_vals.is_a?(Array)
+                         raw_vals
+                       elsif raw_vals.is_a?(String)
+                         raw_vals.split(",").map(&:strip)
+                       else
+                         []
+                       end
 
-      render json: {
-        columns:  meta.keys,
-        metadata: meta,
-        static:   table_def.static?
-      }
-    end
+             # combo_standards should also default to a hash
+             combo = opts["combo_standards"].is_a?(Hash) ? opts["combo_standards"] : {}
+
+             h[m.column_name] = {
+               feature:   m.feature,
+               options:   opts.merge(
+                            "allowed_values"   => allowed,
+                            "combo_standards"  => combo
+                          ),
+               row:       m.row,
+               col:       m.col,
+               label_row: m.label_row,
+               label_col: m.label_col
+             }
+           end
+
+  render json: {
+    columns:  meta.keys,
+    metadata: meta,
+    static:   table_def.static?
+  }
+end
 
     private
 
-    # Decode JWT & load top-level Supplier model
     def authenticate_supplier!
       token = request.headers['Authorization']&.split(' ')&.last
       return unless token
@@ -145,7 +150,6 @@ module Api
         true,
         algorithms: ['HS256']
       )
-
       ::Supplier.find_by(id: payload['sub'])
     rescue JWT::DecodeError
       nil

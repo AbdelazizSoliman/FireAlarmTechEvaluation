@@ -12,7 +12,7 @@
               method: :patch,
               local: true do |f| %>
 
-  <div class="mb-4">
+   <div class="mb-4">
     <%= f.label :feature, "Feature" %><br>
     <%= f.select :feature,
                  options_for_select(
@@ -42,10 +42,11 @@
                        class: "mt-1 block w-full" %>
   </div>
 
+
   <div class="mb-4">
     <%= f.label :options, "Combobox/Checkbox Values (comma-separated)" %><br>
     <%= f.text_field :options,
-                     value: @metadata.options&.dig("allowed_values")&.join(", "),
+                     value: Array(@metadata.options&.dig("allowed_values")).join(", "),
                      name: 'column_metadata[options][allowed_values]',
                      class: "mt-1 block w-full" %>
   </div>
@@ -57,7 +58,6 @@
       <% (@metadata.options["allowed_values"] || []).each do |val| %>
         <% std = @metadata.options.dig("combo_standards", val) || {} %>
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4 items-end">
-          
           <div>
             <label class="block text-sm font-medium">Answer</label>
             <div class="mt-1"><%= val %></div>
@@ -114,7 +114,6 @@
                   include_blank: true,
                   class: "mt-1 block w-full border-gray-300 rounded" %>
           </div>
-
         </div>
       <% end %>
     </fieldset>

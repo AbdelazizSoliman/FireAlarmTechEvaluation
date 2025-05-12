@@ -51,73 +51,77 @@
   </div>
 
   <% if @metadata.feature == "combobox" %>
-    <fieldset class="mt-6 p-4 border rounded bg-gray-50">
-      <legend class="font-semibold">Combo-box Standards</legend>
+  <fieldset class="mt-6 p-4 border rounded bg-gray-50">
+    <legend class="font-semibold">Combo-box Standards</legend>
 
-      <!-- ← here we wrap in Array(...) so it's always an array even if it's a String -->
-      <% Array(@metadata.options["allowed_values"]).each do |val| %>
-        <% std = @metadata.options.dig("combo_standards", val) || {} %>
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4 items-end">
-          <div>
-            <label class="block text-sm font-medium">Answer</label>
-            <div class="mt-1"><%= val %></div>
-          </div>
+    <% 
+      raw_vals = @metadata.options["allowed_values"]
+      allowed_values = if raw_vals.is_a?(String)
+                         raw_vals.split(',').map(&:strip)
+                       else
+                         Array(raw_vals)
+                       end
+    %>
 
-          <!-- Requirement -->
-          <div>
-            <%= label_tag "column_metadata[options][combo_standards][#{val}][requirement]", "Requirement" %><br>
-            <%= select_tag "column_metadata[options][combo_standards][#{val}][requirement]",
-                  options_for_select(
-                    [
-                      ["Not Required/Not Comply",    "not required/not comply"],
-                      ["Not Required",               "not required"],
-                      ["Above Required",             "above required"],
-                      ["Required/Comply",            "required/comply"],
-                      ["Above Required/Extra Grade", "above required/extra grade"],
-                      ["Above Required/No Need",     "above required/no need"]
-                    ],
-                    std["requirement"]
-                  ),
-                  include_blank: false,
-                  class: "mt-1 block w-full border-gray-300 rounded" %>
-          </div>
-
-          <!-- Case -->
-          <div>
-            <%= label_tag "column_metadata[options][combo_standards][#{val}][case]", "Case" %><br>
-            <%= select_tag "column_metadata[options][combo_standards][#{val}][case]",
-                  options_for_select(
-                    [
-                      ["Case 01","Case 01"],
-                      ["Case 02","Case 02"],
-                      ["Case 03","Case 03"],
-                      ["Case 04","Case 04"]
-                    ],
-                    std["case"]
-                  ),
-                  include_blank: true,
-                  class: "mt-1 block w-full border-gray-300 rounded" %>
-          </div>
-
-          <!-- Condition/Logic -->
-          <div>
-            <%= label_tag "column_metadata[options][combo_standards][#{val}][logic]", "Condition/Logic" %><br>
-            <%= select_tag "column_metadata[options][combo_standards][#{val}][logic]",
-                  options_for_select(
-                    [
-                      ["isn't meet the project requirements","isn't meet the project requirements"],
-                      ["meets the project requirements","meets the project requirements"],
-                      ["higher than the project requirements","higher than the project requirements"]
-                    ],
-                    std["logic"]
-                  ),
-                  include_blank: true,
-                  class: "mt-1 block w-full border-gray-300 rounded" %>
-          </div>
+    <% allowed_values.each do |val| %>
+      <% std = @metadata.options.dig("combo_standards", val) || {} %>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4 items-end">
+        <div>
+          <label class="block text-sm font-medium">Answer</label>
+          <div class="mt-1"><%= val %></div>
         </div>
-      <% end %>
-    </fieldset>
-  <% end %>
+
+        <!-- Requirement -->
+        <div>
+          <%= label_tag "column_metadata[options][combo_standards][#{val}][requirement]", "Requirement" %><br>
+          <%= select_tag "column_metadata[options][combo_standards][#{val}][requirement]",
+                options_for_select(
+                  [
+                    ["Not Required/Not Comply",    "not required/not comply"],
+                    ["Not Required",               "not required"],
+                    ["Above Required",             "above required"],
+                    ["Required/Comply",            "required/comply"],
+                    ["Above Required/Extra Grade", "above required/extra grade"],
+                    ["Above Required/No Need",     "above required/no need"]
+                  ],
+                  std["requirement"]
+                ),
+                include_blank: false,
+                class: "mt-1 block w-full border-gray-300 rounded" %>
+        </div>
+
+        <!-- Case -->
+        <div>
+          <%= label_tag "column_metadata[options][combo_standards][#{val}][case]", "Case" %><br>
+          <%= select_tag "column_metadata[options][combo_standards][#{val}][case]",
+                options_for_select(
+                  [["Case 01","Case 01"],["Case 02","Case 02"],["Case 03","Case 03"],["Case 04","Case 04"]],
+                  std["case"]
+                ),
+                include_blank: true,
+                class: "mt-1 block w-full border-gray-300 rounded" %>
+        </div>
+
+        <!-- Condition/Logic -->
+        <div>
+          <%= label_tag "column_metadata[options][combo_standards][#{val}][logic]", "Condition/Logic" %><br>
+          <%= select_tag "column_metadata[options][combo_standards][#{val}][logic]",
+                options_for_select(
+                  [
+                    ["isn't meet the project requirements","isn't meet the project requirements"],
+                    ["meets the project requirements","meets the project requirements"],
+                    ["higher than the project requirements","higher than the project requirements"]
+                  ],
+                  std["logic"]
+                ),
+                include_blank: true,
+                class: "mt-1 block w-full border-gray-300 rounded" %>
+        </div>
+      </div>
+    <% end %>
+  </fieldset>
+<% end %>
+
 
   <div class="mt-6">
     <%= f.submit "Save Metadata",

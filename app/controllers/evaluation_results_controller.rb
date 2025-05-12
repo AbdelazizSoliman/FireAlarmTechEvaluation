@@ -42,7 +42,7 @@ def evaluate
         logic       = setting['logic']        # e.g. "meets the project requirements"
 
         # decide pass/fail (you can refine this to your exact business rules)
-        status = if requirement.to_s.downcase.include?('required')
+        status = if requirement.to_s.downcase.include?('no')
                    'pass'
                  else
                    'fail'

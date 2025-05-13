@@ -2,7 +2,8 @@
   <% @grid.each do |row| %>
     <tr>
       <% row.each do |cell| %>
-        <% ref = "#{('A'.ord + cell[:col] - 1).chr}#{cell[:row]}" %>
+        <%# Compute the A1 reference like "B3" %>
+        <% ref = ("A".ord + cell[:col] - 1).chr + cell[:row].to_s %>
         <td data-ref="<%= ref %>"
             class="border px-2 py-1 cursor-pointer select-none">
           <%= cell[:value] %>

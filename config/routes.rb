@@ -1,10 +1,11 @@
 # config/routes.rb
 Rails.application.routes.draw do
-  namespace :admin do
-    resources :submissions, only: [:index, :show]
-    get  'upload_excel',        to: 'dynamic_tables#upload_excel'
+
+  get  'upload_excel',        to: 'dynamic_tables#upload_excel'
     post 'preview_excel',       to: 'dynamic_tables#preview_excel'
     post 'import_excel_tables', to: 'dynamic_tables#import_excel_tables'
+  namespace :admin do
+    resources :submissions, only: [:index, :show]
   end
 
   # ✅ API namespace for suppliers

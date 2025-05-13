@@ -4,57 +4,54 @@
   <meta charset="UTF-8" />
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-
   <title>Import Tables from Excel</title>
-
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <!-- you can still include your main JS bundle if you need it for other parts of the UI -->
   <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans antialiased">
+<body>
   <div class="max-w-3xl mx-auto py-12 px-4">
     <h1 class="text-2xl font-bold mb-6">Import Tables from Excel</h1>
-
     <form id="excel-upload-form" enctype="multipart/form-data" class="space-y-4">
       <div>
         <label class="block font-medium">Select an Excel file:</label>
-        <input type="file"
-               name="excel_file"
-               accept=".xlsx"
-               required
+        <input type="file" name="excel_file" accept=".xlsx" required
                class="mt-1 block w-full border-gray-300 rounded" />
         <%= hidden_field_tag :subsystem_id, @subsystem_id %>
       </div>
-
       <button type="button"
               onclick="uploadExcel()"
               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
         Upload & Preview
       </button>
     </form>
-
     <div id="excel-preview" class="mt-8"></div>
   </div>
 
   <script>
-    // helper to grab the CSRF token from the meta tag
+    // Read the CSRF token out of the meta tags
     function csrfToken() {
-      return document.querySelector("meta[name='csrf-token']").getAttribute("content");
+      return document
+        .querySelector("meta[name='csrf-token']")
+        .getAttribute("content");
     }
 
     function uploadExcel() {
       const form = document.getElementById('excel-upload-form');
       const data = new FormData(form);
 
-      fetch('/admin/preview_excel', {
+      // **Always use window.fetch** to bypass any overwritten fetch in your bundle
+      window.fetch('/admin/preview_excel', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken() },
         body: data
       })
-      .then(r => r.text())
+      .then(res => res.text())
       .then(html => {
         document.getElementById('excel-preview').innerHTML = html;
         attachCellClickHandlers();
-      });
+      })
+      .catch(err => console.error("Preview failed:", err));
     }
 
     function attachCellClickHandlers() {
@@ -88,7 +85,7 @@
         subsystem_id:   document.querySelector('input[name="subsystem_id"]').value
       };
 
-      fetch('/admin/import_excel_tables', {
+      window.fetch('/admin/import_excel_tables', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +95,8 @@
       })
       .then(() => {
         window.location = `/admin?subsystem_filter=${payload.subsystem_id}`;
-      });
+      })
+      .catch(err => console.error("Import failed:", err));
     }
   </script>
 </body>

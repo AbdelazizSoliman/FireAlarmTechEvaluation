@@ -6,13 +6,13 @@
   <%= csp_meta_tag %>
 
   <title>Import Tables from Excel</title>
-  <!-- load only your Rails styles, not the React/Vite bundle -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans antialiased">
   <div class="max-w-3xl mx-auto py-12 px-4">
     <h1 class="text-2xl font-bold mb-6">Import Tables from Excel</h1>
 
+    <!-- File‐picker form -->
     <form id="excel-upload-form" enctype="multipart/form-data" class="space-y-4">
       <div>
         <label class="block font-medium">Select an Excel file:</label>
@@ -21,6 +21,7 @@
                accept=".xlsx"
                required
                class="mt-1 block w-full border-gray-300 rounded" />
+        <!-- carry through which subsystem we're importing into -->
         <%= hidden_field_tag :subsystem_id, @subsystem_id %>
       </div>
 
@@ -31,22 +32,23 @@
       </button>
     </form>
 
+    <!-- preview grid will be injected here -->
     <div id="excel-preview" class="mt-8"></div>
   </div>
 
   <script>
-    // Pull CSRF token from meta tag
+    // Grab CSRF token from meta-tag
     function csrfToken() {
       return document
         .querySelector("meta[name='csrf-token']")
         .getAttribute("content");
     }
 
+    // 1) Upload file and render preview partial
     function uploadExcel() {
       const form = document.getElementById('excel-upload-form');
       const data = new FormData(form);
 
-      // This will now use the browser’s real fetch
       fetch('/admin/preview_excel', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken() },
@@ -60,15 +62,17 @@
       .catch(err => console.error("Preview failed:", err));
     }
 
+    // 2) Make each <td> clickable to toggle selection
     function attachCellClickHandlers() {
       document.querySelectorAll('#excel-preview td').forEach(td => {
         td.addEventListener('click', () => {
-          td.classList.toggle('bg-yellow-200');
+          td.classList.toggle('bg-yellow-200');  // highlight
           updateSelectedCellsInput();
         });
       });
     }
 
+    // 3) Keep a hidden input updated with all selected A1 refs
     function updateSelectedCellsInput() {
       const refs = Array.from(
         document.querySelectorAll('#excel-preview td.bg-yellow-200')
@@ -85,22 +89,24 @@
       hidden.value = refs.join(',');
     }
 
+    // 4) Re‐post the file + selected refs to create tables
     function importTables() {
-      const payload = {
-        selected_cells: document.getElementById('selected_cells_input').value,
-        subsystem_id:   document.querySelector('input[name="subsystem_id"]').value
-      };
+      const form = document.getElementById('excel-upload-form');
+      const data = new FormData(form);
+
+      // attach the selected cell references
+      data.set('selected_cells',
+        document.getElementById('selected_cells_input').value
+      );
 
       fetch('/admin/import_excel_tables', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken()
-        },
-        body: JSON.stringify(payload)
+        headers: { 'X-CSRF-Token': csrfToken() },
+        body: data
       })
       .then(() => {
-        window.location = `/admin?subsystem_filter=${payload.subsystem_id}`;
+        const sid = form.querySelector('input[name="subsystem_id"]').value;
+        window.location = `/admin?subsystem_filter=${sid}`;
       })
       .catch(err => console.error("Import failed:", err));
     }

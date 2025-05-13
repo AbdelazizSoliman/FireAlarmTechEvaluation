@@ -1,5 +1,7 @@
 # app/controllers/dynamic_tables_controller.rb
 class DynamicTablesController < ApplicationController
+
+  require 'roo'
   require 'did_you_mean'
   require_dependency 'dynamic_table_manager'
   helper_method :filter_params
@@ -53,6 +55,39 @@ class DynamicTablesController < ApplicationController
     end
   end
 
+  def upload_excel
+    @subsystem_id = params[:subsystem_filter]
+  end
+
+  # POST /admin/preview_excel
+  def preview_excel
+    f           = params[:excel_file]
+    spreadsheet = Roo::Spreadsheet.open(f.path)
+    sheet       = spreadsheet.sheet(0)
+
+    @grid = sheet.each_with_index.map do |row, i|
+      row.each_with_index.map { |cell, j| { value: cell.to_s, row: i+1, col: j+1 } }
+    end
+
+    render partial: 'excel_preview'
+  end
+
+  # POST /admin/import_excel_tables
+  def import_excel_tables
+    refs        = params[:selected_cells].to_s.split(',')
+    f           = params[:excel_file]
+    spreadsheet = Roo::Spreadsheet.open(f.path)
+    sheet       = spreadsheet.sheet(0)
+
+    table_names = refs.map { |ref| sheet.cell(ref) }
+
+    # inject into your existing create_multiple_tables
+    params[:table_names]  = table_names
+    params[:subsystem_id] = params[:subsystem_id]
+    create_multiple_tables
+  end
+
+  
   # POST /admin/move_table
   def move_table
     p = params.permit(:direction, :id, :table_name, :project_filter,

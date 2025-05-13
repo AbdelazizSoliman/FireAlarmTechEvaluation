@@ -2,6 +2,9 @@
 Rails.application.routes.draw do
   namespace :admin do
     resources :submissions, only: [:index, :show]
+    get  'upload_excel',        to: 'dynamic_tables#upload_excel'
+    post 'preview_excel',       to: 'dynamic_tables#preview_excel'
+    post 'import_excel_tables', to: 'dynamic_tables#import_excel_tables'
   end
 
   # ✅ API namespace for suppliers
@@ -154,6 +157,7 @@ Rails.application.routes.draw do
   end
 
   # Admin panel routes
+  
   get   '/admin',                           to: 'dynamic_tables#admin'
   post  '/admin/add_column',                to: 'dynamic_tables#add_column'
   post  '/admin/create_table',              to: 'dynamic_tables#create_table'

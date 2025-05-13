@@ -1,0 +1,21 @@
+<table class="table-auto border-collapse border w-full text-center">
+  <% @grid.each do |row| %>
+    <tr>
+      <% row.each do |cell| %>
+        <% ref = "#{('A'.ord + cell[:col] - 1).chr}#{cell[:row]}" %>
+        <td data-ref="<%= ref %>"
+            class="border px-2 py-1 cursor-pointer select-none">
+          <%= cell[:value] %>
+        </td>
+      <% end %>
+    </tr>
+  <% end %>
+</table>
+
+<div class="mt-4 text-right">
+  <button type="button"
+          onclick="importTables()"
+          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+    Create Tables From Selection
+  </button>
+</div>

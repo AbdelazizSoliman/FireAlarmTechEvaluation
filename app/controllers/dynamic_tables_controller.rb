@@ -79,15 +79,20 @@ class DynamicTablesController < ApplicationController
     spreadsheet = Roo::Spreadsheet.open(f.path)
     sheet       = spreadsheet.sheet(0)
 
-    table_names = refs.map { |ref| sheet.cell(ref) }
+    # Convert each "A1" → [row, col] and extract the cell value
+    table_names = refs.map do |ref|
+      row, col = parse_a1_ref(ref)
+      sheet.cell(row, col)
+    end
 
-    # inject into your existing create_multiple_tables
+    # Now hand it off to your existing create_multiple_tables logic:
     params[:table_names]  = table_names
     params[:subsystem_id] = params[:subsystem_id]
     create_multiple_tables
   end
 
-  
+
+
   # POST /admin/move_table
   def move_table
     p = params.permit(:direction, :id, :table_name, :project_filter,
@@ -421,5 +426,15 @@ class DynamicTablesController < ApplicationController
         .parameterize(separator: '_')
         .gsub(/__+/, '_')
         .gsub(/^_+|_+$/, '')
+  end
+
+  def parse_a1_ref(ref)
+    col_letters = ref[/[A-Z]+/]
+    row_number  = ref[/\d+/].to_i
+    # Convert letters to number: A→1, B→2, … Z→26, AA→27, etc.
+    col_number = col_letters.chars.reduce(0) do |sum, ch|
+      sum * 26 + (ch.ord - 'A'.ord + 1)
+    end
+    [row_number, col_number]
   end
 end

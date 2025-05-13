@@ -1,9 +1,9 @@
 # config/routes.rb
 Rails.application.routes.draw do
 
-  get  'upload_excel',        to: 'dynamic_tables#upload_excel'
-    post 'preview_excel',       to: 'dynamic_tables#preview_excel'
-    post 'import_excel_tables', to: 'dynamic_tables#import_excel_tables'
+  get  '/admin/upload_excel',        to: 'dynamic_tables#upload_excel',        as: :admin_upload_excel
+  post '/admin/preview_excel',       to: 'dynamic_tables#preview_excel',       as: :admin_preview_excel
+  post '/admin/import_excel_tables', to: 'dynamic_tables#import_excel_tables', as: :admin_import_excel_tables
   namespace :admin do
     resources :submissions, only: [:index, :show]
   end

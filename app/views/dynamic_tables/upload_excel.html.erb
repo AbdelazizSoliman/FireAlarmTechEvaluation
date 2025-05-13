@@ -1,10 +1,14 @@
-<!-- app/views/dynamic_tables/upload_excel.html.erb -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
   <title>Import Tables from Excel</title>
+
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans antialiased">
   <div class="max-w-3xl mx-auto py-12 px-4">
@@ -18,7 +22,6 @@
                accept=".xlsx"
                required
                class="mt-1 block w-full border-gray-300 rounded" />
-        <!-- carry the subsystem through -->
         <%= hidden_field_tag :subsystem_id, @subsystem_id %>
       </div>
 
@@ -33,13 +36,18 @@
   </div>
 
   <script>
+    // helper to grab the CSRF token from the meta tag
+    function csrfToken() {
+      return document.querySelector("meta[name='csrf-token']").getAttribute("content");
+    }
+
     function uploadExcel() {
       const form = document.getElementById('excel-upload-form');
       const data = new FormData(form);
 
       fetch('/admin/preview_excel', {
         method: 'POST',
-        headers: { 'X-CSRF-Token': Rails.csrfToken() },
+        headers: { 'X-CSRF-Token': csrfToken() },
         body: data
       })
       .then(r => r.text())
@@ -84,12 +92,11 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': Rails.csrfToken()
+          'X-CSRF-Token': csrfToken()
         },
         body: JSON.stringify(payload)
       })
       .then(() => {
-        // return to your admin screen, preserving filters
         window.location = `/admin?subsystem_filter=${payload.subsystem_id}`;
       });
     }

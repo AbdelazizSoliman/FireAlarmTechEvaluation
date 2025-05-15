@@ -77,54 +77,59 @@ class DynamicTablesController < ApplicationController
     render partial: 'excel_preview'
   end
 
-  # POST /admin/import_excel_tables
-  def import_excel_tables
-    uploaded  = params[:excel_file]
-    subsystem = params[:subsystem_id] || params[:subsystem_filter]
+ # POST /admin/import_excel_tables
+def import_excel_tables
+  uploaded  = params[:excel_file]
+  subsystem = params[:subsystem_id] || params[:subsystem_filter]
 
-    if uploaded.nil?
-      flash[:error] = "No file uploaded!"
-      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
-    end
-
-    sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
-
-    refs       = params[:selected_cells].to_s.split(',')
-    raw_names  = []
-    blank_refs = []
-
-    Rails.logger.info "[IMPORT] Selected refs: #{refs.inspect}"
-    refs.each do |ref|
-      row, col = parse_a1_ref(ref)
-      val       = sheet.cell(row, col).to_s.strip
-      Rails.logger.info "[IMPORT] Cell #{ref} → '#{val}'"
-
-      if val.blank?
-        blank_refs << ref
-      else
-        raw_names << val
-      end
-    end
-
-    if raw_names.empty?
-      msg = if blank_refs.any?
-              "The cells you clicked (#{blank_refs.join(', ')}) were empty. " \
-              "Please click on the actual cells containing your table names."
-            else
-              "No cells were selected. Please click on your table-name cells."
-            end
-
-      flash[:error] = msg
-      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
-    end
-
-    tables = raw_names.uniq
-    Rails.logger.info "[IMPORT] Final table names to create: #{tables.inspect}"
-
-    params[:table_names]  = raw_names
-    params[:subsystem_id] = subsystem
-    create_multiple_tables
+  unless uploaded
+    flash[:error] = "No file uploaded!"
+    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
   end
+
+  sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
+
+  # 1) Try manual selection
+  refs       = params[:selected_cells].to_s.split(',')
+  raw_names  = []
+  blank_refs = []
+
+  Rails.logger.info "[IMPORT] Selected refs: #{refs.inspect}"
+  refs.each do |ref|
+    row, col = parse_a1_ref(ref)
+    val      = sheet.cell(row, col).to_s.strip
+    Rails.logger.info "[IMPORT] Cell #{ref} → '#{val}'"
+    val.blank? ? blank_refs << ref : raw_names << val
+  end
+
+  # 2) Fallback: if nothing from manual, pull all non-blank in column A
+  if raw_names.empty?
+    Rails.logger.info "[IMPORT] Manual selection empty (#{blank_refs.inspect}), falling back to column A"
+    raw_names = sheet
+                  .column(1)              # Excel “A”
+                  .map(&:to_s)
+                  .map(&:strip)
+                  .reject(&:blank?)
+                  .uniq
+    Rails.logger.info "[IMPORT] Column A values: #{raw_names.inspect}"
+  end
+
+  # 3) If still empty, error out
+  if raw_names.empty?
+    flash[:error] = if blank_refs.any?
+                      "Cells #{blank_refs.join(', ')} were blank. No table names found."
+                    else
+                      "No cells selected and column A is empty."
+                    end
+    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
+  end
+
+  # 4) Hand off into your bulk‐creator
+  params[:table_names]  = raw_names
+  params[:subsystem_id] = subsystem
+  create_multiple_tables
+end
+
 
   # POST /admin/move_table
   def move_table

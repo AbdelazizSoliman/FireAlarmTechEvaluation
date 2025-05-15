@@ -73,31 +73,35 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/import_excel_tables
-  def import_excel_tables
-    # figure out which subsystem to tag
-    subsystem_id = params[:subsystem_id] || params[:subsystem_filter]
+ def import_excel_tables
+  Rails.logger.info "[IMPORT] params[:subsystem_id]=#{params[:subsystem_id].inspect}"
+  Rails.logger.info "[IMPORT] params[:selected_cells]=#{params[:selected_cells].inspect}"
+  Rails.logger.info "[IMPORT] excel_file present? #{params[:excel_file].present?}"
 
-    # open the file, pull column A
-    sheet = Roo::Spreadsheet.open(params[:excel_file].path).sheet(0)
-    names = sheet
-            .column(1)             # all values in A
-            .map(&:to_s).map(&:strip)
-            .reject(&:blank?)
-            .uniq
+  f           = params.require(:excel_file)
+  spreadsheet = Roo::Spreadsheet.open(f.path)
+  sheet       = spreadsheet.sheet(0)
 
-    if names.empty?
-      flash[:error] = "No table names found in column A!"
-      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
-    end
+  refs        = params[:selected_cells].to_s.split(',')
+  Rails.logger.info "[IMPORT] refs => #{refs.inspect}"
 
-    # hand off to your existing bulk‐create
-    params[:table_names]  = names
-    params[:subsystem_id] = subsystem_id
-    create_multiple_tables
+  raw_names = refs.map do |ref|
+    r, c = parse_a1_ref(ref)
+    sheet.cell(r, c).to_s.strip
+  end
+  Rails.logger.info "[IMPORT] raw_names => #{raw_names.inspect}"
+
+  table_names = raw_names.reject(&:empty?)
+  Rails.logger.info "[IMPORT] table_names => #{table_names.inspect}"
+
+  if table_names.empty?
+    flash[:error] = "No table names found! Please click on the cells that contain your table names."
+    return redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id])
   end
 
-
-
+  # … rest unchanged …
+  create_multiple_tables
+end
 
   # POST /admin/move_table
   def move_table
@@ -182,46 +186,55 @@ class DynamicTablesController < ApplicationController
 
   # POST /admin/create_multiple_tables
   def create_multiple_tables
-    subsystem_id = params[:subsystem_id].to_i
-    raw_names    = Array(params[:table_names])
-    duplicates, created = [], []
+  subsystem_id = params[:subsystem_id].to_i
+  raw_names    = Array(params[:table_names])
+  duplicates   = []
+  created      = []
 
-    raw_names.each do |raw|
-      tbl = to_db_name(raw)
-      next if tbl.blank?
+  Rails.logger.info "[CREATE] Starting bulk‐create for subsystem ##{subsystem_id} with raw_names: #{raw_names.inspect}"
 
-      if ActiveRecord::Base.connection.data_source_exists?(tbl)
-        duplicates << tbl
-      else
-        ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
-          t.bigint  :subsystem_id, null: false
-          t.bigint  :supplier_id,  null: false
-          t.timestamps
-          t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
-          t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
-          t.index   [:supplier_id],                           name: "idx_#{tbl}_on_supplier"
-        end
+  raw_names.each do |raw|
+    tbl = to_db_name(raw)
+    Rails.logger.info "[CREATE] Normalized '#{raw}' → '#{tbl}'"
 
-        TableDefinition.create!(
-          table_name:   tbl,
-          subsystem_id: subsystem_id,
-          parent_table: nil
-        )
+    next if tbl.blank?
 
-        created << tbl
+    if ActiveRecord::Base.connection.data_source_exists?(tbl)
+      Rails.logger.info "[CREATE] Skipping existing table: #{tbl}"
+      duplicates << tbl
+    else
+      Rails.logger.info "[CREATE] Creating table: #{tbl}"
+      ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
+        t.bigint  :subsystem_id, null: false
+        t.bigint  :supplier_id,  null: false
+        t.timestamps
+        t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
+        t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
+        t.index   [:supplier_id],                           name: "idx_#{tbl}_on_supplier"
       end
-    rescue => e
-      flash[:error] ||= ""
-      flash[:error] += "Failed #{tbl}: #{e.message}. "
+
+      TableDefinition.create!(
+        table_name:   tbl,
+        subsystem_id: subsystem_id,
+        parent_table: nil
+      )
+      created << tbl
     end
-
-    msg = []
-    msg << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
-    msg << "Created: #{created.join(', ')}."           if created.any?
-    flash[ created.any? ? :success : :error ] = msg.join(' ')
-
-    redirect_to admin_path(subsystem_filter: subsystem_id)
+  rescue => e
+    Rails.logger.error "[CREATE] Error creating #{tbl}: #{e.message}"
+    flash[:error] ||= ""
+    flash[:error] += "Failed #{tbl}: #{e.message}. "
   end
+
+  Rails.logger.info "[CREATE] Completed. Duplicates: #{duplicates.inspect}, Created: #{created.inspect}"
+
+  messages = []
+  messages << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
+  messages << "Created: #{created.join(', ')}."           if created.any?
+
+  flash[ created.any? ? :success : :error ] = messages.join(' ')
+  redirect_to admin_path(subsystem_filter: subsystem_id)
+end
 
 
   # POST /admin/create_multiple_sub_tables
@@ -391,7 +404,7 @@ class DynamicTablesController < ApplicationController
       redirect_to admin_path and return
     end
   end
-  
+
   def metadata_params
     params.require(:column_metadata).permit(
       :feature,

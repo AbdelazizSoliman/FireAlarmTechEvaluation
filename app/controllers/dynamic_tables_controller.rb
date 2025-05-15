@@ -90,8 +90,8 @@ class DynamicTablesController < ApplicationController
        return redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id])
      end
 
-+    # ←—————— Make sure our redirect “sees” this subsystem
-+    params[:subsystem_filter] = params[:subsystem_id]
+    # ←—————— Make sure our redirect “sees” this subsystem
+    params[:subsystem_filter] = params[:subsystem_id]
 
      # Now hand off to your existing bulk-creation logic:
      params[:table_names]  = table_names

@@ -73,23 +73,31 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/import_excel_tables
-  def import_excel_tables
-    refs        = params[:selected_cells].to_s.split(',')
-    f           = params[:excel_file]
-    spreadsheet = Roo::Spreadsheet.open(f.path)
-    sheet       = spreadsheet.sheet(0)
+ def import_excel_tables
+     refs        = params[:selected_cells].to_s.split(',')
+     f           = params[:excel_file]
+     spreadsheet = Roo::Spreadsheet.open(f.path)
+     sheet       = spreadsheet.sheet(0)
 
-    # Convert each "A1" → [row, col] and extract the cell value
-    table_names = refs.map do |ref|
-      row, col = parse_a1_ref(ref)
-      sheet.cell(row, col)
-    end
+     raw_names = refs.map do |ref|
+       row, col = parse_a1_ref(ref)
+       sheet.cell(row, col).to_s.strip
+     end
 
-    # Now hand it off to your existing create_multiple_tables logic:
-    params[:table_names]  = table_names
-    params[:subsystem_id] = params[:subsystem_id]
-    create_multiple_tables
-  end
+     table_names = raw_names.reject(&:empty?)
+     if table_names.empty?
+       flash[:error] = "No table names found! Please click on the cells that contain your table names."
+       return redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id])
+     end
+
++    # ←—————— Make sure our redirect “sees” this subsystem
++    params[:subsystem_filter] = params[:subsystem_id]
+
+     # Now hand off to your existing bulk-creation logic:
+     params[:table_names]  = table_names
+     params[:subsystem_id] = params[:subsystem_id]
+     create_multiple_tables
+   end
 
 
 

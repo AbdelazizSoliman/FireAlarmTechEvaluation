@@ -1,19 +1,26 @@
+<!-- app/views/dynamic_tables/upload_excel.html.erb -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-
   <title>Import Tables from Excel</title>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans antialiased">
-  <div class="max-w-3xl mx-auto py-12 px-4">
+<body class="bg-gray-50 min-h-screen p-8">
+  <div class="max-w-3xl mx-auto">
     <h1 class="text-2xl font-bold mb-6">Import Tables from Excel</h1>
 
-    <!-- Upload form -->
+    <% if flash[:error] %>
+      <div class="mb-4 p-3 bg-red-100 text-red-800"><%= flash[:error] %></div>
+    <% end %>
+
+    <!-- form must have id so JS can grab it -->
     <form id="excel-upload-form" enctype="multipart/form-data" class="space-y-4">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <%= hidden_field_tag :subsystem_id, @subsystem_id %>
+
       <div>
         <label class="block font-medium">Select an Excel file:</label>
         <input type="file"
@@ -21,8 +28,6 @@
                accept=".xlsx"
                required
                class="mt-1 block w-full border-gray-300 rounded" />
-        <!-- Carry your subsystem context through -->
-        <%= hidden_field_tag :subsystem_id, @subsystem_id %>
       </div>
 
       <button type="button"
@@ -32,84 +37,74 @@
       </button>
     </form>
 
-    <!-- Preview table + import button will go here -->
+    <!-- where the preview table will be injected -->
     <div id="excel-preview" class="mt-8"></div>
   </div>
 
   <script>
-    // Pull the CSRF token
-    function csrfToken() {
-      return document
-        .querySelector("meta[name='csrf-token']")
-        .getAttribute("content");
+    // grab CSRF token
+    function csrfToken(){
+      return document.querySelector("meta[name='csrf-token']").content;
     }
 
-    // 1) Send file to preview endpoint
-    function uploadExcel() {
+    // step 1: send file to preview action
+    function uploadExcel(){
       const form = document.getElementById('excel-upload-form');
       const data = new FormData(form);
-
-      fetch('/admin/preview_excel', {
-        method: 'POST',
-        headers: { 'X-CSRF-Token': csrfToken() },
-        body: data
+      fetch('<%= admin_preview_excel_path %>', {
+        method:'POST',
+        headers:{ 'X-CSRF-Token': csrfToken() },
+        body:data
       })
-      .then(r => r.text())
-      .then(html => {
+      .then(r=>r.text())
+      .then(html=>{
         document.getElementById('excel-preview').innerHTML = html;
         attachCellClickHandlers();
       })
-      .catch(e => console.error("Preview failed:", e));
+      .catch(console.error);
     }
 
-    // 2) Make each cell clickable
-    function attachCellClickHandlers() {
-      document.querySelectorAll('#excel-preview td').forEach(td => {
-        td.addEventListener('click', () => {
+    // step 2: make cells clickable
+    function attachCellClickHandlers(){
+      document.querySelectorAll('#excel-preview td').forEach(td=>{
+        td.addEventListener('click', ()=>{
           td.classList.toggle('bg-yellow-200');
           updateSelectedCellsInput();
         });
       });
     }
 
-    // 3) Track selected A1 refs in a hidden input
-    function updateSelectedCellsInput() {
-      const refs = Array.from(
-        document.querySelectorAll('#excel-preview td.bg-yellow-200')
-      ).map(td => td.dataset.ref);
-
+    // step 3: keep a hidden input with the list of clicked refs
+    function updateSelectedCellsInput(){
+      const refs = Array.from(document.querySelectorAll('#excel-preview td.bg-yellow-200'))
+                        .map(td=>td.dataset.ref);
       let hidden = document.getElementById('selected_cells_input');
-      if (!hidden) {
+      if(!hidden){
         hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.id   = 'selected_cells_input';
-        hidden.name = 'selected_cells';
+        hidden.type  = 'hidden';
+        hidden.id    = 'selected_cells_input';
+        hidden.name  = 'selected_cells';
         document.getElementById('excel-preview').appendChild(hidden);
       }
       hidden.value = refs.join(',');
     }
 
-    // 4) Re-post file + selected refs to import endpoint
-    function importTables() {
+    // step 4: re-post file + selected refs to import action
+    function importTables(){
       const form = document.getElementById('excel-upload-form');
       const data = new FormData(form);
+      data.set('selected_cells', document.getElementById('selected_cells_input').value);
 
-      // append the refs list to the same form data
-      data.set('selected_cells',
-        document.getElementById('selected_cells_input').value
-      );
-
-      fetch('/admin/import_excel_tables', {
-        method: 'POST',
-        headers: { 'X-CSRF-Token': csrfToken() },
-        body: data
+      fetch('<%= admin_import_excel_tables_path %>', {
+        method:'POST',
+        headers:{ 'X-CSRF-Token': csrfToken() },
+        body:data
       })
-      .then(() => {
+      .then(()=> {
         const sid = form.querySelector('input[name="subsystem_id"]').value;
-        // back to your admin index, preserving the subsystem filter
         window.location = `/admin?subsystem_filter=${sid}`;
       })
-      .catch(e => console.error("Import failed:", e));
+      .catch(console.error);
     }
   </script>
 </body>

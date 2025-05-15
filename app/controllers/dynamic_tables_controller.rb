@@ -73,31 +73,29 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/import_excel_tables
- def import_excel_tables
-     refs        = params[:selected_cells].to_s.split(',')
-     f           = params[:excel_file]
-     spreadsheet = Roo::Spreadsheet.open(f.path)
-     sheet       = spreadsheet.sheet(0)
+  def import_excel_tables
+    # figure out which subsystem to tag
+    subsystem_id = params[:subsystem_id] || params[:subsystem_filter]
 
-     raw_names = refs.map do |ref|
-       row, col = parse_a1_ref(ref)
-       sheet.cell(row, col).to_s.strip
-     end
+    # open the file, pull column A
+    sheet = Roo::Spreadsheet.open(params[:excel_file].path).sheet(0)
+    names = sheet
+            .column(1)             # all values in A
+            .map(&:to_s).map(&:strip)
+            .reject(&:blank?)
+            .uniq
 
-     table_names = raw_names.reject(&:empty?)
-     if table_names.empty?
-       flash[:error] = "No table names found! Please click on the cells that contain your table names."
-       return redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id])
-     end
+    if names.empty?
+      flash[:error] = "No table names found in column A!"
+      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    end
 
-    # ←—————— Make sure our redirect “sees” this subsystem
-    params[:subsystem_filter] = params[:subsystem_id]
+    # hand off to your existing bulk‐create
+    params[:table_names]  = names
+    params[:subsystem_id] = subsystem_id
+    create_multiple_tables
+  end
 
-     # Now hand off to your existing bulk-creation logic:
-     params[:table_names]  = table_names
-     params[:subsystem_id] = params[:subsystem_id]
-     create_multiple_tables
-   end
 
 
 
@@ -184,27 +182,32 @@ class DynamicTablesController < ApplicationController
 
   # POST /admin/create_multiple_tables
   def create_multiple_tables
-    subsystem_id       = params[:subsystem_id]
-    raw_names          = params[:table_names] || []
+    subsystem_id = params[:subsystem_id].to_i
+    raw_names    = Array(params[:table_names])
     duplicates, created = [], []
 
     raw_names.each do |raw|
       tbl = to_db_name(raw)
       next if tbl.blank?
-      if ActiveRecord::Base.connection.table_exists?(tbl)
+
+      if ActiveRecord::Base.connection.data_source_exists?(tbl)
         duplicates << tbl
       else
-        ActiveRecord::Migration.create_table(tbl.to_sym, force: :cascade) do |t|
-          t.bigint :subsystem_id, null: false
-          t.bigint :supplier_id,  null: false
+        ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
+          t.bigint  :subsystem_id, null: false
+          t.bigint  :supplier_id,  null: false
           t.timestamps
-          t.index [:subsystem_id],                                name: "idx_#{tbl}_on_subsystem"
-          t.index [:supplier_id, :subsystem_id], unique: true,     name: "idx_#{tbl}_sup_sub"
-          t.index [:supplier_id],                                  name: "idx_#{tbl}_on_supplier"
+          t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
+          t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
+          t.index   [:supplier_id],                           name: "idx_#{tbl}_on_supplier"
         end
-        TableDefinition.create!(table_name: tbl,
-                                subsystem_id: subsystem_id,
-                                parent_table: nil)
+
+        TableDefinition.create!(
+          table_name:   tbl,
+          subsystem_id: subsystem_id,
+          parent_table: nil
+        )
+
         created << tbl
       end
     rescue => e
@@ -213,11 +216,13 @@ class DynamicTablesController < ApplicationController
     end
 
     msg = []
-    msg << "Already exist: #{duplicates.join(', ')}." if duplicates.any?
-    msg << "Created: #{created.join(', ')}."               if created.any?
-    flash[created.empty? ? :error : :success] = msg.join(' ')
-    redirect_to admin_path(filter_params)
+    msg << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
+    msg << "Created: #{created.join(', ')}."           if created.any?
+    flash[ created.any? ? :success : :error ] = msg.join(' ')
+
+    redirect_to admin_path(subsystem_filter: subsystem_id)
   end
+
 
   # POST /admin/create_multiple_sub_tables
   def create_multiple_sub_tables
@@ -379,6 +384,14 @@ class DynamicTablesController < ApplicationController
 
   private
 
+  def ensure_subsystem
+    @subsystem_filter = params[:subsystem_filter] || params[:subsystem_id]
+    unless @subsystem_filter.present?
+      flash[:error] = "Please select a subsystem first."
+      redirect_to admin_path and return
+    end
+  end
+  
   def metadata_params
     params.require(:column_metadata).permit(
       :feature,

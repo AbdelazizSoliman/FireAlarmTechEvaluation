@@ -60,48 +60,65 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/preview_excel
-  def preview_excel
-    f           = params[:excel_file]
-    spreadsheet = Roo::Spreadsheet.open(f.path)
-    sheet       = spreadsheet.sheet(0)
+ def preview_excel
+    uploaded = params[:excel_file]
+    Rails.logger.info "[PREVIEW] got params[:excel_file]=#{uploaded.inspect}"
+    unless uploaded
+      render plain: "❗ No file uploaded", status: :bad_request
+      return
+    end
+
+    path       = uploaded.tempfile.path
+    spreadsheet= Roo::Spreadsheet.open(path)
+    sheet      = spreadsheet.sheet(0)
 
     @grid = sheet.each_with_index.map do |row, i|
-      row.each_with_index.map { |cell, j| { value: cell.to_s, row: i+1, col: j+1 } }
+      row.each_with_index.map { |cell, j|
+        { value: cell.to_s, row: i+1, col: j+1 }
+      }
     end
 
     render partial: 'excel_preview'
   end
 
   # POST /admin/import_excel_tables
- def import_excel_tables
-  Rails.logger.info "[IMPORT] params[:subsystem_id]=#{params[:subsystem_id].inspect}"
-  Rails.logger.info "[IMPORT] params[:selected_cells]=#{params[:selected_cells].inspect}"
-  Rails.logger.info "[IMPORT] excel_file present? #{params[:excel_file].present?}"
+def import_excel_tables
+    uploaded = params[:excel_file]
+    Rails.logger.info "[IMPORT] params[:subsystem_id]=#{params[:subsystem_id].inspect}"
+    Rails.logger.info "[IMPORT] params[:selected_cells]=#{params[:selected_cells].inspect}"
+    Rails.logger.info "[IMPORT] got params[:excel_file]=#{uploaded.inspect}"
 
-  f           = params.require(:excel_file)
-  spreadsheet = Roo::Spreadsheet.open(f.path)
-  sheet       = spreadsheet.sheet(0)
+    unless uploaded
+      flash[:error] = "No file uploaded for import!"
+      return redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id])
+    end
 
-  refs        = params[:selected_cells].to_s.split(',')
-  Rails.logger.info "[IMPORT] refs => #{refs.inspect}"
+    spreadsheet = Roo::Spreadsheet.open(uploaded.tempfile.path)
+    sheet       = spreadsheet.sheet(0)
 
-  raw_names = refs.map do |ref|
-    r, c = parse_a1_ref(ref)
-    sheet.cell(r, c).to_s.strip
+    refs = params[:selected_cells].to_s.split(',')
+    Rails.logger.info "[IMPORT] refs => #{refs.inspect}"
+
+    raw_names = refs.map do |ref|
+      r, c = parse_a1_ref(ref)
+      sheet.cell(r, c).to_s.strip
+    end
+    Rails.logger.info "[IMPORT] raw_names => #{raw_names.inspect}"
+
+    table_names = raw_names.reject(&:empty?)
+    Rails.logger.info "[IMPORT] table_names => #{table_names.inspect}"
+
+    if table_names.empty?
+      flash[:error] = "No table names found in selection!"
+      return redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id])
+    end
+
+    # hand off to bulk create
+    params[:table_names]  = table_names
+    params[:subsystem_id] = params[:subsystem_id]
+    create_multiple_tables
   end
-  Rails.logger.info "[IMPORT] raw_names => #{raw_names.inspect}"
 
-  table_names = raw_names.reject(&:empty?)
-  Rails.logger.info "[IMPORT] table_names => #{table_names.inspect}"
-
-  if table_names.empty?
-    flash[:error] = "No table names found! Please click on the cells that contain your table names."
-    return redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id])
-  end
-
-  # … rest unchanged …
-  create_multiple_tables
-end
 
   # POST /admin/move_table
   def move_table
@@ -185,56 +202,54 @@ end
   end
 
   # POST /admin/create_multiple_tables
-  def create_multiple_tables
-  subsystem_id = params[:subsystem_id].to_i
-  raw_names    = Array(params[:table_names])
-  duplicates   = []
-  created      = []
+ def create_multiple_tables
+    subsystem_id = params[:subsystem_id].to_i
+    raw_names    = Array(params[:table_names])
+    duplicates, created = [], []
 
-  Rails.logger.info "[CREATE] Starting bulk‐create for subsystem ##{subsystem_id} with raw_names: #{raw_names.inspect}"
+    Rails.logger.info "[CREATE] starting for subsystem #{subsystem_id} with #{raw_names.inspect}"
 
-  raw_names.each do |raw|
-    tbl = to_db_name(raw)
-    Rails.logger.info "[CREATE] Normalized '#{raw}' → '#{tbl}'"
+    raw_names.each do |raw|
+      tbl = to_db_name(raw)
+      Rails.logger.info "[CREATE] normalized '#{raw}' → '#{tbl}'"
+      next if tbl.blank?
 
-    next if tbl.blank?
+      if ActiveRecord::Base.connection.data_source_exists?(tbl)
+        Rails.logger.info "[CREATE] skipping existing #{tbl}"
+        duplicates << tbl
+      else
+        Rails.logger.info "[CREATE] creating #{tbl}"
+        ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
+          t.bigint  :subsystem_id, null: false
+          t.bigint  :supplier_id,  null: false
+          t.timestamps
+          t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
+          t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
+          t.index   [:supplier_id],                           name: "idx_#{tbl}_on_supplier"
+        end
 
-    if ActiveRecord::Base.connection.data_source_exists?(tbl)
-      Rails.logger.info "[CREATE] Skipping existing table: #{tbl}"
-      duplicates << tbl
-    else
-      Rails.logger.info "[CREATE] Creating table: #{tbl}"
-      ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
-        t.bigint  :subsystem_id, null: false
-        t.bigint  :supplier_id,  null: false
-        t.timestamps
-        t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
-        t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
-        t.index   [:supplier_id],                           name: "idx_#{tbl}_on_supplier"
+        TableDefinition.create!(
+          table_name:   tbl,
+          subsystem_id: subsystem_id,
+          parent_table: nil
+        )
+        created << tbl
       end
-
-      TableDefinition.create!(
-        table_name:   tbl,
-        subsystem_id: subsystem_id,
-        parent_table: nil
-      )
-      created << tbl
+    rescue => e
+      Rails.logger.error "[CREATE] error on #{tbl}: #{e.message}"
+      flash[:error] ||= ""
+      flash[:error] += "Failed #{tbl}: #{e.message}. "
     end
-  rescue => e
-    Rails.logger.error "[CREATE] Error creating #{tbl}: #{e.message}"
-    flash[:error] ||= ""
-    flash[:error] += "Failed #{tbl}: #{e.message}. "
+
+    Rails.logger.info "[CREATE] done; duplicates=#{duplicates.inspect}, created=#{created.inspect}"
+
+    messages = []
+    messages << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
+    messages << "Created: #{created.join(', ')}."           if created.any?
+    flash[ created.any? ? :success : :error ] = messages.join(' ')
+
+    redirect_to admin_path(subsystem_filter: subsystem_id)
   end
-
-  Rails.logger.info "[CREATE] Completed. Duplicates: #{duplicates.inspect}, Created: #{created.inspect}"
-
-  messages = []
-  messages << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
-  messages << "Created: #{created.join(', ')}."           if created.any?
-
-  flash[ created.any? ? :success : :error ] = messages.join(' ')
-  redirect_to admin_path(subsystem_filter: subsystem_id)
-end
 
 
   # POST /admin/create_multiple_sub_tables
@@ -462,13 +477,12 @@ end
         .gsub(/^_+|_+$/, '')
   end
 
-  def parse_a1_ref(ref)
+ def parse_a1_ref(ref)
     col_letters = ref[/[A-Z]+/]
     row_number  = ref[/\d+/].to_i
-    # Convert letters to number: A→1, B→2, … Z→26, AA→27, etc.
-    col_number = col_letters.chars.reduce(0) do |sum, ch|
+    col_number  = col_letters.chars.reduce(0) { |sum, ch|
       sum * 26 + (ch.ord - 'A'.ord + 1)
-    end
+    }
     [row_number, col_number]
   end
 end

@@ -121,7 +121,7 @@ class DynamicTablesController < ApplicationController
     tables = raw_names.uniq
     Rails.logger.info "[IMPORT] Final table names to create: #{tables.inspect}"
 
-    params[:table_names]  = tables
+    params[:table_names]  = raw_names
     params[:subsystem_id] = subsystem
     create_multiple_tables
   end

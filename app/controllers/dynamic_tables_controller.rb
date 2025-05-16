@@ -9,33 +9,44 @@ class DynamicTablesController < ApplicationController
   before_action :ensure_subsystem, only: [:upload_excel, :preview_excel, :import_excel_tables]
 
   # GET /admin
+  def admin
+  # … filters etc …
+
   if params[:table_name].present? &&
-     ActiveRecord::Base.connection.data_source_exists?(params[:table_name])
+     ActiveRecord::Base
+       .connection
+       .data_source_exists?(params[:table_name])
 
     @table_name       = params[:table_name]
-    @existing_columns = ActiveRecord::Base
-                          .connection
-                          .columns(@table_name)
-                          .map do |col|
-                            md = ColumnMetadata.find_by(
-                                   table_name:  @table_name,
-                                   column_name: col.name
-                                 )
-                            { name: col.name, type: col.type, metadata: md }
-                          end
+    @existing_columns =
+      ActiveRecord::Base
+        .connection
+        .columns(@table_name)
+        .map do |col|
+          md = ColumnMetadata.find_by(
+                 table_name:  @table_name,
+                 column_name: col.name
+               )
+          { name: col.name, type: col.type, metadata: md }
+        end
 
-    # ← move this *outside* of the .map block:
-    @subtables = TableDefinition
-                   .where(
-                     subsystem_id: @subsystem_filter,
-                     parent_table: @table_name
-                   )
-                   .order(:position)
+    # move @subtables *here*, outside of the .map block:
+    @subtables =
+      TableDefinition
+        .where(
+          subsystem_id: @subsystem_filter,
+          parent_table: @table_name
+        )
+        .order(:position)
+
   else
     @table_name       = nil
     @existing_columns = []
     @subtables        = []
   end
+end
+
+
   # GET /admin/upload_excel
   def upload_excel
     @subsystem_id = params[:subsystem_filter]

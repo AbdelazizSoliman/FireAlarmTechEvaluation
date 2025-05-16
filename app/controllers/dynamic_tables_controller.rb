@@ -447,7 +447,7 @@ end
       :rate_key,
       :amount_key,
       :notes_key,
-      options: [:allowed_values, combo_standards: {}]
+      options: [:allowed_values, :mandatory_values, combo_standards: {}]
     )
   end
 

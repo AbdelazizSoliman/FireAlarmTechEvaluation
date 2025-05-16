@@ -257,11 +257,24 @@
      
 
         <!-- 5. Existing Features Table -->
-        <% if @table_name.present? %>
-          <section class="mb-8">
-            <h3 class="text-lg font-semibold">
-              Existing Features in <%= @table_name.humanize %>
-            </h3>
+          <% if @subtables.any? %>
+    <section class="mb-6">
+      <h4 class="text-md font-semibold">
+        Sub-Tables of <%= @table_name.humanize %>
+      </h4>
+      <ul class="list-disc pl-6 mt-2">
+        <% @subtables.each do |td| %>
+          <li>
+            <%= link_to td.table_name.humanize,
+                        admin_path(filter_params.merge(table_name: td.table_name)),
+                        class: "text-blue-600 hover:underline" %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+
 
             <% if @existing_columns.any? %>
               <table class="min-w-full mt-4">

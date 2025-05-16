@@ -9,47 +9,33 @@ class DynamicTablesController < ApplicationController
   before_action :ensure_subsystem, only: [:upload_excel, :preview_excel, :import_excel_tables]
 
   # GET /admin
-  def admin
-    @projects             = Project.all.pluck(:name, :id)
-    @project_filter       = params[:project_filter]
-    @project_scope_filter = params[:project_scope_filter]
-    @system_filter        = params[:system_filter]
-    @subsystem_filter     = params[:subsystem_filter]
+  if params[:table_name].present? &&
+     ActiveRecord::Base.connection.data_source_exists?(params[:table_name])
 
-    @project_scopes = @project_filter.present? ?
-                      Project.find(@project_filter).project_scopes.pluck(:name, :id) :
-                      []
+    @table_name       = params[:table_name]
+    @existing_columns = ActiveRecord::Base
+                          .connection
+                          .columns(@table_name)
+                          .map do |col|
+                            md = ColumnMetadata.find_by(
+                                   table_name:  @table_name,
+                                   column_name: col.name
+                                 )
+                            { name: col.name, type: col.type, metadata: md }
+                          end
 
-    @systems = @project_scope_filter.present? ?
-               ProjectScope.find(@project_scope_filter).systems.pluck(:name, :id) :
-               []
-
-    @subsystems = @system_filter.present? ?
-                  System.find(@system_filter).subsystems.pluck(:name, :id) :
-                  []
-
-    if @subsystem_filter.present?
-      defs         = TableDefinition.where(subsystem_id: @subsystem_filter)
-      @main_tables = defs.where(parent_table: nil).order(:position)
-      @sub_tables  = defs.where.not(parent_table: nil)
-    else
-      @main_tables = []
-      @sub_tables  = []
-    end
-
-    if params[:table_name].present? &&
-       ActiveRecord::Base.connection.data_source_exists?(params[:table_name])
-      @table_name       = params[:table_name]
-      @existing_columns = ActiveRecord::Base.connection.columns(@table_name).map do |col|
-        md = ColumnMetadata.find_by(table_name: @table_name, column_name: col.name)
-        { name: col.name, type: col.type, metadata: md }
-      end
-    else
-      @table_name       = nil
-      @existing_columns = []
-    end
+    # ← move this *outside* of the .map block:
+    @subtables = TableDefinition
+                   .where(
+                     subsystem_id: @subsystem_filter,
+                     parent_table: @table_name
+                   )
+                   .order(:position)
+  else
+    @table_name       = nil
+    @existing_columns = []
+    @subtables        = []
   end
-
   # GET /admin/upload_excel
   def upload_excel
     @subsystem_id = params[:subsystem_filter]

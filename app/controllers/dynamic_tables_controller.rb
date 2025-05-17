@@ -9,42 +9,76 @@ class DynamicTablesController < ApplicationController
   before_action :ensure_subsystem, only: [:upload_excel, :preview_excel, :import_excel_tables]
 
   # GET /admin
-  def admin
-  # … filters etc …
+ def admin
+    # 1) ALWAYS load these first
+    @projects             = Project.all.pluck(:name, :id)
+    @project_filter       = params[:project_filter]
+    @project_scope_filter = params[:project_scope_filter]
+    @system_filter        = params[:system_filter]
+    @subsystem_filter     = params[:subsystem_filter]
 
-  if params[:table_name].present? &&
-     ActiveRecord::Base
-       .connection
-       .data_source_exists?(params[:table_name])
+    # 2) dependent dropdowns
+    @project_scopes = if @project_filter.present?
+                        Project.find(@project_filter).project_scopes.pluck(:name, :id)
+                      else
+                        []
+                      end
 
-    @table_name       = params[:table_name]
-    @existing_columns =
-      ActiveRecord::Base
-        .connection
-        .columns(@table_name)
-        .map do |col|
-          md = ColumnMetadata.find_by(
-                 table_name:  @table_name,
-                 column_name: col.name
-               )
-          { name: col.name, type: col.type, metadata: md }
-        end
+    @systems = if @project_scope_filter.present?
+                 ProjectScope.find(@project_scope_filter).systems.pluck(:name, :id)
+               else
+                 []
+               end
 
-    # move @subtables *here*, outside of the .map block:
-    @subtables =
-      TableDefinition
-        .where(
-          subsystem_id: @subsystem_filter,
-          parent_table: @table_name
-        )
-        .order(:position)
+    @subsystems = if @system_filter.present?
+                    System.find(@system_filter).subsystems.pluck(:name, :id)
+                  else
+                    []
+                  end
 
-  else
-    @table_name       = nil
-    @existing_columns = []
-    @subtables        = []
+    # 3) main vs sub tables for the sidebar
+    if @subsystem_filter.present?
+      defs         = TableDefinition.where(subsystem_id: @subsystem_filter)
+      @main_tables = defs.where(parent_table: nil).order(:position)
+      @sub_tables  = defs.where.not(parent_table: nil)
+    else
+      @main_tables = []
+      @sub_tables  = []
+    end
+
+    # 4) if they’ve clicked on one of those table links…
+    if params[:table_name].present? &&
+       ActiveRecord::Base.connection.data_source_exists?(params[:table_name])
+
+      @table_name       = params[:table_name]
+      @existing_columns =
+        ActiveRecord::Base
+          .connection
+          .columns(@table_name)
+          .map do |col|
+            md = ColumnMetadata.find_by(
+                   table_name:  @table_name,
+                   column_name: col.name
+                 )
+            { name: col.name, type: col.type, metadata: md }
+          end
+
+      # pull the children *here*, outside the map
+      @subtables =
+        TableDefinition
+          .where(
+            subsystem_id: @subsystem_filter,
+            parent_table: @table_name
+          )
+          .order(:position)
+
+    else
+      @table_name       = nil
+      @existing_columns = []
+      @subtables        = []
+    end
   end
-end
+
 
 
   # GET /admin/upload_excel

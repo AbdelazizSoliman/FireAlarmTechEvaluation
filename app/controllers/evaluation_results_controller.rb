@@ -70,35 +70,39 @@ def evaluate
       end
 # ───── CHECKBOXES ─────
 if meta.feature == 'checkboxes'
-  # submitted will be an Array from your JS
-  selected = Array(submitted)
-  
-  required = Array(meta.options['mandatory_values'])
-  extra    = selected - required
+          # normalize to an Array
+          selected  = Array(submitted)
+          mandatory = Array(meta.options['mandatory_values'])
+          missing   = mandatory - selected
+          extra     = selected - mandatory
 
-  if (required - selected).empty?
-    degree = 1.0 + extra.size * 0.1
-    status = 'pass'
-  else
-    degree = 0.0
-    status = 'fail'
-  end 
-  EvaluationResult
-    .find_or_initialize_by(
-      supplier_id:  supplier.id,
-      subsystem_id: subsystem.id,
-      table_name:   table_name,
-      column_name:  column
-    )
-    .update!(
-      submitted_value: selected,
-      standard_value:  nil,
-      tolerance:       nil,
-      degree:          degree,
-      status:          status
-    )
-  next
-end
+          if missing.empty?
+            status = 'pass'
+            # 1 + 0.1 for each extra tick
+            degree = 1.0 + (extra.size * 0.1)
+          else
+            status = 'fail'
+            degree = 0.0
+          end
+
+          # persist
+          EvaluationResult
+            .find_or_initialize_by(
+              supplier_id:  supplier.id,
+              subsystem_id: subsystem.id,
+              table_name:   table_name,
+              column_name:  column
+            )
+            .update!(
+              submitted_value:    selected,
+              standard_value:     nil,
+              tolerance:          nil,
+              degree:             degree,
+              status:             status
+            )
+
+          next
+        end
       # --- NUMERIC HANDLING (existing logic) ---
       next unless meta.standard_value && meta.tolerance
       standard = meta.standard_value.to_f

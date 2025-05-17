@@ -50,7 +50,21 @@
                      class: "mt-1 block w-full" %>
   </div>
 
-    <%= f.label :mandatory_values, "Mandatory Selections (comma-separated)" %><br>
+ <div class="mb-4">
+  <%= f.label :mandatory_values, "Mandatory Selections (comma-separated)" %><br>
+
+  <% raw_vals = @metadata.options['mandatory_values'] %>
+  <% arr_vals = case raw_vals
+       when String then raw_vals.split(',').map(&:strip)
+       when Array  then raw_vals
+       else             []
+     end %>
+
+  <%= text_field_tag 'column_metadata[options][mandatory_values]',
+                     arr_vals.join(', '),
+                     class: "mt-1 block w-full" %>
+</div>
+
 
 
   <% if @metadata.feature == "combobox" %>

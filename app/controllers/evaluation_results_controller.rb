@@ -76,39 +76,47 @@ class EvaluationResultsController < ApplicationController
 
           # --- CHECKBOXES HANDLING ---
           if meta.feature == 'checkboxes'
-            # normalize both to string arrays
-            selected  = Array(submitted).map(&:to_s)
-            mandatory = Array(meta.options['mandatory_values']).map(&:to_s)
+  # normalize submitted values to an array of strings
+  selected = Array(submitted).map(&:to_s)
 
-            missing = mandatory - selected
-            extra   = selected - mandatory
+  # pull raw mandatory from JSON, then split if it's a string
+  raw_mandatory = meta.options['mandatory_values']
+  mandatory = case raw_mandatory
+              when Array then raw_mandatory.map(&:to_s)
+              when String then raw_mandatory.split(',').map(&:strip)
+              else []
+              end
 
-            if missing.any?
-              status = 'fail'
-              degree = 0.0
-            else
-              status = 'pass'
-              # base 1.0, plus 0.1 per extra selection
-              degree = 1.0 + (extra.size * 0.1)
-            end
+  # compute what's missing / extra
+  missing = mandatory - selected
+  extra   = selected - mandatory
 
-            EvaluationResult
-              .find_or_initialize_by(
-                supplier_id:  supplier.id,
-                subsystem_id: subsystem.id,
-                table_name:   table_name,
-                column_name:  column
-              )
-              .update!(
-                submitted_value: selected,
-                standard_value:  nil,
-                tolerance:       nil,
-                degree:          degree,
-                status:          status
-              )
+  if missing.any?
+    status = 'fail'
+    degree = 0.0
+  else
+    status = 'pass'
+    # base 1.0 + 0.1 per extra
+    degree = 1.0 + (extra.size * 0.1)
+  end
 
-            next
-          end
+  EvaluationResult
+    .find_or_initialize_by(
+      supplier_id:  supplier.id,
+      subsystem_id: subsystem.id,
+      table_name:   table_name,
+      column_name:  column
+    )
+    .update!(
+      submitted_value: selected,
+      standard_value:  nil,
+      tolerance:       nil,
+      degree:          degree,
+      status:          status
+    )
+
+  next
+end
 
           # --- NUMERIC HANDLING ---
           next unless meta.standard_value && meta.tolerance

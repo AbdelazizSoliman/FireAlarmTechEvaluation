@@ -3,89 +3,129 @@ class EvaluationResultsController < ApplicationController
   def index
     @supplier  = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-    @results   =
-      EvaluationResult
-        .where(supplier_id:  @supplier.id,
-               subsystem_id: @subsystem.id)
-        .order(:table_name, :column_name)
+    @results   = EvaluationResult
+                   .where(supplier_id:  @supplier.id,
+                          subsystem_id: @subsystem.id)
+                   .order(:table_name, :column_name)
   end
 
   # POST /evaluation_results/evaluate
-def evaluate
-  supplier  = Supplier.find(params[:supplier_id])
-  subsystem = Subsystem.find(params[:subsystem_id])
+  def evaluate
+    supplier  = Supplier.find(params[:supplier_id])
+    subsystem = Subsystem.find(params[:subsystem_id])
 
-  TableDefinition.where(subsystem_id: subsystem.id).pluck(:table_name).each do |table_name|
-    model = Class.new(ActiveRecord::Base) do
-      self.table_name        = table_name
-      self.inheritance_column = :_type_disabled
-    end
+    TableDefinition
+      .where(subsystem_id: subsystem.id)
+      .pluck(:table_name)
+      .each do |table_name|
+        # Build a quick inline model for that dynamic table
+        model = Class.new(ActiveRecord::Base) do
+          self.table_name        = table_name
+          self.inheritance_column = :_type_disabled
+        end
 
-    record = model.find_by(supplier_id: supplier.id, subsystem_id: subsystem.id)
-    next unless record
+        record = model.find_by(
+          supplier_id:  supplier.id,
+          subsystem_id: subsystem.id
+        )
+        next unless record
 
-    record.attributes.each do |column, submitted|
-      next if %w[id supplier_id subsystem_id created_at updated_at].include?(column)
+        record.attributes.each do |column, submitted|
+          # skip the AR bookkeeping columns
+          next if %w[id supplier_id subsystem_id created_at updated_at].include?(column)
 
-      meta = ColumnMetadata.find_by(table_name: table_name, column_name: column)
-      next unless meta
-
-      # --- COMBOBOX HANDLING ---
-      if meta.feature == 'combobox'
-        # pull the JSONB‐stored standards
-        standards = meta.options['combo_standards'] || {}
-        key       = submitted.to_s
-        setting   = standards[key] || {}
-
-        requirement = setting['requirement']  # e.g. "required/comply", "not required", etc.
-        kase        = setting['case']         # e.g. "Case 01"
-        logic       = setting['logic']        # e.g. "meets the project requirements"
-
-        # decide pass/fail (you can refine this to your exact business rules)
-        status = if requirement.to_s.downcase.include?('no')
-                   'pass'
-                 else
-                   'fail'
-                 end
-        degree = status == 'pass' ? 1.0 : 0.0
-
-        EvaluationResult
-          .find_or_initialize_by(
-            supplier_id:    supplier.id,
-            subsystem_id:   subsystem.id,
-            table_name:     table_name,
-            column_name:    column
+          meta = ColumnMetadata.find_by(
+            table_name:  table_name,
+            column_name: column
           )
-          .update!(
-            submitted_value:    submitted,
-            standard_value:     nil,
-            tolerance:          nil,
-            degree:             degree,
-            status:             status,
-            combo_case:         kase,
-            combo_logic:        logic
-          )
+          next unless meta
 
-        next
-      end
-# ───── CHECKBOXES ─────
-if meta.feature == 'checkboxes'
-          # normalize to an Array
-          selected  = Array(submitted)
-          mandatory = Array(meta.options['mandatory_values'])
-          missing   = mandatory - selected
-          extra     = selected - mandatory
+          # --- COMBOBOX HANDLING ---
+          if meta.feature == 'combobox'
+            standards  = meta.options['combo_standards'] || {}
+            key        = submitted.to_s
+            setting    = standards[key] || {}
 
-          if missing.empty?
-            status = 'pass'
-            # 1 + 0.1 for each extra tick
-            degree = 1.0 + (extra.size * 0.1)
-          else
-            status = 'fail'
-            degree = 0.0
+            requirement = setting['requirement']
+            kase        = setting['case']
+            logic       = setting['logic']
+
+            # basic pass/fail on requirement text
+            status = requirement.to_s.downcase.include?('no') ? 'pass' : 'fail'
+            degree = (status == 'pass' ? 1.0 : 0.0)
+
+            EvaluationResult
+              .find_or_initialize_by(
+                supplier_id:  supplier.id,
+                subsystem_id: subsystem.id,
+                table_name:   table_name,
+                column_name:  column
+              )
+              .update!(
+                submitted_value: submitted,
+                standard_value:  nil,
+                tolerance:       nil,
+                degree:          degree,
+                status:          status,
+                combo_case:      kase,
+                combo_logic:     logic
+              )
+
+            next
           end
 
-          # persist
+          # --- CHECKBOXES HANDLING ---
+          if meta.feature == 'checkboxes'
+            # normalize both to string arrays
+            selected  = Array(submitted).map(&:to_s)
+            mandatory = Array(meta.options['mandatory_values']).map(&:to_s)
+
+            missing = mandatory - selected
+            extra   = selected - mandatory
+
+            if missing.any?
+              status = 'fail'
+              degree = 0.0
+            else
+              status = 'pass'
+              # base 1.0, plus 0.1 per extra selection
+              degree = 1.0 + (extra.size * 0.1)
+            end
+
+            EvaluationResult
+              .find_or_initialize_by(
+                supplier_id:  supplier.id,
+                subsystem_id: subsystem.id,
+                table_name:   table_name,
+                column_name:  column
+              )
+              .update!(
+                submitted_value: selected,
+                standard_value:  nil,
+                tolerance:       nil,
+                degree:          degree,
+                status:          status
+              )
+
+            next
+          end
+
+          # --- NUMERIC HANDLING ---
+          next unless meta.standard_value && meta.tolerance
+
+          standard = meta.standard_value.to_f
+          tol      = meta.tolerance.to_f
+          min_ok   = standard - (standard * tol / 100.0)
+
+          degree, status =
+            if submitted.to_f >= standard
+              [1.0, 'pass']
+            elsif submitted.to_f >= min_ok
+              [0.5, 'pass']
+            else
+              [0.0, 'fail']
+            end
+
           EvaluationResult
             .find_or_initialize_by(
               supplier_id:  supplier.id,
@@ -94,63 +134,29 @@ if meta.feature == 'checkboxes'
               column_name:  column
             )
             .update!(
-              submitted_value:    selected,
-              standard_value:     nil,
-              tolerance:          nil,
-              degree:             degree,
-              status:             status
+              submitted_value: submitted,
+              standard_value:  standard,
+              tolerance:       tol,
+              degree:          degree,
+              status:          status
             )
-
-          next
         end
-      # --- NUMERIC HANDLING (existing logic) ---
-      next unless meta.standard_value && meta.tolerance
-      standard = meta.standard_value.to_f
-      tol      = meta.tolerance.to_f
-      min_ok   = standard - (standard * tol / 100.0)
+      end
 
-      degree, status =
-        if submitted.to_f >= standard
-          [1.0, 'pass']
-        elsif submitted.to_f >= min_ok
-          [0.5, 'pass']
-        else
-          [0.0, 'fail']
-        end
-
-      EvaluationResult
-        .find_or_initialize_by(
-          supplier_id:  supplier.id,
-          subsystem_id: subsystem.id,
-          table_name:   table_name,
-          column_name:  column
-        )
-        .update!(
-          submitted_value: submitted,
-          standard_value:  standard,
-          tolerance:       tol,
-          degree:          degree,
-          status:          status
-        )
-    end
+    redirect_to evaluation_results_path(
+      supplier_id:  supplier.id,
+      subsystem_id: subsystem.id
+    ), notice: 'Re-evaluation complete!'
   end
-
-  redirect_to evaluation_results_path(
-    supplier_id:  supplier.id,
-    subsystem_id: subsystem.id
-  ), notice: 'Re-evaluation complete!'
-end
-
 
   # GET /evaluation_results/download
   def download
     @supplier  = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-    @results   =
-      EvaluationResult
-        .where(supplier_id:  @supplier.id,
-               subsystem_id: @subsystem.id)
-        .order(:table_name, :column_name)
+    @results   = EvaluationResult
+                   .where(supplier_id:  @supplier.id,
+                          subsystem_id: @subsystem.id)
+                   .order(:table_name, :column_name)
 
     package = Axlsx::Package.new
     raw_name  = "Eval #{@supplier.supplier_name} – #{@subsystem.name}"

@@ -8,20 +8,24 @@
 </h1>
 
 <div class="mb-6 flex space-x-3">
-  <%= button_to "Re-Evaluate Now",
-                evaluate_evaluation_results_path(
-                  supplier_id:  @supplier.id,
-                  subsystem_id: @subsystem.id
-                ),
-                method: :post,
-                class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition" %>
+  <%=
+    button_to "Re-Evaluate Now",
+    evaluate_evaluation_results_path(
+      supplier_id:  @supplier.id,
+      subsystem_id: @subsystem.id
+    ),
+    method: :post,
+    class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+  %>
 
-  <%= link_to "Download Excel",
-              download_evaluation_results_path(
-                supplier_id:  @supplier.id,
-                subsystem_id: @subsystem.id
-              ),
-              class: "px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition" %>
+  <%=
+    link_to "Download Excel",
+    download_evaluation_results_path(
+      supplier_id:  @supplier.id,
+      subsystem_id: @subsystem.id
+    ),
+    class: "px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+  %>
 </div>
 
 <table class="w-full border-collapse border border-gray-300 text-sm">
@@ -57,6 +61,13 @@
           <% md = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name) %>
           <% if md&.feature == 'checkboxes' %>
             <%= Array(md.options['mandatory_values']).join(', ') %>
+            <% elseif md.feature == 'combobox' %>
+            <%
+              pass_vals = md.options['combo_standards']
+              .select { |answer, cfg| %w[Case 03 Case 04 Case 05].include?(cfg['case']) }
+              .keys
+            %>
+            <%= pass_vals.join(', ') %>
           <% else %>
             <%= r.standard_value.presence || '—' %>
           <% end %>
@@ -73,7 +84,9 @@
         </td>
 
         <!-- Status -->
-        <td class="border border-gray-300 px-3 py-2 text-center uppercase font-medium">
+        <td
+          class="border border-gray-300 px-3 py-2 text-center uppercase font-medium"
+        >
           <%= r.status %>
         </td>
 

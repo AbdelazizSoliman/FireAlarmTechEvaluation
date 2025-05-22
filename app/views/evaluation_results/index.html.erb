@@ -1,4 +1,5 @@
 <!-- app/views/evaluation_results/index.html.erb -->
+
 <h1 class="text-2xl font-semibold mb-6">
   Evaluation Results for
   <span class="text-indigo-600"><%= @supplier.supplier_name %></span>
@@ -40,27 +41,48 @@
     <% @results.each do |r| %>
       <% row_bg = r.status == 'pass' ? 'bg-green-50' : 'bg-red-50' %>
       <tr class="<%= row_bg %>">
+        <!-- Attribute -->
         <td class="border border-gray-300 px-3 py-2">
           <%= "#{r.table_name}.#{r.column_name}" %>
         </td>
+
+        <!-- Submitted -->
         <td class="border border-gray-300 px-3 py-2 text-right">
           <%= r.submitted_value %>
         </td>
+
+        <!-- Standard (text for checkboxes, numeric otherwise) -->
         <td class="border border-gray-300 px-3 py-2 text-right">
-          <%= r.standard_value %>
+          <%# fetch metadata to decide what to show %>
+          <% md = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name) %>
+          <% if md&.feature == 'checkboxes' %>
+            <%= Array(md.options['mandatory_values']).join(', ') %>
+          <% else %>
+            <%= r.standard_value.presence || '—' %>
+          <% end %>
         </td>
+
+        <!-- Tolerance -->
         <td class="border border-gray-300 px-3 py-2 text-right">
-          <%= r.tolerance %>
+          <%= r.tolerance.presence || '—' %>
         </td>
+
+        <!-- Degree -->
         <td class="border border-gray-300 px-3 py-2 text-right">
           <%= r.degree %>
         </td>
+
+        <!-- Status -->
         <td class="border border-gray-300 px-3 py-2 text-center uppercase font-medium">
           <%= r.status %>
         </td>
+
+        <!-- Case -->
         <td class="border border-gray-300 px-3 py-2 text-center">
           <%= r.combo_case %>
         </td>
+
+        <!-- Logic -->
         <td class="border border-gray-300 px-3 py-2">
           <%= r.combo_logic %>
         </td>

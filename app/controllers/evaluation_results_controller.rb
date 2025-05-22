@@ -21,6 +21,11 @@ class EvaluationResultsController < ApplicationController
                  )
                  .where(column_name: valid_columns)
                  .order(:table_name, :column_name)
+                 # Preload ColumnMetadata records to avoid N+1 queries
+    table_names = @results.map(&:table_name).uniq
+    @column_metadatas = ColumnMetadata
+                          .where(table_name: table_names)
+                          .index_by { |md| "#{md.table_name}.#{md.column_name}" }
   end
 
   # POST /evaluation_results/evaluate

@@ -56,6 +56,7 @@
         </td>
 
         <!-- Standard -->
+        <% require 'json' %>
         <td class="border border-gray-300 px-3 py-2 text-right">
           <%
             md = ColumnMetadata.find_by(
@@ -65,20 +66,24 @@
           %>
 
           <% if md&.feature == 'checkboxes' %>
-            <!-- show the mandatory_values array for checkboxes -->
+            <!-- show the comma-list of mandatory_values -->
             <%= Array(md.options['mandatory_values']).join(', ') %>
           <% elsif md&.feature == 'combobox' %>
-            <% # pull out your combo_standards hash (no `require 'json'` needed) %>
-            <% raw_standards = md.options['combo_standards'] || {} %>
-            <% combo_hash = raw_standards.is_a?(String) ? JSON.parse(raw_standards) : raw_standards %>
+            <!-- pull out your combo_standards (string or hash) -->
+            <% raw        = md.options['combo_standards'] || {} %>
+            <% combo_hash = raw.is_a?(String) ? JSON.parse(raw) : raw %>
 
-            <% # pick only the answers whose case is 03, 04 or 05 %>
+            <!-- pick only the answers whose case is one of your “pass” cases -->
             <% pass_cases = %w[Case 03 Case 04 Case 05] %>
-            <% allowed = combo_hash.select { |answer, cfg| pass_cases.include?(cfg['case']) }.keys %>
+            <%
+              allowed    = combo_hash.select { |answer, cfg|
+                pass_cases.include?(cfg['case'])
+              }.keys
+            %>
 
             <%= allowed.any? ? allowed.join(', ') : '—' %>
           <% else %>
-            <!-- numeric standard or fallback dash -->
+            <!-- numeric standard_value or dash -->
             <%= r.standard_value.presence || '—' %>
           <% end %>
         </td>

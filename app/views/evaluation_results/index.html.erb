@@ -1,52 +1,70 @@
-<h1>
+<!-- app/views/evaluation_results/index.html.erb -->
+<h1 class="text-2xl font-semibold mb-6">
   Evaluation Results for
-  <%= @supplier.supplier_name %> /
-  <%= @subsystem.name %>
+  <span class="text-indigo-600"><%= @supplier.supplier_name %></span>
+  /
+  <span class="text-indigo-600"><%= @subsystem.name %></span>
 </h1>
 
-<div class="mb-4">
+<div class="mb-6 flex space-x-3">
   <%= button_to "Re-Evaluate Now",
                 evaluate_evaluation_results_path(
                   supplier_id:  @supplier.id,
                   subsystem_id: @subsystem.id
                 ),
                 method: :post,
-                class: "btn btn-primary" %>
+                class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition" %>
 
   <%= link_to "Download Excel",
               download_evaluation_results_path(
                 supplier_id:  @supplier.id,
                 subsystem_id: @subsystem.id
               ),
-              class: "btn btn-secondary ml-2" %>
+              class: "px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition" %>
 </div>
 
-<table class="table-auto …">
+<table class="w-full border-collapse border border-gray-300 text-sm">
   <thead>
-    <tr class="bg-gray-200">
-      <th>Attribute</th>
-      <th>Submitted</th>
-      <th>Standard</th>
-      <th>Tolerance</th>
-      <th>Degree</th>
-      <th>Status</th>
-      <th>Case</th>
-      <th>Logic</th>
+    <tr class="bg-gray-100">
+      <th class="border border-gray-300 px-3 py-2 text-left">Attribute</th>
+      <th class="border border-gray-300 px-3 py-2 text-right">Submitted</th>
+      <th class="border border-gray-300 px-3 py-2 text-right">Standard</th>
+      <th class="border border-gray-300 px-3 py-2 text-right">Tolerance</th>
+      <th class="border border-gray-300 px-3 py-2 text-right">Degree</th>
+      <th class="border border-gray-300 px-3 py-2 text-center">Status</th>
+      <th class="border border-gray-300 px-3 py-2 text-center">Case</th>
+      <th class="border border-gray-300 px-3 py-2 text-left">Logic</th>
     </tr>
   </thead>
   <tbody>
     <% @results.each do |r| %>
-      <tr class="<%= r.status == 'pass' ? 'bg-green-100' : 'bg-red-100' %>">
-        <td><%= "#{r.table_name}.#{r.column_name}" %></td>
-        <td><%= r.submitted_value %></td>
-        <td><%= r.standard_value  %></td>
-        <td><%= r.tolerance       %></td>
-        <td><%= r.degree          %></td>
-        <td><%= r.status.upcase   %></td>
-        <td><%= r.combo_case      %></td>
-        <td><%= r.combo_logic     %></td>
+      <% row_bg = r.status == 'pass' ? 'bg-green-50' : 'bg-red-50' %>
+      <tr class="<%= row_bg %>">
+        <td class="border border-gray-300 px-3 py-2">
+          <%= "#{r.table_name}.#{r.column_name}" %>
+        </td>
+        <td class="border border-gray-300 px-3 py-2 text-right">
+          <%= r.submitted_value %>
+        </td>
+        <td class="border border-gray-300 px-3 py-2 text-right">
+          <%= r.standard_value %>
+        </td>
+        <td class="border border-gray-300 px-3 py-2 text-right">
+          <%= r.tolerance %>
+        </td>
+        <td class="border border-gray-300 px-3 py-2 text-right">
+          <%= r.degree %>
+        </td>
+        <td class="border border-gray-300 px-3 py-2 text-center uppercase font-medium">
+          <%= r.status %>
+        </td>
+        <td class="border border-gray-300 px-3 py-2 text-center">
+          <%= r.combo_case %>
+        </td>
+        <td class="border border-gray-300 px-3 py-2">
+          <%= r.combo_logic %>
+        </td>
       </tr>
     <% end %>
   </tbody>
 </table>
-

@@ -60,7 +60,7 @@
             <% if md.feature == 'combobox' %>
               <% combo_stds = md.options['combo_standards'] || {} %>
               <% pass_cases = %w[Case 03 Case 04 Case 05] %>
-              <% required_vals = combo_stds.select { |key, value| value.is_a?(Hash) && pass_cases.include?(value['case']) }.keys %>
+              <% required_vals = combo_stds.select { |key, value| value.is_a?(Hash) && pass_cases.include?(value['case'].to_s.strip) }.keys %>
               <% Rails.logger.info "Combo standards for #{r.table_name}.#{r.column_name}: #{combo_stds.inspect}" %>
               <% Rails.logger.info "Required values for #{r.table_name}.#{r.column_name}: #{required_vals.inspect}" %>
               <%= required_vals.any? ? required_vals.join(', ') : '—' %>

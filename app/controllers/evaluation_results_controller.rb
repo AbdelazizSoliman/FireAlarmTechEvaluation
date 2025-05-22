@@ -1,19 +1,24 @@
 # app/controllers/evaluation_results_controller.rb
 class EvaluationResultsController < ApplicationController
- def index
+  # GET /evaluation_results?supplier_id=…&subsystem_id=…
+  def index
     @supplier  = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
 
-    # look up all the live metadata-backed column names
+    # Only show results for columns that actually have metadata
     valid_columns = ColumnMetadata
-                      .where(table_name: TableDefinition
-                                                     .where(subsystem_id: @subsystem.id)
-                                                     .pluck(:table_name))
+                      .where(
+                        table_name: TableDefinition
+                                      .where(subsystem_id: @subsystem.id)
+                                      .pluck(:table_name)
+                      )
                       .pluck(:column_name)
 
     @results = EvaluationResult
-                 .where(supplier_id:    @supplier.id,
-                        subsystem_id:   @subsystem.id)
+                 .where(
+                   supplier_id:  @supplier.id,
+                   subsystem_id: @subsystem.id
+                 )
                  .where(column_name: valid_columns)
                  .order(:table_name, :column_name)
   end
@@ -23,34 +28,56 @@ class EvaluationResultsController < ApplicationController
     supplier  = Supplier.find(params[:supplier_id])
     subsystem = Subsystem.find(params[:subsystem_id])
 
-    TableDefinition.where(subsystem_id: subsystem.id).pluck(:table_name).each do |table_name|
+    # Loop through every dynamic table in this subsystem
+    TableDefinition
+      .where(subsystem_id: subsystem.id)
+      .pluck(:table_name)
+      .each do |table_name|
+
+      # Build a temporary AR model for that table
       model = Class.new(ActiveRecord::Base) do
         self.table_name        = table_name
         self.inheritance_column = :_type_disabled
       end
 
+      # Fetch the single record for this supplier+subsystem (if any)
       record = model.find_by(supplier_id: supplier.id, subsystem_id: subsystem.id)
       next unless record
 
+      # Iterate each column/value pair
       record.attributes.each do |column, submitted|
-        # skip metadata columns
+        # Skip our plumbing columns
         next if %w[id supplier_id subsystem_id created_at updated_at].include?(column)
 
         meta = ColumnMetadata.find_by(table_name: table_name, column_name: column)
         next unless meta
 
-        # --- COMBOBOX HANDLING ---
+        # --- COMBOBOX HANDLING: use the “Case” value to decide pass/fail & degree ---
         if meta.feature == 'combobox'
           standards = meta.options['combo_standards'] || {}
           setting   = standards[submitted.to_s] || {}
 
-          requirement = setting['requirement']
-          kase        = setting['case']
-          logic       = setting['logic']
+          kase  = setting['case']  || ''
+          logic = setting['logic'] || ''
 
-          # crude rule: anything without “no” is fail
-          status = requirement.to_s.downcase.include?('no') ? 'pass' : 'fail'
-          degree = (status == 'pass' ? 1.0 : 0.0)
+          # Map your cases:
+          # 01 & 02 → fail, 0.0
+          # 03 & 04 → pass, 1.0
+          # 05      → pass, 1.5
+          # 06      → fail, 0.0
+          case kase
+          when 'Case 01', 'Case 02'
+            status = 'fail'; degree = 0.0
+          when 'Case 03', 'Case 04'
+            status = 'pass'; degree = 1.0
+          when 'Case 05'
+            status = 'pass'; degree = 1.5
+          when 'Case 06'
+            status = 'fail'; degree = 0.0
+          else
+            # fallback
+            status = 'fail'; degree = 0.0
+          end
 
           EvaluationResult
             .find_or_initialize_by(
@@ -68,20 +95,19 @@ class EvaluationResultsController < ApplicationController
               combo_case:      kase,
               combo_logic:     logic
             )
+
           next
         end
 
-        # --- CHECKBOXES HANDLING ---
+        # --- CHECKBOXES HANDLING (unchanged) ---
         if meta.feature == 'checkboxes'
-          # normalize the submitted value into an Array of strings
           selected = case submitted
                      when Array then submitted.map(&:to_s)
                      when String then submitted.split(',').map(&:strip)
                      else []
                      end
 
-          # likewise normalize mandatory_values
-          raw_mand = meta.options['mandatory_values']
+          raw_mand  = meta.options['mandatory_values']
           mandatory = case raw_mand
                       when Array then raw_mand.map(&:to_s)
                       when String then raw_mand.split(',').map(&:strip)
@@ -92,11 +118,9 @@ class EvaluationResultsController < ApplicationController
           extra   = selected - mandatory
 
           if missing.any?
-            status = 'fail'
-            degree = 0.0
+            status = 'fail'; degree = 0.0
           else
-            status = 'pass'
-            degree = 1.0 + (extra.size * 0.1)
+            status = 'pass'; degree = 1.0 + (extra.size * 0.1)
           end
 
           EvaluationResult
@@ -113,10 +137,11 @@ class EvaluationResultsController < ApplicationController
               degree:          degree,
               status:          status
             )
+
           next
         end
 
-        # --- NUMERIC HANDLING ---
+        # --- NUMERIC HANDLING (unchanged) ---
         next unless meta.standard_value && meta.tolerance
 
         standard = meta.standard_value.to_f
@@ -149,6 +174,7 @@ class EvaluationResultsController < ApplicationController
       end
     end
 
+    # Redirect back to the results page
     redirect_to evaluation_results_path(
       supplier_id:  supplier.id,
       subsystem_id: subsystem.id
@@ -159,15 +185,16 @@ class EvaluationResultsController < ApplicationController
   def download
     @supplier  = Supplier.find(params[:supplier_id])
     @subsystem = Subsystem.find(params[:subsystem_id])
-    @results   =
-      EvaluationResult
-        .where(supplier_id:  @supplier.id,
-               subsystem_id: @subsystem.id)
-        .order(:table_name, :column_name)
+    @results   = EvaluationResult
+                   .where(supplier_id:  @supplier.id,
+                          subsystem_id: @subsystem.id)
+                   .order(:table_name, :column_name)
 
-    package = Axlsx::Package.new
-    raw_name  = "Eval #{@supplier.supplier_name} – #{@subsystem.name}"
-    sheet_name = raw_name.gsub(/[\\\/\?\*\[\]]/, '-').slice(0, 31)
+    package  = Axlsx::Package.new
+    raw_name = "Eval #{@supplier.supplier_name} – #{@subsystem.name}"
+    sheet_name = raw_name
+      .gsub(/[\\\/\?\*\[\]]/, '-')
+      .slice(0, 31)
 
     package.workbook.add_worksheet(name: sheet_name) do |sheet|
       sheet.add_row [

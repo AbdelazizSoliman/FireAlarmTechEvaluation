@@ -33,7 +33,7 @@
     <tr class="bg-gray-100">
       <th class="border border-gray-300 px-3 py-2 text-left">Attribute</th>
       <th class="border border-gray-300 px-3 py-2 text-right">Submitted</th>
-      <th class="border border-gray-300 px-3 py-2 text-right">Standard</th>
+      <th class="border border-gray-300 px-3 py-2 text-right">Required</th>
       <th class="border border-gray-300 px-3 py-2 text-right">Tolerance</th>
       <th class="border border-gray-300 px-3 py-2 text-right">Degree</th>
       <th class="border border-gray-300 px-3 py-2 text-center">Status</th>
@@ -55,18 +55,21 @@
           <%= r.submitted_value %>
         </td>
 
-        <!-- Standard (text for checkboxes, numeric otherwise) -->
+        <!-- Standard -->
         <td class="border border-gray-300 px-3 py-2 text-right">
           <% md = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name) %>
           <% if md&.feature == 'checkboxes' %>
+            <%# show the mandatory_values array %>
             <%= Array(md.options['mandatory_values']).join(', ') %>
           <% elsif md&.feature == 'combobox' %>
+            <%# collect all answers whose case is one of the “pass” cases %>
+            <% combo_stds = md.options['combo_standards'] || {} %>
             <%
-              pass_vals = (md.options['combo_standards'] || {})
-                            .select { |_, cfg| %w[Case 03 Case 04 Case 05].include?(cfg['case']) }
-                            .keys
+              pass_answers = combo_stds
+              .select { |_, cfg| %w[Case 03 Case 04 Case 05].include?(cfg['case']) }
+              .keys
             %>
-            <%= pass_vals.any? ? pass_vals.join(', ') : '—' %>
+            <%= pass_answers.any? ? pass_answers.join(', ') : '—' %>
           <% else %>
             <%= r.standard_value.presence || '—' %>
           <% end %>

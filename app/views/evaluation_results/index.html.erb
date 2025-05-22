@@ -58,30 +58,37 @@
         <!-- Required -->
         <td class="border border-gray-300 px-3 py-2 text-right">
           <% md = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name) %>
-
-          <% if md&.feature == 'checkboxes' %>
-            <%= Array(md.options['mandatory_values']).join(', ') %>
-          <% elsif md&.feature == 'combobox' %>
-            <% raw = md.options['combo_standards'] %>
-            <%
-              combo = case raw
-              when String then JSON.parse(raw)     # if it’s stored as a JSON string
-              when Hash   then raw                 # if it’s already a Hash/JSONB
-              else {}
+          <% raw_combo_stds = md&.options && md.options['combo_standards'] %>
+          <%
+            combo_stds =
+            case raw_combo_stds
+            when String
+              begin
+                JSON.parse(raw_combo_stds)
+              rescue
+                {}
               end
-            %>
-            <% pass_cases     = %w[Case 03 Case 04 Case 05] %>
+            when Hash
+              raw_combo_stds
+            else
+              {}
+            end
+          %>
+          <% pass_cases = %w[Case 03 Case 04 Case 05] %>
+          <% if combo_stds.any? %>
             <%
-              required_vals = combo.select { |answer, cfg|
+              required_vals = combo_stds.select { |_answer, cfg|
                 pass_cases.include?(cfg['case'])
               }.keys
             %>
-
             <%= required_vals.any? ? required_vals.join(', ') : '—' %>
+          <% elsif md&.feature == 'checkboxes' %>
+            <%= Array(md.options['mandatory_values']).join(', ') %>
           <% else %>
             <%= r.standard_value.presence || '—' %>
           <% end %>
         </td>
+
         <!-- Tolerance -->
         <td class="border border-gray-300 px-3 py-2 text-right">
           <%= r.tolerance.presence || '—' %>

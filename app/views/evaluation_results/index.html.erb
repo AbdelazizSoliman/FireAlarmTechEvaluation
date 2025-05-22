@@ -59,7 +59,7 @@
           <% if md %>
             <% if md.feature == 'combobox' %>
               <% combo_stds = md.options['combo_standards'] || {} %>
-              <% pass_cases = %w[Case 03 Case 04 Case 05] %>
+              <% pass_cases = ["Case 03", "Case 04", "Case 05"] %>
               <% required_vals = [] %>
               <% Rails.logger.info "Pass cases: #{pass_cases.inspect}" %>
               <% combo_stds.each do |key, value| %>

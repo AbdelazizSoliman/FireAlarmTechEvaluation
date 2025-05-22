@@ -57,20 +57,28 @@
 
         <!-- Standard -->
         <td class="border border-gray-300 px-3 py-2 text-right">
-          <% md = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name) %>
-          <% if md&.feature == 'checkboxes' %>
-            <%# show the mandatory_values array %>
+          <%
+            md = ColumnMetadata.find_by(
+              table_name:   r.table_name,
+              column_name:  r.column_name
+            )
+          %>
+
+          <% case md&.feature
+     when 'checkboxes' %>
+            <!-- show comma‐joined mandatory_values for checkboxes -->
             <%= Array(md.options['mandatory_values']).join(', ') %>
-          <% elsif md&.feature == 'combobox' %>
-            <%# collect all answers whose case is one of the “pass” cases %>
-            <% combo_stds = md.options['combo_standards'] || {} %>
+          <% when 'combobox' %>
+            <!-- pick only those answers whose case is Case 03, 04, or 05 -->
+            <% pass_cases   = %w[Case 03 Case 04 Case 05] %>
             <%
-              pass_answers = combo_stds
-              .select { |_, cfg| %w[Case 03 Case 04 Case 05].include?(cfg['case']) }
+              standards   = (md.options['combo_standards'] || {})
+              .select { |answer, cfg| pass_cases.include?(cfg['case']) }
               .keys
             %>
-            <%= pass_answers.any? ? pass_answers.join(', ') : '—' %>
+            <%= standards.any? ? standards.join(', ') : '—' %>
           <% else %>
+            <!-- numeric standard_value or dash -->
             <%= r.standard_value.presence || '—' %>
           <% end %>
         </td>

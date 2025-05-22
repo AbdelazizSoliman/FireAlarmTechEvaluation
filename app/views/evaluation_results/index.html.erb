@@ -57,17 +57,16 @@
 
         <!-- Standard (text for checkboxes, numeric otherwise) -->
         <td class="border border-gray-300 px-3 py-2 text-right">
-          <%# fetch metadata to decide what to show %>
           <% md = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name) %>
           <% if md&.feature == 'checkboxes' %>
             <%= Array(md.options['mandatory_values']).join(', ') %>
-            <% elseif md.feature == 'combobox' %>
+          <% elsif md&.feature == 'combobox' %>
             <%
-              pass_vals = md.options['combo_standards']
-              .select { |answer, cfg| %w[Case 03 Case 04 Case 05].include?(cfg['case']) }
-              .keys
+              pass_vals = (md.options['combo_standards'] || {})
+                            .select { |_, cfg| %w[Case 03 Case 04 Case 05].include?(cfg['case']) }
+                            .keys
             %>
-            <%= pass_vals.join(', ') %>
+            <%= pass_vals.any? ? pass_vals.join(', ') : '—' %>
           <% else %>
             <%= r.standard_value.presence || '—' %>
           <% end %>

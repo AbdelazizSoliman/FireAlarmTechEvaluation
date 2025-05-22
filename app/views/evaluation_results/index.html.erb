@@ -65,26 +65,20 @@
           %>
 
           <% if md&.feature == 'checkboxes' %>
+            <!-- show the mandatory_values array for checkboxes -->
             <%= Array(md.options['mandatory_values']).join(', ') %>
           <% elsif md&.feature == 'combobox' %>
-            <% raw_combo = md.options['combo_standards'] %>
-            <%
-              combo_hash = case raw_combo
-                when String then JSON.parse(raw_combo)
-                when Hash   then raw_combo
-                else {}
-              end
-            %>
+            <% # pull out your combo_standards hash (no `require 'json'` needed) %>
+            <% raw_standards = md.options['combo_standards'] || {} %>
+            <% combo_hash = raw_standards.is_a?(String) ? JSON.parse(raw_standards) : raw_standards %>
 
+            <% # pick only the answers whose case is 03, 04 or 05 %>
             <% pass_cases = %w[Case 03 Case 04 Case 05] %>
-            <%
-              standards = combo_hash
-              .select { |_, cfg| pass_cases.include?(cfg['case']) }
-              .keys
-            %>
+            <% allowed = combo_hash.select { |answer, cfg| pass_cases.include?(cfg['case']) }.keys %>
 
-            <%= standards.any? ? standards.join(', ') : '—' %>
+            <%= allowed.any? ? allowed.join(', ') : '—' %>
           <% else %>
+            <!-- numeric standard or fallback dash -->
             <%= r.standard_value.presence || '—' %>
           <% end %>
         </td>

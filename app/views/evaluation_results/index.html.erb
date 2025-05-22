@@ -61,11 +61,14 @@
               <% combo_stds = md.options['combo_standards'] || {} %>
               <% pass_cases = %w[Case 03 Case 04 Case 05] %>
               <% required_vals = [] %>
+              <% Rails.logger.info "Pass cases: #{pass_cases.inspect}" %>
               <% combo_stds.each do |key, value| %>
                 <% case_value = value['case'].to_s.strip rescue 'nil' %>
-                <% is_match = value.is_a?(Hash) && pass_cases.include?(case_value) %>
-                <% Rails.logger.info "Checking #{r.table_name}.#{r.column_name} - Key: #{key}, Case: #{case_value.inspect}, Is Hash: #{value.is_a?(Hash)}, Matches pass_cases: #{is_match}" %>
-                <% required_vals << key if is_match %>
+                <% is_hash = value.is_a?(Hash) %>
+                <% case_exists = value.key?('case') %>
+                <% matches_pass_cases = pass_cases.include?(case_value) %>
+                <% Rails.logger.info "Checking #{r.table_name}.#{r.column_name} - Key: #{key}, Case: #{case_value.inspect}, Is Hash: #{is_hash}, Case Exists: #{case_exists}, Matches pass_cases: #{matches_pass_cases}" %>
+                <% required_vals << key if is_hash && case_exists && matches_pass_cases %>
               <% end %>
               <% Rails.logger.info "Combo standards for #{r.table_name}.#{r.column_name}: #{combo_stds.inspect}" %>
               <% Rails.logger.info "Required values for #{r.table_name}.#{r.column_name}: #{required_vals.inspect}" %>

@@ -124,6 +124,51 @@ def submitted_data
   render json: { submission: data }, status: :ok
 end
 
+def my_submissions
+  supplier = authenticate_supplier!
+  return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
+
+  # Find all subsystems where this supplier has at least one submitted table
+  subsystem_ids = TableDefinition
+    .where(id: ColumnMetadata.where("table_name IN (?)",
+      ActiveRecord::Base.connection.tables
+    ).pluck(:table_name))
+    .pluck(:subsystem_id)
+    .uniq
+
+  # You probably want to fetch all subsystems that have at least one row in any of their dynamic tables for this supplier
+  subsystems = Subsystem.where(id: subsystem_ids)
+
+  submissions = []
+
+  subsystems.each do |subsystem|
+    # Find at least one table for this subsystem where the supplier has a row
+    table_defs = TableDefinition.where(subsystem_id: subsystem.id)
+    found = false
+
+    table_defs.each do |td|
+      model = Class.new(ActiveRecord::Base) do
+        self.table_name = td.table_name
+        self.inheritance_column = :_type_disabled
+      end
+      # Does this supplier have a row?
+      row = model.where(supplier_id: supplier.id, subsystem_id: subsystem.id).first
+      if row
+        submissions << {
+          id: row.id,
+          subsystem_id: subsystem.id,
+          subsystem_name: subsystem.name,
+          created_at: row.created_at
+        }
+        found = true
+        break
+      end
+    end
+  end
+
+  render json: { submissions: submissions }
+end
+
     # GET /api/table_metadata/:table_name?subsystem_id=…
     def table_metadata
   tn        = params[:table_name]

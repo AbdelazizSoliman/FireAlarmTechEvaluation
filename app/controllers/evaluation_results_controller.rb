@@ -187,20 +187,19 @@ class EvaluationResultsController < ApplicationController
   end
 
   # GET /evaluation_results/download
-  def download
+ def download
   @supplier  = Supplier.find(params[:supplier_id])
   @subsystem = Subsystem.find(params[:subsystem_id])
   @results   = EvaluationResult
-                 .where(supplier_id:  @supplier.id,
-                        subsystem_id: @subsystem.id)
-                 .where(status: 'active')
-                 .order(:table_name, :column_name)
+    .where(supplier_id: @supplier.id, subsystem_id: @subsystem.id)
+    .order(:table_name, :column_name)
+    .select do |r|
+      ColumnMetadata.exists?(table_name: r.table_name, column_name: r.column_name)
+    end
 
   package  = Axlsx::Package.new
   raw_name = "Eval #{@supplier.supplier_name} – #{@subsystem.name}"
-  sheet_name = raw_name
-    .gsub(/[\\\/\?\*\[\]]/, '-')
-    .slice(0, 31)
+  sheet_name = raw_name.gsub(/[\\\/\?\*\[\]]/, '-').slice(0, 31)
 
   package.workbook.add_worksheet(name: sheet_name) do |sheet|
     sheet.add_row [
@@ -215,22 +214,21 @@ class EvaluationResultsController < ApplicationController
     ]
     @results.each do |r|
       md = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name)
-      required_value = if md
-                         case md.feature
-                         when 'combobox'
-                           combo_stds = md.options['combo_standards'] || {}
-                           pass_cases = ["Case 03", "Case 04", "Case 05"]
-                           required_vals = combo_stds.select { |key, value| value.is_a?(Hash) && pass_cases.include?(value['case'].to_s.strip) }.keys
-                           required_vals.any? ? required_vals.join(', ') : '—'
-                         when 'checkboxes'
-                           mandatory_vals = Array(md.options['mandatory_values'])
-                           mandatory_vals.any? ? mandatory_vals.join(', ') : '—'
-                         else
-                           r.standard_value.presence || '—'
-                         end
-                       else
-                         '—'
-                       end
+      next unless md
+
+      required_value =
+        case md.feature
+        when 'combobox'
+          combo_stds = md.options['combo_standards'] || {}
+          pass_cases = ["Case 03", "Case 04", "Case 05"]
+          required_vals = combo_stds.select { |key, value| value.is_a?(Hash) && pass_cases.include?(value['case'].to_s.strip) }.keys
+          required_vals.any? ? required_vals.join(', ') : '—'
+        when 'checkboxes'
+          mandatory_vals = Array(md.options['mandatory_values'])
+          mandatory_vals.any? ? mandatory_vals.join(', ') : '—'
+        else
+          r.standard_value.presence || '—'
+        end
 
       sheet.add_row [
         "#{r.table_name}.#{r.column_name}",
@@ -252,4 +250,5 @@ class EvaluationResultsController < ApplicationController
     filename: "evaluation_#{@supplier.supplier_name}_#{@subsystem.name}.xlsx",
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 end
+
 end

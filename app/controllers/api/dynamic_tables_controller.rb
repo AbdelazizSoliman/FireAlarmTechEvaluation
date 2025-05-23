@@ -128,46 +128,40 @@ def my_submissions
   supplier = authenticate_supplier!
   return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
 
-  # Find all subsystems where this supplier has at least one submitted table
-  subsystem_ids = TableDefinition
-    .where(id: ColumnMetadata.where("table_name IN (?)",
-      ActiveRecord::Base.connection.tables
-    ).pluck(:table_name))
-    .pluck(:subsystem_id)
-    .uniq
-
-  # You probably want to fetch all subsystems that have at least one row in any of their dynamic tables for this supplier
-  subsystems = Subsystem.where(id: subsystem_ids)
+  # Find all subsystems that have dynamic tables
+  subsystem_ids = TableDefinition.distinct.pluck(:subsystem_id)
 
   submissions = []
 
-  subsystems.each do |subsystem|
-    # Find at least one table for this subsystem where the supplier has a row
-    table_defs = TableDefinition.where(subsystem_id: subsystem.id)
-    found = false
-
-    table_defs.each do |td|
+  subsystem_ids.each do |subsystem_id|
+    tables = TableDefinition.where(subsystem_id: subsystem_id)
+    submitted = false
+    tables.each do |td|
+      table = td.table_name
+      # Check if table exists in DB
+      next unless ActiveRecord::Base.connection.data_source_exists?(table)
       model = Class.new(ActiveRecord::Base) do
-        self.table_name = td.table_name
+        self.table_name = table
         self.inheritance_column = :_type_disabled
       end
-      # Does this supplier have a row?
-      row = model.where(supplier_id: supplier.id, subsystem_id: subsystem.id).first
+      row = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id).first
       if row
+        subsystem = Subsystem.find(subsystem_id)
         submissions << {
-          id: row.id,
           subsystem_id: subsystem.id,
           subsystem_name: subsystem.name,
-          created_at: row.created_at
+          table_name: table,
+          submitted_at: row.created_at
         }
-        found = true
-        break
+        submitted = true
+        break # If you want only one row per subsystem, otherwise remove this
       end
     end
   end
 
   render json: { submissions: submissions }
 end
+
 
     # GET /api/table_metadata/:table_name?subsystem_id=…
     def table_metadata

@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     get  '/subsystems/:subsystem_id/table_order',       to: 'dynamic_tables#table_order'
     get  '/subsystems/:subsystem_id/table_definitions', to: 'dynamic_tables#table_definitions'
     post '/subsystems/:subsystem_id/save_all',          to: 'dynamic_tables#save_all'
+    get '/subsystems/:subsystem_id/submitted_data', to: 'dynamic_tables#submitted_data'
     
     namespace :supplier do
       resources :suppliers,      only: [:create, :index, :show]

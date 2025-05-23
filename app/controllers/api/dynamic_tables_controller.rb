@@ -96,6 +96,34 @@ module Api
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
     end
 
+    # app/controllers/api/dynamic_tables_controller.rb
+def submitted_data
+  supplier = authenticate_supplier!
+  subsystem_id = params[:id] || params[:subsystem_id]
+
+  if supplier.nil?
+    render json: { error: 'Supplier not found. Please log in again.' }, status: :unauthorized
+    return
+  end
+
+  # Fetch all table definitions for this subsystem
+  tables = TableDefinition.where(subsystem_id: subsystem_id)
+  data = {}
+
+  tables.each do |td|
+    model = Class.new(ActiveRecord::Base) do
+      self.table_name = td.table_name
+      self.inheritance_column = :_type_disabled
+    end
+
+    # For each table, get the one record for this supplier and subsystem
+    record = model.find_by(supplier_id: supplier.id, subsystem_id: subsystem_id)
+    data[td.table_name] = record ? record.attributes : nil
+  end
+
+  render json: { submission: data }, status: :ok
+end
+
     # GET /api/table_metadata/:table_name?subsystem_id=…
     def table_metadata
   tn        = params[:table_name]

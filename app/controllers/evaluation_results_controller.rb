@@ -193,6 +193,7 @@ class EvaluationResultsController < ApplicationController
   @results   = EvaluationResult
                  .where(supplier_id:  @supplier.id,
                         subsystem_id: @subsystem.id)
+                 .where(status: 'active')
                  .order(:table_name, :column_name)
 
   package  = Axlsx::Package.new

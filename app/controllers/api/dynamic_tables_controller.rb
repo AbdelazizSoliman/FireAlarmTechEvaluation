@@ -119,7 +119,11 @@ module Api
         data[td.table_name] = record ? record.attributes : nil
       end
 
-      render json: { submission: data }, status: :ok
+      # Fetch subsystem name
+      subsystem = Subsystem.find_by(id: subsystem_id)
+      subsystem_name = subsystem&.name || "Unknown Subsystem"
+
+      render json: { submission: data, subsystem_name: subsystem_name }, status: :ok
     end
 
     def my_submissions

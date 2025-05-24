@@ -128,38 +128,33 @@ def my_submissions
   supplier = authenticate_supplier!
   return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
 
-  # Get all unique subsystem_ids (ordered by position if you want)
-  subsystem_ids = TableDefinition.order(:position).pluck(:subsystem_id).uniq
-
-  submissions = []
+  # Get all unique subsystem_ids where supplier has at least one submitted row in any dynamic table
+  subsystem_ids = TableDefinition.distinct.pluck(:subsystem_id)
+  submitted = []
 
   subsystem_ids.each do |subsystem_id|
-    tables = TableDefinition.where(subsystem_id: subsystem_id).order(:position)
+    tables = TableDefinition.where(subsystem_id: subsystem_id)
     tables.each do |td|
-      table = td.table_name
-      next unless ActiveRecord::Base.connection.data_source_exists?(table)
-
+      next unless ActiveRecord::Base.connection.data_source_exists?(td.table_name)
       model = Class.new(ActiveRecord::Base) do
-        self.table_name = table
+        self.table_name = td.table_name
         self.inheritance_column = :_type_disabled
       end
-
       row = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id).first
       if row
         subsystem = Subsystem.find(subsystem_id)
-        submissions << {
+        submitted << {
           subsystem_id: subsystem.id,
-          subsystem_name: subsystem.name,
-          table_name: table,
-          submitted_at: row.created_at
+          subsystem_name: subsystem.name
         }
-        break # Stop after first table found for this subsystem
+        break # Only need to add the subsystem once, move to next
       end
     end
   end
 
-  render json: { submissions: submissions }
+  render json: { submissions: submitted }
 end
+
 
 
 

@@ -1,4 +1,3 @@
-# app/controllers/api/dynamic_tables_controller.rb
 module Api
   class DynamicTablesController < ApplicationController
     skip_forgery_protection
@@ -96,109 +95,98 @@ module Api
       render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
     end
 
-    # app/controllers/api/dynamic_tables_controller.rb
-def submitted_data
-  supplier = authenticate_supplier!
-  subsystem_id = params[:id] || params[:subsystem_id]
+    def submitted_data
+      supplier = authenticate_supplier!
+      subsystem_id = params[:id] || params[:subsystem_id]
 
-  if supplier.nil?
-    render json: { error: 'Supplier not found. Please log in again.' }, status: :unauthorized
-    return
-  end
+      if supplier.nil?
+        render json: { error: 'Supplier not found. Please log in again.' }, status: :unauthorized
+        return
+      end
 
-  # Fetch all table definitions for this subsystem
-  tables = TableDefinition.where(subsystem_id: subsystem_id)
-  data = {}
+      # Fetch all table definitions for this subsystem
+      tables = TableDefinition.where(subsystem_id: subsystem_id)
+      data = {}
 
-  tables.each do |td|
-    model = Class.new(ActiveRecord::Base) do
-      self.table_name = td.table_name
-      self.inheritance_column = :_type_disabled
+      tables.each do |td|
+        model = Class.new(ActiveRecord::Base) do
+          self.table_name = td.table_name
+          self.inheritance_column = :_type_disabled
+        end
+
+        # For each table, get the one record for this supplier and subsystem
+        record = model.find_by(supplier_id: supplier.id, subsystem_id: subsystem_id)
+        data[td.table_name] = record ? record.attributes : nil
+      end
+
+      render json: { submission: data }, status: :ok
     end
 
-    # For each table, get the one record for this supplier and subsystem
-    record = model.find_by(supplier_id: supplier.id, subsystem_id: subsystem_id)
-    data[td.table_name] = record ? record.attributes : nil
-  end
+    def my_submissions
+      supplier = authenticate_supplier!
+      return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
 
-  render json: { submission: data }, status: :ok
-end
+      # Get all unique subsystem_ids where the supplier has submitted data
+      submitted_subsystem_ids = TableDefinition.joins("LEFT JOIN (#{dynamic_table_query(supplier.id)}) dt ON dt.subsystem_id = table_definitions.subsystem_id")
+                                              .where("dt.supplier_id = ?", supplier.id)
+                                              .distinct
+                                              .pluck(:subsystem_id)
 
-def my_submissions
-  supplier = authenticate_supplier!
-  return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
-
-  # Get all unique subsystem_ids where supplier has at least one submitted row in any dynamic table
-  subsystem_ids = TableDefinition.distinct.pluck(:subsystem_id)
-  submitted = []
-
-  subsystem_ids.each do |subsystem_id|
-    tables = TableDefinition.where(subsystem_id: subsystem_id)
-    tables.each do |td|
-      next unless ActiveRecord::Base.connection.data_source_exists?(td.table_name)
-      model = Class.new(ActiveRecord::Base) do
-        self.table_name = td.table_name
-        self.inheritance_column = :_type_disabled
+      submitted = []
+      submitted_subsystem_ids.each do |subsystem_id|
+        subsystem = Subsystem.find_by(id: subsystem_id)
+        if subsystem
+          submitted << {
+            subsystem_id: subsystem.id,
+            subsystem_name: subsystem.name
+          }
+        end
       end
-      row = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id).first
-      if row
-        subsystem = Subsystem.find(subsystem_id)
-        submitted << {
-          subsystem_id: subsystem.id,
-          subsystem_name: subsystem.name
-        }
-        break # Only need to add the subsystem once, move to next
-      end
+
+      render json: { submissions: submitted }
     end
-  end
-
-  render json: { submissions: submitted }
-end
-
-
-
 
     # GET /api/table_metadata/:table_name?subsystem_id=…
     def table_metadata
-  tn        = params[:table_name]
-  table_def = TableDefinition.find_by!(table_name: tn)
+      tn        = params[:table_name]
+      table_def = TableDefinition.find_by!(table_name: tn)
 
-  meta = ColumnMetadata
-           .where(table_name: tn)
-           .each_with_object({}) do |m,h|
-             opts     = m.options || {}
-             raw_vals = opts["allowed_values"]
-             # ensure allowed_values is always an Array
-             allowed = if raw_vals.is_a?(Array)
-                         raw_vals
-                       elsif raw_vals.is_a?(String)
-                         raw_vals.split(",").map(&:strip)
-                       else
-                         []
-                       end
+      meta = ColumnMetadata
+               .where(table_name: tn)
+               .each_with_object({}) do |m,h|
+                 opts     = m.options || {}
+                 raw_vals = opts["allowed_values"]
+                 # ensure allowed_values is always an Array
+                 allowed = if raw_vals.is_a?(Array)
+                             raw_vals
+                           elsif raw_vals.is_a?(String)
+                             raw_vals.split(",").map(&:strip)
+                           else
+                             []
+                           end
 
-             # combo_standards should also default to a hash
-             combo = opts["combo_standards"].is_a?(Hash) ? opts["combo_standards"] : {}
+                 # combo_standards should also default to a hash
+                 combo = opts["combo_standards"].is_a?(Hash) ? opts["combo_standards"] : {}
 
-             h[m.column_name] = {
-               feature:   m.feature,
-               options:   opts.merge(
-                            "allowed_values"   => allowed,
-                            "combo_standards"  => combo
-                          ),
-               row:       m.row,
-               col:       m.col,
-               label_row: m.label_row,
-               label_col: m.label_col
-             }
-           end
+                 h[m.column_name] = {
+                   feature:   m.feature,
+                   options:   opts.merge(
+                                "allowed_values"   => allowed,
+                                "combo_standards"  => combo
+                              ),
+                   row:       m.row,
+                   col:       m.col,
+                   label_row: m.label_row,
+                   label_col: m.label_col
+                 }
+               end
 
-  render json: {
-    columns:  meta.keys,
-    metadata: meta,
-    static:   table_def.static?
-  }
-end
+      render json: {
+        columns:  meta.keys,
+        metadata: meta,
+        static:   table_def.static?
+      }
+    end
 
     private
 
@@ -215,6 +203,15 @@ end
       ::Supplier.find_by(id: payload['sub'])
     rescue JWT::DecodeError
       nil
+    end
+
+    def dynamic_table_query(supplier_id)
+      table_names = TableDefinition.pluck(:table_name).map { |tn| "\"#{tn}\"" }.join(", ")
+      <<-SQL
+        SELECT DISTINCT subsystem_id, supplier_id
+        FROM (#{table_names.map { |tn| "SELECT subsystem_id, supplier_id FROM #{tn}" }.join(" UNION ALL ")})
+        WHERE supplier_id = #{supplier_id}
+      SQL
     end
   end
 end

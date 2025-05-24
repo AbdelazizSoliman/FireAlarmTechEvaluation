@@ -206,11 +206,30 @@ module Api
     end
 
     def dynamic_table_query(supplier_id)
-      table_names = TableDefinition.pluck(:table_name).map { |tn| "\"#{tn}\"" }.join(", ")
+      # Fetch table names as an array
+      table_names = TableDefinition.pluck(:table_name)
+      return "" if table_names.empty? # Return empty string if no tables
+
+      # Build subqueries for each table
+      subqueries = table_names.map do |tn|
+        # Only include tables that exist and have required columns
+        next unless ActiveRecord::Base.connection.data_source_exists?(tn)
+        model = Class.new(ActiveRecord::Base) do
+          self.table_name = tn
+          self.inheritance_column = :_type_disabled
+        end
+        required_columns = ["subsystem_id", "supplier_id"]
+        next unless required_columns.all? { |col| model.column_names.include?(col) }
+        "SELECT subsystem_id, supplier_id FROM \"#{tn}\""
+      end.compact
+
+      return "" if subqueries.empty? # Return empty string if no valid subqueries
+
+      # Join subqueries with UNION ALL
       <<-SQL
         SELECT DISTINCT subsystem_id, supplier_id
-        FROM (#{table_names.map { |tn| "SELECT subsystem_id, supplier_id FROM #{tn}" }.join(" UNION ALL ")})
-        WHERE supplier_id = #{supplier_id}
+        FROM (#{subqueries.join(" UNION ALL ")})
+        WHERE supplier_id = #{ActiveRecord::Base.connection.quote(supplier_id)}
       SQL
     end
   end

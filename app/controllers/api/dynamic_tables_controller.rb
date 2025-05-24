@@ -128,33 +128,31 @@ def my_submissions
   supplier = authenticate_supplier!
   return render json: { error: "Unauthorized" }, status: :unauthorized unless supplier
 
-  # Find all subsystems that have dynamic tables
-  subsystem_ids = TableDefinition.distinct.pluck(:subsystem_id)
-
   submissions = []
 
-  subsystem_ids.each do |subsystem_id|
+  TableDefinition.select(:subsystem_id).distinct.find_each do |td_sub|
+    subsystem_id = td_sub.subsystem_id
     tables = TableDefinition.where(subsystem_id: subsystem_id)
-    submitted = false
     tables.each do |td|
       table = td.table_name
-      # Check if table exists in DB
       next unless ActiveRecord::Base.connection.data_source_exists?(table)
+
+      # Build anonymous AR class for this table
       model = Class.new(ActiveRecord::Base) do
         self.table_name = table
         self.inheritance_column = :_type_disabled
       end
+
       row = model.where(supplier_id: supplier.id, subsystem_id: subsystem_id).first
       if row
-        subsystem = Subsystem.find(subsystem_id)
+        subsystem = Subsystem.find_by(id: subsystem_id)
         submissions << {
-          subsystem_id: subsystem.id,
-          subsystem_name: subsystem.name,
+          subsystem_id: subsystem&.id,
+          subsystem_name: subsystem&.name,
           table_name: table,
           submitted_at: row.created_at
         }
-        submitted = true
-        break # If you want only one row per subsystem, otherwise remove this
+        break # Only include first found table per subsystem
       end
     end
   end

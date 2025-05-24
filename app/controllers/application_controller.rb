@@ -34,19 +34,20 @@ class ApplicationController < ActionController::Base
   end
 
   # Loads all unread notifications (or user-specific if you have such logic)
-  def set_unread_notifications
-  if current_user
-    Rails.logger.info "Current User: #{current_user.full_name}"
-    @notifications = Notification.where(notifiable: current_user, read: false).order(created_at: :desc)
-    @unread_notifications_count = @notifications.count
-  elsif current_supplier
+ def set_unread_notifications
+  if current_supplier
     Rails.logger.info "Current Supplier: #{current_supplier.supplier_name}"
     @notifications = Notification.where(notifiable: current_supplier, read: false).order(created_at: :desc)
+    @unread_notifications_count = @notifications.count
+  elsif current_user
+    Rails.logger.info "Current User: #{current_user.full_name}"
+    @notifications = Notification.where(notifiable: current_user, read: false).order(created_at: :desc)
     @unread_notifications_count = @notifications.count
   else
     @notifications = []
     @unread_notifications_count = 0
   end
 end
+
 
 end

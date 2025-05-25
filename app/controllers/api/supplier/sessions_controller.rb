@@ -3,19 +3,23 @@ module Api
       class SessionsController < ApplicationController
         skip_before_action :verify_authenticity_token
 
-        def create
-          Rails.logger.info("Login attempt with email: #{params[:email]}")
-          supplier = ::Supplier.find_by(supplier_email: params[:email])
-          if supplier&.authenticate(params[:password])
-            Rails.logger.info("Supplier found: #{supplier.id}, status: #{supplier.status}")
-            session[:supplier_id] = supplier.id
-            token = generate_token(supplier.id)
-            render json: { token: token, status: supplier.status, supplier_id: supplier.id }, status: :ok
-          else
-            Rails.logger.info("No supplier found or invalid password for email: #{params[:email]}")
-            render json: { error: 'Invalid email or password' }, status: :unauthorized
-          end
-        end
+      def create
+  email = params[:email] || params.dig(:session, :email)
+  password = params[:password] || params.dig(:session, :password)
+  Rails.logger.info("Login attempt with email: #{email}")
+
+  supplier = ::Supplier.where('LOWER(supplier_email) = ?', email.to_s.downcase).first
+  if supplier&.authenticate(password)
+    Rails.logger.info("Supplier found: #{supplier.id}, status: #{supplier.status}")
+    session[:supplier_id] = supplier.id
+    token = generate_token(supplier.id)
+    render json: { token: token, status: supplier.status, supplier_id: supplier.id }, status: :ok
+  else
+    Rails.logger.info("No supplier found or invalid password for email: #{email}")
+    render json: { error: 'Invalid email or password' }, status: :unauthorized
+  end
+end
+
 
         def profile
           supplier = authenticate_supplier!

@@ -11,7 +11,7 @@ module Api
   supplier = ::Supplier.where('LOWER(supplier_email) = ?', email.to_s.downcase).first
   if supplier&.authenticate(password)
     Rails.logger.info("Supplier found: #{supplier.id}, status: #{supplier.status}")
-    session[:supplier_id] = supplier.id
+    # session[:supplier_id] = supplier.id
     token = generate_token(supplier.id)
     render json: { token: token, status: supplier.status, supplier_id: supplier.id }, status: :ok
   else

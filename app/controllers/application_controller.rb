@@ -22,7 +22,7 @@ class ApplicationController < ActionController::Base
 
   # Example of a helper method for a custom supplier session
   def current_supplier
-    @current_supplier ||= Supplier.find_by(id: session[:supplier_id])
+    @current_supplier
   end
 
   private
@@ -48,6 +48,7 @@ class ApplicationController < ActionController::Base
     @unread_notifications_count = 0
   end
 end
+
 
 
 end

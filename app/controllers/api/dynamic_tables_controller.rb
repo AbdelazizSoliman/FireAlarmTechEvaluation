@@ -195,18 +195,19 @@ module Api
     private
 
     def authenticate_supplier!
-  auth_header = request.headers['Authorization']
-  return unless auth_header&.starts_with?('Bearer ')
+      auth_header = request.headers['Authorization']
+      return unless auth_header&.starts_with?('Bearer ')
 
-  token = auth_header.split(' ').last
-  begin
-    decoded = JWT.decode(token, Rails.application.secret_key_base, true, { algorithm: 'HS256' })
-    payload = decoded.first
-    @current_supplier = ::Supplier.find_by(id: payload['sub'])
-  rescue JWT::DecodeError
-    nil
-  end
-
+      token = auth_header.split(' ').last
+      begin
+        decoded = JWT.decode(token, Rails.application.secret_key_base, true, { algorithm: 'HS256' })
+        payload = decoded.first
+        @current_supplier = ::Supplier.find_by(id: payload['sub'])
+       rescue JWT::DecodeError
+        nil
+      end
+    end
+    
     def dynamic_table_query(supplier_id)
       # Fetch table names as an array
       table_names = TableDefinition.pluck(:table_name)

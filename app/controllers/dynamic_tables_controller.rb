@@ -5,11 +5,11 @@ class DynamicTablesController < ApplicationController
   require_dependency 'dynamic_table_manager'
   helper_method :filter_params
 
-  before_action :set_table_name,   only: [:add_column]
+  before_action :set_table_name, only: [:add_column]
   before_action :ensure_subsystem, only: [:upload_excel, :preview_excel, :import_excel_tables]
 
   # GET /admin
- def admin
+  def admin
     # 1) ALWAYS load these first
     @projects             = Project.all.pluck(:name, :id)
     @project_filter       = params[:project_filter]
@@ -47,39 +47,26 @@ class DynamicTablesController < ApplicationController
     end
 
     # 4) if they’ve clicked on one of those table links…
-    if params[:table_name].present? &&
-       ActiveRecord::Base.connection.data_source_exists?(params[:table_name])
-
+    if params[:table_name].present? && ActiveRecord::Base.connection.data_source_exists?(params[:table_name])
       @table_name       = params[:table_name]
-      @existing_columns =
-        ActiveRecord::Base
-          .connection
-          .columns(@table_name)
-          .map do |col|
-            md = ColumnMetadata.find_by(
-                   table_name:  @table_name,
-                   column_name: col.name
-                 )
-            { name: col.name, type: col.type, metadata: md }
-          end
+      @existing_columns = ActiveRecord::Base
+        .connection
+        .columns(@table_name)
+        .map do |col|
+          md = ColumnMetadata.find_by(table_name: @table_name, column_name: col.name)
+          { name: col.name, type: col.type, metadata: md }
+        end
 
       # pull the children *here*, outside the map
-      @subtables =
-        TableDefinition
-          .where(
-            subsystem_id: @subsystem_filter,
-            parent_table: @table_name
-          )
-          .order(:position)
-
+      @subtables = TableDefinition
+        .where(subsystem_id: @subsystem_filter, parent_table: @table_name)
+        .order(:position)
     else
       @table_name       = nil
       @existing_columns = []
       @subtables        = []
     end
   end
-
-
 
   # GET /admin/upload_excel
   def upload_excel
@@ -108,127 +95,119 @@ class DynamicTablesController < ApplicationController
     render partial: 'excel_preview'
   end
 
- # POST /admin/import_excel_tables
-def import_excel_tables
-  uploaded  = params[:excel_file]
-  subsystem = params[:subsystem_id] || params[:subsystem_filter]
+  # POST /admin/import_excel_tables
+  def import_excel_tables
+    uploaded  = params[:excel_file]
+    subsystem = params[:subsystem_id] || params[:subsystem_filter]
 
-  unless uploaded
-    flash[:error] = "No file uploaded!"
-    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
-  end
-
-  sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
-  rows = sheet.parse # Convert sheet to an array of rows
-
-  # Step 1: Parse the Excel structure
-  main_table = nil
-  current_subtable = nil
-  subtables = {} # { subtable_name => { parent: main_table, features: [{name, type, frontend_feature, values}] } }
-
-  rows.each_with_index do |row, idx|
-    next if row.compact.empty? # Skip empty rows
-
-    cell = row[0].to_s.strip
-    next if cell.empty?
-
-    # Main table (red cell, assumed to be the first non-empty cell in column A)
-    if main_table.nil?
-      main_table = to_db_name(cell)
-      next
+    unless uploaded
+      flash[:error] = "No file uploaded!"
+      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
     end
 
-    # Subtable detection (e.g., "1-Call-reset-button", "2-Pull-cord")
-    if cell.match?(/^\d+-/)
-      subtable_name = to_db_name(cell)
-      current_subtable = subtable_name
-      subtables[current_subtable] = { parent: main_table, features: [] }
-      next
-    end
+    sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
+    rows = sheet.parse
 
-    # Features under the current subtable
-    if current_subtable
-      feature_name = to_db_name(cell)
-      # Right side might contain type/values in the future (column B)
-      raw_value = row[1].to_s.strip if row[1]
+    main_table = nil
+    current_subtable = nil
+    subtables = {}
 
-      # Infer column type and frontend feature
-      col_type, frontend_feature, allowed_values = infer_feature_details(cell, raw_value)
+    rows.each_with_index do |row, idx|
+      next if row.compact.empty?
 
-      subtables[current_subtable][:features] << {
-        name: feature_name,
-        type: col_type,
-        frontend_feature: frontend_feature,
-        values: allowed_values
-      }
-    end
-  end
+      cell = row[0].to_s.strip
+      next if cell.empty?
 
-  # Step 2: Create the main table
-  params[:table_names] = [main_table]
-  params[:subsystem_id] = subsystem
-  create_multiple_tables
-
-  # Step 3: Create subtables and their features
-  subtables.each do |subtable_name, data|
-    # Create the subtable
-    params[:sub_table_names] = [subtable_name]
-    params[:parent_tables] = [data[:parent]]
-    params[:subsystem_id] = subsystem
-    create_multiple_sub_tables
-
-    # Create features for the subtable
-    unless data[:features].empty?
-      feature_names = []
-      column_types = []
-      front_end_features = []
-      combobox_values_arr = []
-      has_costs = []
-      rate_keys = []
-      amount_keys = []
-      notes_keys = []
-      sub_fields = []
-      array_defaults = []
-
-      data[:features].each do |feature|
-        feature_names << feature[:name]
-        column_types << feature[:type]
-        front_end_features << feature[:frontend_feature]
-        combobox_values_arr << (feature[:values] || []).join(',')
-        # Default values for other fields (can be enhanced later)
-        has_costs << '0'
-        rate_keys << ''
-        amount_keys << ''
-        notes_keys << ''
-        sub_fields << ''
-        array_defaults << '0'
+      if main_table.nil?
+        main_table = to_db_name(cell)
+        next
       end
 
-      params[:table_name] = subtable_name
-      params[:feature_names] = feature_names
-      params[:column_types] = column_types
-      params[:features] = front_end_features
-      params[:combobox_values_arr] = combobox_values_arr
-      params[:has_costs] = has_costs
-      params[:rate_keys] = rate_keys
-      params[:amount_keys] = amount_keys
-      params[:notes_keys] = notes_keys
-      params[:sub_fields] = sub_fields
-      params[:array_default_empties] = array_defaults
+      if cell.match?(/^\d+-/)
+        subtable_name = to_db_name(cell)
+        current_subtable = subtable_name
+        subtables[current_subtable] = { parent: main_table, features: [] }
+        next
+      end
 
-      create_multiple_features
+      if current_subtable
+        feature_name = to_db_name(cell)
+        raw_value = row[1].to_s.strip if row[1]
+
+        col_type, frontend_feature, allowed_values = infer_feature_details(cell, raw_value)
+
+        subtables[current_subtable][:features] << {
+          name: feature_name,
+          type: col_type,
+          frontend_feature: frontend_feature,
+          values: allowed_values
+        }
+      end
     end
-  end
 
-  flash[:success] = "Imported tables, subtables, and features from Excel."
-  redirect_to admin_path(subsystem_filter: subsystem)
-end
+    # Create the main table
+    params[:table_names] = [main_table]
+    params[:subsystem_id] = subsystem
+    create_multiple_tables
+
+    # Create subtables and their features
+    subtables.each do |subtable_name, data|
+      params[:sub_table_names] = [subtable_name]
+      params[:parent_tables] = [data[:parent]]
+      params[:subsystem_id] = subsystem
+      create_multiple_sub_tables
+
+      unless data[:features].empty?
+        feature_names = []
+        column_types = []
+        front_end_features = []
+        combobox_values_arr = []
+        has_costs = []
+        rate_keys = []
+        amount_keys = []
+        notes_keys = []
+        sub_fields = []
+        array_defaults = []
+
+        data[:features].each do |feature|
+          feature_names << feature[:name]
+          column_types << feature[:type]
+          front_end_features << feature[:frontend_feature]
+          combobox_values_arr << (feature[:values] || []).join(',')
+          has_costs << '0'
+          rate_keys << ''
+          amount_keys << ''
+          notes_keys << ''
+          sub_fields << ''
+          array_defaults << '0'
+        end
+
+        params[:table_name] = subtable_name
+        params[:feature_names] = feature_names
+        params[:column_types] = column_types
+        params[:features] = front_end_features
+        params[:combobox_values_arr] = combobox_values_arr
+        params[:has_costs] = has_costs
+        params[:rate_keys] = rate_keys
+        params[:amount_keys] = amount_keys
+        params[:notes_keys] = notes_keys
+        params[:sub_fields] = sub_fields
+        params[:array_default_empties] = array_defaults
+
+        create_multiple_features
+      end
+    end
+
+    # Handle redirection and flash messages here
+    flash[:success] = "Imported tables, subtables, and features from Excel."
+    redirect_to admin_path(subsystem_filter: subsystem)
+  end
 
   # POST /admin/move_table
   def move_table
-    p  = params.permit(:direction, :id, :table_name,
-                       :project_filter, :project_scope_filter,
-                       :system_filter, :subsystem_filter)
+    p = params.permit(:direction, :id, :table_name,
+                      :project_filter, :project_scope_filter,
+                      :system_filter, :subsystem_filter)
     td = TableDefinition.find(p[:id])
 
     case p[:direction]
@@ -238,7 +217,8 @@ end
                             .order(position: :desc).first
       if prev
         td.position, prev.position = prev.position, td.position
-        td.save!; prev.save!
+        td.save!
+        prev.save!
       end
     when 'down'
       nxt = TableDefinition.where(subsystem_id: td.subsystem_id, parent_table: nil)
@@ -246,7 +226,8 @@ end
                             .order(:position).first
       if nxt
         td.position, nxt.position = nxt.position, td.position
-        td.save!; nxt.save!
+        td.save!
+        nxt.save!
       end
     end
 
@@ -299,7 +280,7 @@ end
   def ordered_tables
     subsys = Subsystem.find(params[:subsystem_id])
     mains  = TableDefinition.where(subsystem_id: subsys.id, parent_table: nil)
-                             .order(:position)
+                            .order(:position)
     render json: mains
   end
 
@@ -348,7 +329,7 @@ end
     messages = []
     messages << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
     messages << "Created: #{created.join(', ')}."           if created.any?
-    flash[ created.any? ? :success : :error ] = messages.join(' ')
+    flash[created.any? ? :success : :error] = messages.join(' ')
     redirect_to admin_path(subsystem_filter: subsystem_id)
   end
 
@@ -387,12 +368,6 @@ end
       flash[:error] ||= ""
       flash[:error] += "Failed #{tbl}: #{e.message}. "
     end
-
-    msg = []
-    msg << "Already exist: #{duplicates.join(', ')}." if duplicates.any?
-    msg << "Created: #{created.join(', ')}."               if created.any?
-    flash[created.empty? ? :error : :success] = msg.join(' ')
-    redirect_to admin_path(filter_params)
   end
 
   # GET /admin/sub_tables
@@ -414,7 +389,7 @@ end
     amount_keys         = params[:amount_keys]         || []
     notes_keys          = params[:notes_keys]          || []
     sub_fields          = params[:sub_fields]          || []
-    array_defaults      = params[:array_default_empties]|| []
+    array_defaults      = params[:array_default_empties] || []
 
     created = []
 
@@ -424,7 +399,7 @@ end
 
       migration_opts = {}
       col_type       = if types[idx] == 'text[]'
-                         migration_opts = { array: true, default: (array_defaults[idx]=='1' ? [] : nil) }
+                         migration_opts = { array: true, default: (array_defaults[idx] == '1' ? [] : nil) }
                          :text
                        else
                          types[idx].to_sym
@@ -452,14 +427,6 @@ end
       flash[:error] ||= ""
       flash[:error] += "Failed feature #{col}: #{e.message}. "
     end
-
-    if created.any?
-      flash[:success] = "Features created: #{created.join(', ')}."
-    elsif flash[:error].blank?
-      flash[:error] = "No features created."
-    end
-
-    redirect_to admin_path(table_name: table_name, **filter_params)
   end
 
   # GET /admin/feature_row
@@ -555,8 +522,7 @@ end
 
   def set_table_name
     @table_name = params[:table_name]
-    unless @table_name.present? &&
-           ActiveRecord::Base.connection.data_source_exists?(@table_name)
+    unless @table_name.present? && ActiveRecord::Base.connection.data_source_exists?(@table_name)
       flash[:error] = "Table #{@table_name} does not exist!"
       redirect_to admin_path and return
     end
@@ -578,49 +544,49 @@ end
   end
 
   def levenshtein_distance(a, b)
-    (Array.new(a.length+1) { |i| i }).tap do |m|
+    (Array.new(a.length + 1) { |i| i }).tap do |m|
       (1..b.length).each { |j| m[0, j] = j }
       (1..a.length).each do |i|
         (1..b.length).each do |j|
-          cost = a[i-1] == b[j-1] ? 0 : 1
-          m[i, j] = [m[i-1, j] + 1, m[i, j-1] + 1, m[i-1, j-1] + cost].min
+          cost = a[i - 1] == b[j - 1] ? 0 : 1
+          m[i, j] = [m[i - 1, j] + 1, m[i, j - 1] + 1, m[i - 1, j - 1] + cost].min
         end
       end
     end[a.length, b.length]
   end
 
   def infer_feature_details(feature_name, raw_value)
-  feature_name = feature_name.downcase
-  allowed_values = raw_value.present? ? raw_value.split(',').map(&:strip) : []
+    feature_name = feature_name.downcase
+    allowed_values = raw_value.present? ? raw_value.split(',').map(&:strip) : []
 
-  # Infer column type
-  col_type = if feature_name.match?(/total no\.|number of/i)
-               'integer'
-             elsif feature_name.match?(/antibacterial|waterproof|led indicator/i)
-               'boolean'
-             else
-               'string'
-             end
+    # Infer column type
+    col_type = if feature_name.match?(/total no\.|number of/i)
+                 'integer'
+               elsif feature_name.match?(/antibacterial|waterproof|led indicator/i)
+                 'boolean'
+               else
+                 'string'
+               end
 
-  # Infer frontend feature based on raw_value format
-  frontend_feature = if raw_value.present?
-                       if raw_value.downcase.start_with?('combobox:')
-                         allowed_values = raw_value.sub(/^combobox:/i, '').split(',').map(&:strip)
-                         'combobox'
-                       elsif raw_value.downcase.start_with?('checkbox:')
-                         allowed_values = raw_value.sub(/^checkbox:/i, '').split(',').map(&:strip)
-                         'checkboxes'
-                       elsif allowed_values.length > 1
-                         'combobox'
-                       elsif allowed_values.length == 1 && col_type == 'boolean'
-                         'checkbox'
+    # Infer frontend feature based on raw_value format
+    frontend_feature = if raw_value.present?
+                         if raw_value.downcase.start_with?('combobox:')
+                           allowed_values = raw_value.sub(/^combobox:/i, '').split(',').map(&:strip)
+                           'combobox'
+                         elsif raw_value.downcase.start_with?('checkbox:')
+                           allowed_values = raw_value.sub(/^checkbox:/i, '').split(',').map(&:strip)
+                           'checkboxes'
+                         elsif allowed_values.length > 1
+                           'combobox'
+                         elsif allowed_values.length == 1 && col_type == 'boolean'
+                           'checkbox'
+                         else
+                           ''
+                         end
                        else
-                         ''
+                         col_type == 'boolean' ? 'checkbox' : ''
                        end
-                     else
-                       col_type == 'boolean' ? 'checkbox' : ''
-                     end
 
-  [col_type, frontend_feature, allowed_values]
-end
+    [col_type, frontend_feature, allowed_values]
+  end
 end

@@ -602,9 +602,15 @@ end
                'string'
              end
 
-  # Infer frontend feature
+  # Infer frontend feature based on raw_value format
   frontend_feature = if raw_value.present?
-                       if allowed_values.length > 1
+                       if raw_value.downcase.start_with?('combobox:')
+                         allowed_values = raw_value.sub(/^combobox:/i, '').split(',').map(&:strip)
+                         'combobox'
+                       elsif raw_value.downcase.start_with?('checkbox:')
+                         allowed_values = raw_value.sub(/^checkbox:/i, '').split(',').map(&:strip)
+                         'checkboxes'
+                       elsif allowed_values.length > 1
                          'combobox'
                        elsif allowed_values.length == 1 && col_type == 'boolean'
                          'checkbox'

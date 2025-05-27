@@ -96,112 +96,119 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/import_excel_tables
+
   def import_excel_tables
-    uploaded  = params[:excel_file]
-    subsystem = params[:subsystem_id] || params[:subsystem_filter]
+  uploaded  = params[:excel_file]
+  subsystem = params[:subsystem_id] || params[:subsystem_filter]
 
-    unless uploaded
-      flash[:error] = "No file uploaded!"
-      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
-    end
-
-    sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
-    rows = sheet.parse
-
-    main_table = nil
-    current_subtable = nil
-    subtables = {}
-
-    rows.each_with_index do |row, idx|
-      next if row.compact.empty?
-
-      cell = row[0].to_s.strip
-      next if cell.empty?
-
-      if main_table.nil?
-        main_table = to_db_name(cell)
-        next
-      end
-
-      if cell.match?(/^\d+-/)
-        subtable_name = to_db_name(cell)
-        current_subtable = subtable_name
-        subtables[current_subtable] = { parent: main_table, features: [] }
-        next
-      end
-
-      if current_subtable
-        feature_name = to_db_name(cell)
-        raw_value = row[1].to_s.strip if row[1]
-
-        col_type, frontend_feature, allowed_values = infer_feature_details(cell, raw_value)
-
-        subtables[current_subtable][:features] << {
-          name: feature_name,
-          type: col_type,
-          frontend_feature: frontend_feature,
-          values: allowed_values
-        }
-      end
-    end
-
-    # Create the main table
-    params[:table_names] = [main_table]
-    params[:subsystem_id] = subsystem
-    create_multiple_tables
-
-    # Create subtables and their features
-    subtables.each do |subtable_name, data|
-      params[:sub_table_names] = [subtable_name]
-      params[:parent_tables] = [data[:parent]]
-      params[:subsystem_id] = subsystem
-      create_multiple_sub_tables
-
-      unless data[:features].empty?
-        feature_names = []
-        column_types = []
-        front_end_features = []
-        combobox_values_arr = []
-        has_costs = []
-        rate_keys = []
-        amount_keys = []
-        notes_keys = []
-        sub_fields = []
-        array_defaults = []
-
-        data[:features].each do |feature|
-          feature_names << feature[:name]
-          column_types << feature[:type]
-          front_end_features << feature[:frontend_feature]
-          combobox_values_arr << (feature[:values] || []).join(',')
-          has_costs << '0'
-          rate_keys << ''
-          amount_keys << ''
-          notes_keys << ''
-          sub_fields << ''
-          array_defaults << '0'
-        end
-
-        params[:table_name] = subtable_name
-        params[:feature_names] = feature_names
-        params[:column_types] = column_types
-        params[:features] = front_end_features
-        params[:combobox_values_arr] = combobox_values_arr
-        params[:has_costs] = has_costs
-        params[:rate_keys] = rate_keys
-        params[:amount_keys] = amount_keys
-        params[:notes_keys] = notes_keys
-        params[:sub_fields] = sub_fields
-        params[:array_default_empties] = array_defaults
-
-        create_multiple_features
-      end
-    end
-
-    # Handle redirection and flash messages here
-    flash[:success] = "Imported tables, subtables, and features from Excel."
-    redirect_to admin_path(subsystem_filter: subsystem)
+  unless uploaded
+    flash[:error] = "No file uploaded!"
+    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
   end
+
+  sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
+  rows = sheet.parse
+
+  main_table = nil
+  current_subtable = nil
+  subtables = {}
+
+  rows.each_with_index do |row, idx|
+    next if row.compact.empty?
+
+    cell = row[0].to_s.strip
+    next if cell.empty?
+
+    if main_table.nil?
+      main_table = to_db_name(cell)
+      next
+    end
+
+    if cell.match?(/^\d+-/)
+      subtable_name = to_db_name(cell)
+      current_subtable = subtable_name
+      subtables[current_subtable] = { parent: main_table, features: [] }
+      next
+    end
+
+    if current_subtable
+      feature_name = to_db_name(cell)
+      raw_value = row[1].to_s.strip if row[1]
+
+      col_type, frontend_feature, allowed_values = infer_feature_details(cell, raw_value)
+
+      subtables[current_subtable][:features] << {
+        name: feature_name,
+        type: col_type,
+        frontend_feature: frontend_feature,
+        values: allowed_values
+      }
+    end
+  end
+
+  # Ensure main_table exists before proceeding
+  unless main_table
+    flash[:error] = "No main table found in the Excel file!"
+    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
+  end
+
+  # Create the main table
+  params[:table_names] = [main_table]
+  params[:subsystem_id] = subsystem
+  create_multiple_tables
+
+  # Create subtables and their features
+  subtables.each do |subtable_name, data|
+    params[:sub_table_names] = [subtable_name]
+    params[:parent_tables] = [data[:parent]]
+    params[:subsystem_id] = subsystem
+    create_multiple_sub_tables
+
+    unless data[:features].empty?
+      feature_names = []
+      column_types = []
+      front_end_features = []
+      combobox_values_arr = []
+      has_costs = []
+      rate_keys = []
+      amount_keys = []
+      notes_keys = []
+      sub_fields = []
+      array_defaults = []
+
+      data[:features].each do |feature|
+        feature_names << feature[:name]
+        column_types << feature[:type]
+        front_end_features << feature[:frontend_feature]
+        combobox_values_arr << (feature[:values] || []).join(',')
+        has_costs << '0'
+        rate_keys << ''
+        amount_keys << ''
+        notes_keys << ''
+        sub_fields << ''
+        array_defaults << '0'
+      end
+
+      params[:table_name] = subtable_name
+      params[:feature_names] = feature_names
+      params[:column_types] = column_types
+      params[:features] = front_end_features
+      params[:combobox_values_arr] = combobox_values_arr
+      params[:has_costs] = has_costs
+      params[:rate_keys] = rate_keys
+      params[:amount_keys] = amount_keys
+      params[:notes_keys] = notes_keys
+      params[:sub_fields] = sub_fields
+      params[:array_default_empties] = array_defaults
+
+      create_multiple_features
+    end
+  end
+
+  # Handle redirection and flash messages here
+  flash[:success] = "Imported tables, subtables, and features from Excel."
+  redirect_to admin_path(subsystem_filter: subsystem) and return
+end
 
   # POST /admin/move_table
   def move_table
@@ -285,53 +292,54 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/create_multiple_tables
-  def create_multiple_tables
-    subsystem_id = params[:subsystem_id].to_i
-    raw_names    = Array(params[:table_names])
-    duplicates, created = [], []
+ def create_multiple_tables
+  subsystem_id = params[:subsystem_id].to_i
+  raw_names    = Array(params[:table_names])
+  duplicates, created = [], []
 
-    Rails.logger.info "[CREATE] Starting bulk-create: #{raw_names.inspect}"
+  Rails.logger.info "[CREATE] Starting bulk-create: #{raw_names.inspect}"
 
-    raw_names.each do |raw|
-      tbl = to_db_name(raw)
-      Rails.logger.info "[CREATE] Normalized '#{raw}' → '#{tbl}'"
-      next if tbl.blank?
+  raw_names.each do |raw|
+    tbl = to_db_name(raw)
+    Rails.logger.info "[CREATE] Normalized '#{raw}' → '#{tbl}'"
+    next if tbl.blank?
 
-      if ActiveRecord::Base.connection.data_source_exists?(tbl)
-        Rails.logger.info "[CREATE] Skipping existing #{tbl}"
-        duplicates << tbl
-      else
-        Rails.logger.info "[CREATE] Creating #{tbl}"
-        ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
-          t.bigint  :subsystem_id, null: false
-          t.bigint  :supplier_id,  null: false
-          t.timestamps
-          t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
-          t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
-          t.index   [:supplier_id],                           name: "idx_#{tbl}_on_supplier"
-        end
-
-        TableDefinition.create!(
-          table_name:   tbl,
-          subsystem_id: subsystem_id,
-          parent_table: nil
-        )
-        created << tbl
+    if ActiveRecord::Base.connection.data_source_exists?(tbl)
+      Rails.logger.info "[CREATE] Skipping existing #{tbl}"
+      duplicates << tbl
+    else
+      Rails.logger.info "[CREATE] Creating #{tbl}"
+      ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
+        t.bigint  :subsystem_id, null: false
+        t.bigint  :supplier_id,  null: false
+        t.timestamps
+        t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
+        t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
+        t.index   [:supplier_id],                           name: "idx_#{tbl}_on_supplier"
       end
-    rescue => e
-      Rails.logger.error "[CREATE] Error on #{tbl}: #{e.message}"
-      flash[:error] ||= ""
-      flash[:error] += "Failed #{tbl}: #{e.message}. "
+
+      TableDefinition.create!(
+        table_name:   tbl,
+        subsystem_id: subsystem_id,
+        parent_table: nil
+      )
+      created << tbl
     end
-
-    Rails.logger.info "[CREATE] Done; duplicates=#{duplicates.inspect}, created=#{created.inspect}"
-
-    messages = []
-    messages << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
-    messages << "Created: #{created.join(', ')}."           if created.any?
-    flash[created.any? ? :success : :error] = messages.join(' ')
-    redirect_to admin_path(subsystem_filter: subsystem_id)
+  rescue => e
+    Rails.logger.error "[CREATE] Error on #{tbl}: #{e.message}"
+    flash[:error] ||= ""
+    flash[:error] += "Failed #{tbl}: #{e.message}. "
   end
+
+  Rails.logger.info "[CREATE] Done; duplicates=#{duplicates.inspect}, created=#{created.inspect}"
+
+  messages = []
+  messages << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
+  messages << "Created: #{created.join(', ')}."           if created.any?
+  flash[created.any? ? :success : :error] = messages.join(' ')
+  # Remove this line
+  # redirect_to admin_path(subsystem_filter: subsystem_id)
+end
 
   # POST /admin/create_multiple_sub_tables
   def create_multiple_sub_tables

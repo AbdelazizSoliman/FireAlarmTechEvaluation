@@ -119,48 +119,110 @@ def import_excel_tables
   end
 
   sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
+  rows = sheet.parse # Convert sheet to an array of rows
 
-  # 1) Try manual selection
-  refs       = params[:selected_cells].to_s.split(',')
-  raw_names  = []
-  blank_refs = []
+  # Step 1: Parse the Excel structure
+  main_table = nil
+  current_subtable = nil
+  subtables = {} # { subtable_name => { parent: main_table, features: [{name, type, frontend_feature, values}] } }
 
-  Rails.logger.info "[IMPORT] Selected refs: #{refs.inspect}"
-  refs.each do |ref|
-    row, col = parse_a1_ref(ref)
-    val      = sheet.cell(row, col).to_s.strip
-    Rails.logger.info "[IMPORT] Cell #{ref} → '#{val}'"
-    val.blank? ? blank_refs << ref : raw_names << val
+  rows.each_with_index do |row, idx|
+    next if row.compact.empty? # Skip empty rows
+
+    cell = row[0].to_s.strip
+    next if cell.empty?
+
+    # Main table (red cell, assumed to be the first non-empty cell in column A)
+    if main_table.nil?
+      main_table = to_db_name(cell)
+      next
+    end
+
+    # Subtable detection (e.g., "1-Call-reset-button", "2-Pull-cord")
+    if cell.match?(/^\d+-/)
+      subtable_name = to_db_name(cell)
+      current_subtable = subtable_name
+      subtables[current_subtable] = { parent: main_table, features: [] }
+      next
+    end
+
+    # Features under the current subtable
+    if current_subtable
+      feature_name = to_db_name(cell)
+      # Right side might contain type/values in the future (column B)
+      raw_value = row[1].to_s.strip if row[1]
+
+      # Infer column type and frontend feature
+      col_type, frontend_feature, allowed_values = infer_feature_details(cell, raw_value)
+
+      subtables[current_subtable][:features] << {
+        name: feature_name,
+        type: col_type,
+        frontend_feature: frontend_feature,
+        values: allowed_values
+      }
+    end
   end
 
-  # 2) Fallback: if nothing from manual, pull all non-blank in column A
-  if raw_names.empty?
-    Rails.logger.info "[IMPORT] Manual selection empty (#{blank_refs.inspect}), falling back to column A"
-    raw_names = sheet
-                  .column(1)              # Excel “A”
-                  .map(&:to_s)
-                  .map(&:strip)
-                  .reject(&:blank?)
-                  .uniq
-    Rails.logger.info "[IMPORT] Column A values: #{raw_names.inspect}"
-  end
-
-  # 3) If still empty, error out
-  if raw_names.empty?
-    flash[:error] = if blank_refs.any?
-                      "Cells #{blank_refs.join(', ')} were blank. No table names found."
-                    else
-                      "No cells selected and column A is empty."
-                    end
-    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
-  end
-
-  # 4) Hand off into your bulk‐creator
-  params[:table_names]  = raw_names
+  # Step 2: Create the main table
+  params[:table_names] = [main_table]
   params[:subsystem_id] = subsystem
   create_multiple_tables
-end
 
+  # Step 3: Create subtables and their features
+  subtables.each do |subtable_name, data|
+    # Create the subtable
+    params[:sub_table_names] = [subtable_name]
+    params[:parent_tables] = [data[:parent]]
+    params[:subsystem_id] = subsystem
+    create_multiple_sub_tables
+
+    # Create features for the subtable
+    unless data[:features].empty?
+      feature_names = []
+      column_types = []
+      front_end_features = []
+      combobox_values_arr = []
+      has_costs = []
+      rate_keys = []
+      amount_keys = []
+      notes_keys = []
+      sub_fields = []
+      array_defaults = []
+
+      data[:features].each do |feature|
+        feature_names << feature[:name]
+        column_types << feature[:type]
+        front_end_features << feature[:frontend_feature]
+        combobox_values_arr << (feature[:values] || []).join(',')
+        # Default values for other fields (can be enhanced later)
+        has_costs << '0'
+        rate_keys << ''
+        amount_keys << ''
+        notes_keys << ''
+        sub_fields << ''
+        array_defaults << '0'
+      end
+
+      params[:table_name] = subtable_name
+      params[:feature_names] = feature_names
+      params[:column_types] = column_types
+      params[:features] = front_end_features
+      params[:combobox_values_arr] = combobox_values_arr
+      params[:has_costs] = has_costs
+      params[:rate_keys] = rate_keys
+      params[:amount_keys] = amount_keys
+      params[:notes_keys] = notes_keys
+      params[:sub_fields] = sub_fields
+      params[:array_default_empties] = array_defaults
+
+      create_multiple_features
+    end
+  end
+
+  flash[:success] = "Imported tables, subtables, and features from Excel."
+  redirect_to admin_path(subsystem_filter: subsystem)
+end
 
   # POST /admin/move_table
   def move_table
@@ -526,4 +588,33 @@ end
       end
     end[a.length, b.length]
   end
+
+  def infer_feature_details(feature_name, raw_value)
+  feature_name = feature_name.downcase
+  allowed_values = raw_value.present? ? raw_value.split(',').map(&:strip) : []
+
+  # Infer column type
+  col_type = if feature_name.match?(/total no\.|number of/i)
+               'integer'
+             elsif feature_name.match?(/antibacterial|waterproof|led indicator/i)
+               'boolean'
+             else
+               'string'
+             end
+
+  # Infer frontend feature
+  frontend_feature = if raw_value.present?
+                       if allowed_values.length > 1
+                         'combobox'
+                       elsif allowed_values.length == 1 && col_type == 'boolean'
+                         'checkbox'
+                       else
+                         ''
+                       end
+                     else
+                       col_type == 'boolean' ? 'checkbox' : ''
+                     end
+
+  [col_type, frontend_feature, allowed_values]
+end
 end

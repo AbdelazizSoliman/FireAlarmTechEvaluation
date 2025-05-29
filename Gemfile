@@ -4,7 +4,7 @@
 source 'https://rubygems.org'
 
 # Define the Ruby version for the application
-ruby '3.2.2'
+ruby "3.2.8"
 
 gem 'aws-sdk-s3', require: false
 

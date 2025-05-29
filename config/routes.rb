@@ -1,3 +1,4 @@
+# config/routes.rb
 Rails.application.routes.draw do
   get  '/admin/upload_excel',        to: 'dynamic_tables#upload_excel',        as: :admin_upload_excel
   post '/admin/preview_excel',       to: 'dynamic_tables#preview_excel',       as: :admin_preview_excel
@@ -52,15 +53,6 @@ Rails.application.routes.draw do
         post :reject_supplier
       end
     end
-
-    # Dynamic‐table endpoints under /api/subsystems/:id
-    # resources :subsystems, only: [] do
-    #   member do
-    #     get  :table_order        # GET  /api/subsystems/:id/table_order
-    #     get  :table_definitions  # GET  /api/subsystems/:id/table_definitions
-    #     post :save_all           # POST /api/subsystems/:id/save_all
-    #   end
-    # end
 
     resources :sub_tables, only: [:index]
 

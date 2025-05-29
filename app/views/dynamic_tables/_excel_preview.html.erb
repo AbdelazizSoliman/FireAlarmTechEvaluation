@@ -1,36 +1,39 @@
-<table class="table-auto border-collapse border w-full text-center">
-  <% @grid.each do |row| %>
-    <tr>
-      <% row.each do |cell| %>
-        <%# Compute the A1 reference like "B3" %>
-        <% ref = ("A".ord + cell[:col] - 1).chr + cell[:row].to_s %>
-        <td
-          data-ref="<%= ref %>"
-          class="border px-2 py-1 cursor-pointer select-none"
-        >
-          <%= check_box_tag "selected_cells[row_#{cell[:row]}_col_#{cell[:col]}]", 1, cell[:selected], class: 'checkmark' %>
-          <%= cell[:value] %>
-        </td>
-      <% end %>
-    </tr>
-  <% end %>
-</table>
+<!-- app/views/dynamic_tables/_excel_preview.html.erb -->
+<%= form_with url: admin_submit_preview_path, method: :post, data: { turbo: false } do |form| %>
+  <table class="table-auto border-collapse border w-full text-center">
+    <% @grid.each do |row| %>
+      <tr>
+        <% row.each do |cell| %>
+          <%# Compute the A1 reference like "B3" %>
+          <% ref = ("A".ord + cell[:col] - 1).chr + cell[:row].to_s %>
+          <td
+            data-ref="<%= ref %>"
+            class="border px-2 py-1 cursor-pointer select-none"
+          >
+            <%= form.check_box "selected_cells[row_#{cell[:row]}_col_#{cell[:col]}]", { checked: cell[:selected], class: 'checkmark' }, 1, 0 %>
+            <%= cell[:value] %>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </table>
 
-<div class="mt-4 text-right">
-  <%= button_to "Submit Selection", submit_preview_path, method: :post, class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
-  <%= button_to "Create Main Tables", create_main_tables_path, method: :post, class: 'px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700' %>
-  <%= button_to "Create Child Tables", create_child_tables_path, method: :post, class: 'px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700', data: { turbo: false } %>
-  <%= button_to "Create Features", create_features_path, method: :post, class: 'px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700', data: { turbo: false } %>
-  <%= button_to "Test Tables", test_tables_path(table_name: params[:table_name]), method: :get, class: 'px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700' %>
-</div>
-
-<% if @grid.any? { |row| row.any? { |cell| cell[:value].match?(/^\d+-/) } } %>
-  <div class="mt-4">
-    <label for="parent_table" class="block font-medium"
-      >Select Parent Table for Child Tables:</label
-    >
-    <%= select_tag :parent_table, options_from_collection_for_select(TableDefinition.where(subsystem_id: session[:subsystem_id], parent_table: nil), :table_name, :table_name), include_blank: true, class: 'mt-1 block w-full border-gray-300 rounded' %>
+  <div class="mt-4 text-right">
+    <%= form.submit "Submit Selection", class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
+    <%= button_to "Create Main Tables", admin_create_main_tables_path, method: :post, class: 'px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700' %>
+    <%= button_to "Create Child Tables", admin_create_child_tables_path, method: :post, class: 'px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700', data: { turbo: false } %>
+    <%= button_to "Create Features", admin_create_features_path, method: :post, class: 'px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700', data: { turbo: false } %>
+    <%= button_to "Test Tables", admin_test_tables_path(table_name: params[:table_name]), method: :get, class: 'px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700' %>
   </div>
+
+  <% if @grid.any? { |row| row.any? { |cell| cell[:value].match?(/^\d+-/) } } %>
+    <div class="mt-4">
+      <label for="parent_table" class="block font-medium"
+        >Select Parent Table for Child Tables:</label
+      >
+      <%= select_tag :parent_table, options_from_collection_for_select(TableDefinition.where(subsystem_id: session[:subsystem_id], parent_table: nil), :table_name, :table_name), include_blank: true, class: 'mt-1 block w-full border-gray-300 rounded' %>
+    </div>
+  <% end %>
 <% end %>
 
 <script>

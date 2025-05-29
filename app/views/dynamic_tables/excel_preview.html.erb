@@ -1,0 +1,22 @@
+<!-- app/views/dynamic_tables/excel_preview.html.erb -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <title>Excel Preview</title>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  </head>
+  <body class="bg-gray-50 min-h-screen p-8">
+    <div class="max-w-5xl mx-auto">
+      <h1 class="text-2xl font-bold mb-6">Excel Preview</h1>
+
+      <% if flash[:error] %>
+        <div class="mb-4 p-3 bg-red-100 text-red-800"><%= flash[:error] %></div>
+      <% end %>
+
+      <%= render 'excel_preview' %>
+    </div>
+  </body>
+</html>

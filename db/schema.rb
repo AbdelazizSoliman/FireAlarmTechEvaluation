@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_05_22_091156) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_29_092707) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -812,6 +812,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_22_091156) do
     t.index ["subsystem_id"], name: "index_telephone_systems_on_subsystem_id"
     t.index ["supplier_id", "subsystem_id"], name: "idx_tel_sys_sup_sub", unique: true
     t.index ["supplier_id"], name: "index_telephone_systems_on_supplier_id"
+  end
+
+  create_table "temp_excel_grids", force: :cascade do |t|
+    t.text "grid_data"
+    t.string "session_id"
+    t.bigint "subsystem_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "test_dynamically", force: :cascade do |t|

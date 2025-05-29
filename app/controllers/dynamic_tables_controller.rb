@@ -78,7 +78,8 @@ class DynamicTablesController < ApplicationController
     uploaded = params[:excel_file]
     Rails.logger.info "[PREVIEW] got params[:excel_file]=#{uploaded.inspect}"
     unless uploaded
-      render plain: "❗ No file uploaded", status: :bad_request
+      flash[:error] = "❗ No file uploaded"
+      redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id] || params[:subsystem_filter])
       return
     end
 
@@ -92,8 +93,12 @@ class DynamicTablesController < ApplicationController
       end
     end
 
-    # Store the grid in session for later use
-    session[:excel_grid] = @grid
+    # Store the grid in TempExcelGrid instead of session
+    TempExcelGrid.create!(
+      session_id: session.id.to_s,
+      grid_data: @grid,
+      subsystem_id: params[:subsystem_id] || params[:subsystem_filter]
+    )
     session[:subsystem_id] = params[:subsystem_id] || params[:subsystem_filter]
 
     render 'excel_preview'
@@ -102,7 +107,14 @@ class DynamicTablesController < ApplicationController
   # POST /admin/submit_preview
   def submit_preview
     selected_cells = params[:selected_cells] || {}
-    grid = session[:excel_grid].deep_dup
+    temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
+    unless temp_grid
+      flash[:error] = "No preview data found. Please upload the file again."
+      redirect_to admin_upload_excel_path(subsystem_filter: session[:subsystem_id])
+      return
+    end
+
+    grid = temp_grid.grid_data.deep_dup
 
     # Update grid with selected cells
     selected_cells.each do |key, value|
@@ -110,132 +122,35 @@ class DynamicTablesController < ApplicationController
       grid[row - 1][col - 1][:selected] = value == '1'
     end
 
-    session[:excel_grid] = grid
+    temp_grid.update!(grid_data: grid)
     @grid = grid
 
     render 'excel_preview'
   end
 
   # POST /admin/import_excel_tables
-  def import_excel_tables
-    uploaded = params[:excel_file]
-    subsystem = params[:subsystem_id] || params[:subsystem_filter]
-
-    unless uploaded
-      flash[:error] = "No file uploaded!"
-      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
-    end
-
-    sheet = Roo::Spreadsheet.open(uploaded.tempfile.path).sheet(0)
-    rows = sheet.parse
-
-    main_table = nil
-    current_subtable = nil
-    subtables = {}
-
-    rows.each_with_index do |row, idx|
-      next if row.compact.empty?
-
-      cell = row[0].to_s.strip
-      next if cell.empty?
-
-      if main_table.nil?
-        main_table = to_db_name(cell)
-        next
-      end
-
-      if cell.match?(/^\d+-/)
-        subtable_name = to_db_name(cell)
-        current_subtable = subtable_name
-        subtables[current_subtable] = { parent: main_table, features: [] }
-        next
-      end
-
-      if current_subtable
-        feature_name = to_db_name(cell)
-        raw_value = row[1].to_s.strip if row[1]
-
-        col_type, frontend_feature, allowed_values = infer_feature_details(cell, raw_value)
-
-        subtables[current_subtable][:features] << {
-          name: feature_name,
-          type: col_type,
-          frontend_feature: frontend_feature,
-          values: allowed_values
-        }
-      end
-    end
-
-    # Ensure main_table exists before proceeding
-    unless main_table
-      flash[:error] = "No main table found in the Excel file!"
-      return redirect_to admin_upload_excel_path(subsystem_filter: subsystem)
-    end
-
-    # Create the main table
-    params[:table_names] = [main_table]
-    params[:subsystem_id] = subsystem
-    create_multiple_tables
-
-    # Create subtables and their features
-    subtables.each do |subtable_name, data|
-      params[:sub_table_names] = [subtable_name]
-      params[:parent_tables] = [data[:parent]]
-      params[:subsystem_id] = subsystem
-      create_multiple_sub_tables
-
-      unless data[:features].empty?
-        feature_names = []
-        column_types = []
-        front_end_features = []
-        combobox_values_arr = []
-        has_costs = []
-        rate_keys = []
-        amount_keys = []
-        notes_keys = []
-        sub_fields = []
-        array_defaults = []
-
-        data[:features].each do |feature|
-          feature_names << feature[:name]
-          column_types << feature[:type]
-          front_end_features << feature[:frontend_feature]
-          combobox_values_arr << (feature[:values] || []).join(',')
-          has_costs << '0'
-          rate_keys << ''
-          amount_keys << ''
-          notes_keys << ''
-          sub_fields << ''
-          array_defaults << '0'
-        end
-
-        params[:table_name] = subtable_name
-        params[:feature_names] = feature_names
-        params[:column_types] = column_types
-        params[:features] = front_end_features
-        params[:combobox_values_arr] = combobox_values_arr
-        params[:has_costs] = has_costs
-        params[:rate_keys] = rate_keys
-        params[:amount_keys] = amount_keys
-        params[:notes_keys] = notes_keys
-        params[:sub_fields] = sub_fields
-        params[:array_default_empties] = array_defaults
-
-        create_multiple_features
-      end
-    end
-
-    # Handle redirection and flash messages here
-    flash[:success] = "Imported tables, subtables, and features from Excel."
-    redirect_to admin_path(subsystem_filter: subsystem) and return
+ def import_excel_tables
+  subsystem_id = params[:subsystem_id] || params[:subsystem_filter]
+  if subsystem_id.blank?
+    flash[:error] = "No subsystem selected. Please try again."
+    redirect_to admin_path
+  else
+    flash[:notice] = "Please use the preview and selection process to import tables."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
   end
+ end
 
   # POST /admin/create_main_tables
   def create_main_tables
-    grid = session[:excel_grid]
+    temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
     subsystem_id = session[:subsystem_id]
-    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id) unless grid
+    unless temp_grid
+      flash[:error] = "No preview data found. Please upload the file again."
+      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+      return
+    end
 
+    grid = temp_grid.grid_data
     main_tables = []
     grid.each_with_index do |row, i|
       cell = row[0]
@@ -249,19 +164,29 @@ class DynamicTablesController < ApplicationController
     params[:subsystem_id] = subsystem_id
     create_multiple_tables
 
+    temp_grid.destroy # Clean up after use
     flash[:success] = "Main tables created: #{main_tables.join(', ')}."
     redirect_to admin_path(subsystem_filter: subsystem_id)
   end
 
   # POST /admin/create_child_tables
   def create_child_tables
-    grid = session[:excel_grid]
+    temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
     subsystem_id = session[:subsystem_id]
-    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id) unless grid
+    unless temp_grid
+      flash[:error] = "No preview data found. Please upload the file again."
+      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+      return
+    end
 
     parent_table = params[:parent_table]
-    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id), alert: "Please select a parent table." unless parent_table
+    unless parent_table
+      flash[:error] = "Please select a parent table."
+      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+      return
+    end
 
+    grid = temp_grid.grid_data
     child_tables = []
     grid.each_with_index do |row, i|
       cell = row[0]
@@ -276,19 +201,29 @@ class DynamicTablesController < ApplicationController
     params[:subsystem_id] = subsystem_id
     create_multiple_sub_tables
 
+    temp_grid.destroy # Clean up after use
     flash[:success] = "Child tables created under #{parent_table}: #{child_tables.join(', ')}."
     redirect_to admin_path(subsystem_filter: subsystem_id)
   end
 
   # POST /admin/create_features
   def create_features
-    grid = session[:excel_grid]
+    temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
     subsystem_id = session[:subsystem_id]
-    return redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id) unless grid
+    unless temp_grid
+      flash[:error] = "No preview data found. Please upload the file again."
+      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+      return
+    end
 
     table_name = params[:table_name]
-    return redirect_to admin_path(subsystem_filter: subsystem_id), alert: "Please select a table." unless table_name
+    unless table_name
+      flash[:error] = "Please select a table."
+      redirect_to admin_path(subsystem_filter: subsystem_id)
+      return
+    end
 
+    grid = temp_grid.grid_data
     features = []
     grid.each_with_index do |row, i|
       cell = row[0]
@@ -322,6 +257,7 @@ class DynamicTablesController < ApplicationController
       create_multiple_features
     end
 
+    temp_grid.destroy # Clean up after use
     flash[:success] = "Features created for #{table_name}: #{features.map { |f| f[:name] }.join(', ')}."
     redirect_to admin_path(subsystem_filter: subsystem_id)
   end
@@ -329,7 +265,11 @@ class DynamicTablesController < ApplicationController
   # GET /admin/test_tables
   def test_tables
     table_name = params[:table_name]
-    return redirect_to admin_path(subsystem_filter: session[:subsystem_id]), alert: "Please select a table." unless table_name
+    unless table_name
+      flash[:error] = "Please select a table."
+      redirect_to admin_path(subsystem_filter: session[:subsystem_id])
+      return
+    end
 
     # Basic test: Check if table exists and has columns
     if ActiveRecord::Base.connection.data_source_exists?(table_name)
@@ -431,7 +371,7 @@ class DynamicTablesController < ApplicationController
 
     Rails.logger.info "[CREATE] Starting bulk-create: #{raw_names.inspect}"
 
-    raw_names.each do |raw|
+    raw_names.each_with_index do |raw, index|
       tbl = to_db_name(raw)
       Rails.logger.info "[CREATE] Normalized '#{raw}' → '#{tbl}'"
       next if tbl.blank?
@@ -453,7 +393,8 @@ class DynamicTablesController < ApplicationController
         TableDefinition.create!(
           table_name:   tbl,
           subsystem_id: subsystem_id,
-          parent_table: nil
+          parent_table: nil,
+          position: index + 1 + TableDefinition.where(subsystem_id: subsystem_id, parent_table: nil).maximum(:position).to_i
         )
         created << tbl
       end
@@ -469,7 +410,6 @@ class DynamicTablesController < ApplicationController
     messages << "Already existed: #{duplicates.join(', ')}." if duplicates.any?
     messages << "Created: #{created.join(', ')}."           if created.any?
     flash[created.any? ? :success : :error] = messages.join(' ')
-    # No redirect here, handled by calling action
   end
 
   # POST /admin/create_multiple_sub_tables
@@ -633,7 +573,10 @@ class DynamicTablesController < ApplicationController
   end
 
   def to_db_name(name)
-    name.to_s.parameterize(separator: '_').gsub(/__+/, '_').gsub(/^_+|_+$/, '')
+    normalized = name.to_s.parameterize(separator: '_').gsub(/__+/, '_').gsub(/^_+|_+$/, '')
+    # Prefix with 'table_' if the name starts with a number
+    normalized = "table_#{normalized}" if normalized.match?(/\A\d/)
+    normalized
   end
 
   def metadata_params

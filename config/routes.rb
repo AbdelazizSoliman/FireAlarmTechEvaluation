@@ -1,9 +1,12 @@
-# config/routes.rb
 Rails.application.routes.draw do
-
   get  '/admin/upload_excel',        to: 'dynamic_tables#upload_excel',        as: :admin_upload_excel
   post '/admin/preview_excel',       to: 'dynamic_tables#preview_excel',       as: :admin_preview_excel
+  post '/admin/submit_preview',      to: 'dynamic_tables#submit_preview',      as: :admin_submit_preview
   post '/admin/import_excel_tables', to: 'dynamic_tables#import_excel_tables', as: :admin_import_excel_tables
+  post '/admin/create_main_tables',  to: 'dynamic_tables#create_main_tables',  as: :admin_create_main_tables
+  post '/admin/create_child_tables', to: 'dynamic_tables#create_child_tables', as: :admin_create_child_tables
+  post '/admin/create_features',     to: 'dynamic_tables#create_features',     as: :admin_create_features
+  get  '/admin/test_tables',         to: 'dynamic_tables#test_tables',         as: :admin_test_tables
   namespace :admin do
     resources :submissions, only: [:index, :show]
   end
@@ -160,7 +163,6 @@ Rails.application.routes.draw do
   end
 
   # Admin panel routes
-  
   get   '/admin',                           to: 'dynamic_tables#admin'
   post  '/admin/add_column',                to: 'dynamic_tables#add_column'
   post  '/admin/create_table',              to: 'dynamic_tables#create_table'

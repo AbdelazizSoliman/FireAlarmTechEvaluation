@@ -1,10 +1,8 @@
-<!-- app/views/dynamic_tables/_excel_preview.html.erb -->
 <%= form_with url: admin_submit_preview_path, method: :post, data: { turbo: false } do |form| %>
   <table class="table-auto border-collapse border w-full text-center">
     <% @grid.each do |row| %>
       <tr>
         <% row.each do |cell| %>
-          <%# Compute the A1 reference like "B3" %>
           <% ref = ("A".ord + cell[:col] - 1).chr + cell[:row].to_s %>
           <td
             data-ref="<%= ref %>"

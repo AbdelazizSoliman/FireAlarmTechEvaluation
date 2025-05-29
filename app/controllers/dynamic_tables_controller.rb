@@ -74,35 +74,36 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/preview_excel
-  def preview_excel
-    uploaded = params[:excel_file]
-    Rails.logger.info "[PREVIEW] got params[:excel_file]=#{uploaded.inspect}"
-    unless uploaded
-      flash[:error] = "❗ No file uploaded"
-      redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id] || params[:subsystem_filter])
-      return
-    end
-
-    path = uploaded.tempfile.path
-    spreadsheet = Roo::Spreadsheet.open(path)
-    sheet = spreadsheet.sheet(0)
-
-    @grid = sheet.each_with_index.map do |row, i|
-      row.each_with_index.map do |cell, j|
-        { value: cell.to_s, row: i + 1, col: j + 1, selected: false }
-      end
-    end
-
-    # Store the grid in TempExcelGrid instead of session
-    TempExcelGrid.create!(
-      session_id: session.id.to_s,
-      grid_data: @grid,
-      subsystem_id: params[:subsystem_id] || params[:subsystem_filter]
-    )
-    session[:subsystem_id] = params[:subsystem_id] || params[:subsystem_filter]
-
-    render 'excel_preview'
+ def preview_excel
+  uploaded = params[:excel_file]
+  Rails.logger.info "[PREVIEW] got params[:excel_file]=#{uploaded.inspect}"
+  unless uploaded
+    flash[:error] = "❗ No file uploaded"
+    redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id] || params[:subsystem_filter])
+    return
   end
+
+  path = uploaded.tempfile.path
+  spreadsheet = Roo::Spreadsheet.open(path)
+  sheet = spreadsheet.sheet(0)
+
+  @grid = sheet.each_with_index.map do |row, i|
+    row.each_with_index.map do |cell, j|
+      { value: cell.to_s, row: i + 1, col: j + 1, selected: false }
+    end
+  end
+  Rails.logger.info "[PREVIEW] Generated grid: #{@grid.inspect}"
+
+  # Store the grid in TempExcelGrid instead of session
+  TempExcelGrid.create!(
+    session_id: session.id.to_s,
+    grid_data: @grid,
+    subsystem_id: params[:subsystem_id] || params[:subsystem_filter]
+  )
+  session[:subsystem_id] = params[:subsystem_id] || params[:subsystem_filter]
+
+  render 'excel_preview', layout: 'application', formats: [:html]
+end
 
   # POST /admin/submit_preview
   def submit_preview

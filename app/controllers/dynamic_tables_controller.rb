@@ -152,126 +152,128 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/create_main_tables
-  def create_main_tables
-    temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
-    subsystem_id = session[:subsystem_id]
-    unless temp_grid
-      flash[:error] = "No preview data found. Please upload the file again."
-      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
-      return
-    end
-
-    grid = temp_grid.grid_data
-    main_tables = []
-    grid.each_with_index do |row, i|
-      cell = row[0]
-      next unless cell && cell[:selected] && i == 0 && cell[:value].present?
-
-      main_table = to_db_name(cell[:value])
-      main_tables << main_table
-    end
-
-    params[:table_names] = main_tables
-    params[:subsystem_id] = subsystem_id
-    create_multiple_tables
-
-    temp_grid.destroy # Clean up after use
-    flash[:success] = "Main tables created: #{main_tables.join(', ')}."
-    redirect_to admin_path(subsystem_filter: subsystem_id)
+ def create_main_tables
+  temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
+  subsystem_id = session[:subsystem_id]
+  unless temp_grid
+    flash[:error] = "No preview data found. Please upload the file again."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    return
   end
+
+  cell_value = params[:selected_cell_value].to_s.strip
+
+  main_tables = []
+  if cell_value.present?
+    main_table = safe_table_name(cell_value, subsystem_id)
+    main_tables << main_table
+  else
+    flash[:error] = "Please select a valid main table cell."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    return
+  end
+
+  params[:table_names] = main_tables
+  params[:subsystem_id] = subsystem_id
+  create_multiple_tables
+
+  temp_grid.destroy
+  flash[:success] = "Main tables created: #{main_tables.join(', ')}."
+  redirect_to admin_path(subsystem_filter: subsystem_id)
+end
+
 
   # POST /admin/create_child_tables
   def create_child_tables
-    temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
-    subsystem_id = session[:subsystem_id]
-    unless temp_grid
-      flash[:error] = "No preview data found. Please upload the file again."
-      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
-      return
-    end
-
-    parent_table = params[:parent_table]
-    unless parent_table
-      flash[:error] = "Please select a parent table."
-      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
-      return
-    end
-
-    grid = temp_grid.grid_data
-    child_tables = []
-    grid.each_with_index do |row, i|
-      cell = row[0]
-      next unless cell && cell[:selected] && cell[:value].match?(/^\d+-/) && i > 0
-
-      child_table = to_db_name(cell[:value])
-      child_tables << child_table
-    end
-
-    params[:sub_table_names] = child_tables
-    params[:parent_tables] = [parent_table] * child_tables.length
-    params[:subsystem_id] = subsystem_id
-    create_multiple_sub_tables
-
-    temp_grid.destroy # Clean up after use
-    flash[:success] = "Child tables created under #{parent_table}: #{child_tables.join(', ')}."
-    redirect_to admin_path(subsystem_filter: subsystem_id)
+  temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
+  subsystem_id = session[:subsystem_id]
+  unless temp_grid
+    flash[:error] = "No preview data found. Please upload the file again."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    return
   end
+
+  cell_value = params[:selected_cell_value].to_s.strip
+  cell_row = params[:selected_cell_row].to_i
+
+  child_tables = []
+  # Consider only rows after first row, and must match child pattern (e.g., "1-xxx")
+  if cell_value.present? && cell_row > 1 && cell_value.match?(/^\d+-/)
+    child_table = to_db_name(cell_value)
+    child_tables << child_table
+  else
+    flash[:error] = "Please select a valid child table cell (must match child pattern in first column, not first row)."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    return
+  end
+
+  # For demo, pick parent_table as the main table in the first row, column 1
+  parent_table_cell = temp_grid.grid_data[0][0]
+  parent_table = parent_table_cell.present? ? to_db_name(parent_table_cell[:value]) : nil
+
+  params[:sub_table_names] = child_tables
+  params[:parent_tables] = [parent_table] * child_tables.length
+  params[:subsystem_id] = subsystem_id
+  create_multiple_sub_tables
+
+  temp_grid.destroy
+  flash[:success] = "Child tables created: #{child_tables.join(', ')}."
+  redirect_to admin_path(subsystem_filter: subsystem_id)
+end
 
   # POST /admin/create_features
   def create_features
-    temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
-    subsystem_id = session[:subsystem_id]
-    unless temp_grid
-      flash[:error] = "No preview data found. Please upload the file again."
-      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
-      return
-    end
-
-    table_name = params[:table_name]
-    unless table_name
-      flash[:error] = "Please select a table."
-      redirect_to admin_path(subsystem_filter: subsystem_id)
-      return
-    end
-
-    grid = temp_grid.grid_data
-    features = []
-    grid.each_with_index do |row, i|
-      cell = row[0]
-      next unless cell && cell[:selected] && !cell[:value].match?(/^\d+-/) && i > 0
-
-      feature_name = to_db_name(cell[:value])
-      raw_value = row[1] ? row[1][:value].to_s.strip : ''
-      col_type, frontend_feature, allowed_values = infer_feature_details(cell[:value], raw_value)
-
-      features << {
-        name: feature_name,
-        type: col_type,
-        frontend_feature: frontend_feature,
-        values: allowed_values
-      }
-    end
-
-    unless features.empty?
-      params[:table_name] = table_name
-      params[:feature_names] = features.map { |f| f[:name] }
-      params[:column_types] = features.map { |f| f[:type] }
-      params[:features] = features.map { |f| f[:frontend_feature] }
-      params[:combobox_values_arr] = features.map { |f| (f[:values] || []).join(',') }
-      params[:has_costs] = Array.new(features.length, '0')
-      params[:rate_keys] = Array.new(features.length, '')
-      params[:amount_keys] = Array.new(features.length, '')
-      params[:notes_keys] = Array.new(features.length, '')
-      params[:sub_fields] = Array.new(features.length, '')
-      params[:array_default_empties] = Array.new(features.length, '0')
-
-      create_multiple_features
-    end
-
-    temp_grid.destroy # Clean up after use
-    flash[:success] = "Features created for #{table_name}: #{features.map { |f| f[:name] }.join(', ')}."
-    redirect_to admin_path(subsystem_filter: subsystem_id)
+  temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
+  subsystem_id = session[:subsystem_id]
+  unless temp_grid
+    flash[:error] = "No preview data found. Please upload the file again."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    return
   end
+
+  cell_value = params[:selected_cell_value].to_s.strip
+  cell_row = params[:selected_cell_row].to_i
+
+  features = []
+  # For demo, treat any cell in the first column after row 1 as a feature if not a child table (not matching /^\d+-/)
+  if cell_value.present? && cell_row > 1 && !cell_value.match?(/^\d+-/)
+    feature_name = to_db_name(cell_value)
+    features << feature_name
+  else
+    flash[:error] = "Please select a valid feature cell (first column, after first row, not matching child table pattern)."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    return
+  end
+
+  # Get the selected table to add the feature to
+  main_table_cell = temp_grid.grid_data[0][0]
+  table_name = main_table_cell.present? ? to_db_name(main_table_cell[:value]) : nil
+
+  unless table_name
+    flash[:error] = "No main table found to add feature to."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    return
+  end
+
+  # The rest is simplified, adjust as needed
+  params[:table_name] = table_name
+  params[:feature_names] = features
+  params[:column_types] = ['string'] * features.length
+  params[:features] = [''] * features.length
+  params[:combobox_values_arr] = [''] * features.length
+  params[:has_costs] = ['0'] * features.length
+  params[:rate_keys] = [''] * features.length
+  params[:amount_keys] = [''] * features.length
+  params[:notes_keys] = [''] * features.length
+  params[:sub_fields] = [''] * features.length
+  params[:array_default_empties] = ['0'] * features.length
+
+  create_multiple_features
+
+  temp_grid.destroy
+  flash[:success] = "Features created for #{table_name}: #{features.join(', ')}."
+  redirect_to admin_path(subsystem_filter: subsystem_id)
+end
 
   # GET /admin/test_tables
   def test_tables
@@ -583,12 +585,12 @@ class DynamicTablesController < ApplicationController
     [row_number, col_number]
   end
 
-  def to_db_name(name)
-    normalized = name.to_s.parameterize(separator: '_').gsub(/__+/, '_').gsub(/^_+|_+$/, '')
-    # Prefix with 'table_' if the name starts with a number
-    normalized = "table_#{normalized}" if normalized.match?(/\A\d/)
-    normalized
-  end
+ def to_db_name(name)
+  normalized = name.to_s.parameterize(separator: '_').gsub(/__+/, '_').gsub(/^_+|_+$/, '')
+  normalized = "table_#{normalized}" if normalized.match?(/\A\d/)
+  normalized
+end
+
 
   def metadata_params
     params.require(:column_metadata).permit(
@@ -682,4 +684,14 @@ class DynamicTablesController < ApplicationController
 
     [col_type, frontend_feature, allowed_values]
   end
+
+  def safe_table_name(base_name, subsystem_id)
+  name = to_db_name(base_name)
+  if ActiveRecord::Base.connection.data_source_exists?(name)
+    subsystem = Subsystem.find(subsystem_id)
+    name = "#{name}_#{to_db_name(subsystem.name)}"
+  end
+  name
+end
+
 end

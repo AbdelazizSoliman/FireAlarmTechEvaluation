@@ -73,6 +73,58 @@ class DynamicTablesController < ApplicationController
     @subsystem_id = params[:subsystem_filter]
   end
 
+  # POST /admin/handle_excel_actions
+ def handle_excel_actions
+  temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
+  subsystem_id = session[:subsystem_id]
+
+  unless params[:rows].present?
+    flash[:error] = "No selections found. Please assign types to rows."
+    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id) and return
+  end
+
+  rows = params[:rows].values
+
+  # Step 1: Create all main tables
+  main_tables = rows.select { |r| r["type"] == "main_table" }.map { |r| safe_table_name(r["value"], subsystem_id) }
+  params[:table_names] = main_tables
+  params[:subsystem_id] = subsystem_id
+  create_multiple_tables if main_tables.any?
+
+  # Step 2: Create child tables
+  child_rows = rows.select { |r| r["type"] == "child_table" && r["parent"].present? }
+  if child_rows.any?
+    params[:sub_table_names] = child_rows.map { |r| safe_table_name(r["value"], subsystem_id) }
+    params[:parent_tables] = child_rows.map { |r| safe_table_name(r["parent"], subsystem_id) }
+    params[:subsystem_id] = subsystem_id
+    create_multiple_sub_tables
+  end
+
+  # Step 3: Create features
+  feature_rows = rows.select { |r| r["type"] == "feature" && r["target"].present? }
+  feature_group = feature_rows.group_by { |r| r["target"] }
+  feature_group.each do |target_table, feats|
+    params[:table_name] = safe_table_name(target_table, subsystem_id)
+    params[:feature_names] = feats.map { |f| to_db_name(f["value"]) }
+    params[:column_types] = ['string'] * feats.length
+    params[:features] = [''] * feats.length
+    params[:combobox_values_arr] = [''] * feats.length
+    params[:has_costs] = ['0'] * feats.length
+    params[:rate_keys] = [''] * feats.length
+    params[:amount_keys] = [''] * feats.length
+    params[:notes_keys] = [''] * feats.length
+    params[:sub_fields] = [''] * feats.length
+    params[:array_default_empties] = ['0'] * feats.length
+
+    create_multiple_features
+  end
+
+  TempExcelGrid.where(session_id: session.id.to_s).delete_all
+  flash[:success] = "All tables and features have been created."
+  redirect_to admin_path(subsystem_filter: subsystem_id)
+end
+
+
   # POST /admin/preview_excel
   def preview_excel
     uploaded = params[:excel_file]
@@ -685,7 +737,7 @@ end
     [col_type, frontend_feature, allowed_values]
   end
 
-  def safe_table_name(base_name, subsystem_id)
+def safe_table_name(base_name, subsystem_id)
   name = to_db_name(base_name)
   if ActiveRecord::Base.connection.data_source_exists?(name)
     subsystem = Subsystem.find(subsystem_id)
@@ -693,5 +745,6 @@ end
   end
   name
 end
+
 
 end

@@ -1,117 +1,136 @@
-<%= form_with url: admin_create_main_tables_path, method: :post, data: { turbo: false }, id: 'excel-preview-form' do |form| %>
-  <table class="table-auto border-collapse border w-full text-center">
-    <% @grid.each_with_index do |row, i| %>
+<%= form_with url: handle_excel_actions_path, method: :post, data: { turbo: false }, id: 'excel-preview-form' do %>
+  <table class="table-auto border-collapse border w-full text-center mb-4">
+    <thead>
       <tr>
-        <% row.each_with_index do |cell, j| %>
-          <% if cell[:col].present? && cell[:row].present? %>
-            <% ref = ("A".ord + cell[:col].to_i - 1).chr + cell[:row].to_s %>
-          <% else %>
-            <% ref = "" %>
-          <% end %>
-          <% if j == 0 %>
-            <td
-              data-ref="<%= ref %>"
-              data-value="<%= cell[:value] %>"
-              data-row="<%= cell[:row] %>"
-              class="border px-2 py-1 cursor-pointer select-none first-col-cell"
-              onclick="selectExcelCell(this)"
-              style="background-color: #f0fdf4; position:relative;"
-            >
-              <span
-                class="select-icon"
-                style="font-size: 1.2em; margin-right:4px; vertical-align:middle;"
-              >
-                &#x25CB;
-              </span>
-              <span class="cell-value"><%= cell[:value] %></span>
-            </td>
-          <% else %>
-            <td data-ref="<%= ref %>" class="border px-2 py-1 select-none">
-              <%= cell[:value] %>
-            </td>
-          <% end %>
-        <% end %>
+        <th>Row</th>
+        <th>Cell Value</th>
+        <th>Type</th>
+        <th>If Child: Parent Table</th>
+        <th>If Feature: Target Table</th>
       </tr>
-    <% end %>
+    </thead>
+    <tbody>
+      <% @grid.each_with_index do |row, i| %>
+        <% cell = row[0] %>
+        <tr>
+          <td><%= i + 1 %></td>
+          <td>
+            <input
+              type="hidden"
+              name="rows[<%= i %>][value]"
+              value="<%= cell[:value] %>"
+            />
+            <%= cell[:value] %>
+          </td>
+          <td>
+            <select
+              name="rows[<%= i %>][type]"
+              class="row-type-select"
+              data-row-index="<%= i %>"
+            >
+              <option value="">—</option>
+              <option value="main_table">Main Table</option>
+              <option value="child_table">Child Table</option>
+              <option value="feature">Feature</option>
+            </select>
+          </td>
+          <td>
+            <!-- Parent selection for child tables -->
+            <select
+              name="rows[<%= i %>][parent]"
+              class="parent-table-select"
+              id="parent-select-<%= i %>"
+              disabled
+            >
+              <option value="">Select Parent</option>
+              <!-- Options will be filled by JS -->
+            </select>
+          </td>
+          <td>
+            <!-- Target table selection for features -->
+            <select
+              name="rows[<%= i %>][target]"
+              class="target-table-select"
+              id="target-select-<%= i %>"
+              disabled
+            >
+              <option value="">Select Table</option>
+              <!-- Options will be filled by JS -->
+            </select>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
   </table>
 
-  <input
-    type="hidden"
-    name="selected_cell_value"
-    id="selected_cell_value"
-    value=""
-  />
-  <input
-    type="hidden"
-    name="selected_cell_row"
-    id="selected_cell_row"
-    value=""
-  />
-  <input type="hidden" name="excel_action" id="excel_action" value="" />
-
-  <div class="mt-4 text-right flex justify-end space-x-2">
+  <div class="flex justify-end space-x-2 mt-6">
     <button
-      type="button"
-      onclick="submitExcelAction('main')"
-      class="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 opacity-100"
+      type="submit"
+      class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 opacity-100"
     >
-      Create Main Tables
-    </button>
-    <button
-      type="button"
-      onclick="submitExcelAction('child')"
-      class="inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 opacity-100"
-    >
-      Create Child Tables
-    </button>
-    <button
-      type="button"
-      onclick="submitExcelAction('feature')"
-      class="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 opacity-100"
-    >
-      Create Features
+      Submit
     </button>
   </div>
 <% end %>
 
 <script>
-  function selectExcelCell(td) {
-    // Unselect all
-    document.querySelectorAll(".first-col-cell").forEach((cell) => {
-      cell.style.backgroundColor = "#f0fdf4";
-      var icon = cell.querySelector(".select-icon");
-      if (icon) icon.innerHTML = "&#x25CB;"; // Empty circle
+  // Collect available main/child tables as admin chooses them, then fill in parent/target selectors dynamically
+  const mainTables = [];
+  const childTables = [];
+
+  // Called whenever a type is selected for a row
+  function updateTableSelectors() {
+    // 1. Re-scan the sheet to find main and child tables
+    mainTables.length = 0;
+    childTables.length = 0;
+
+    document.querySelectorAll(".row-type-select").forEach((sel, idx) => {
+      const rowType = sel.value;
+      const cellValue = document.querySelector(
+        `input[name="rows[${idx}][value]"]`
+      ).value;
+      if (rowType === "main_table") mainTables.push({ idx, name: cellValue });
+      if (rowType === "child_table") childTables.push({ idx, name: cellValue });
     });
-    // Select this cell
-    td.style.backgroundColor = "#bbf7d0";
-    var selectedIcon = td.querySelector(".select-icon");
-    if (selectedIcon) selectedIcon.innerHTML = "&#x25C9;"; // Filled circle
-    document.getElementById("selected_cell_value").value = td.getAttribute(
-      "data-value"
-    );
-    document.getElementById("selected_cell_row").value = td.getAttribute(
-      "data-row"
-    );
+
+    // 2. Update all parent/target selectors
+    document.querySelectorAll(".row-type-select").forEach((sel, idx) => {
+      const rowType = sel.value;
+
+      // Child table parent dropdown
+      const parentSel = document.getElementById(`parent-select-${idx}`);
+      parentSel.innerHTML = '<option value="">Select Parent</option>';
+      parentSel.disabled = rowType !== "child_table";
+      if (rowType === "child_table" && mainTables.length > 0) {
+        mainTables.forEach((tbl) => {
+          const opt = document.createElement("option");
+          opt.value = tbl.name;
+          opt.text = tbl.name;
+          parentSel.appendChild(opt);
+        });
+      }
+
+      // Feature target table dropdown
+      const targetSel = document.getElementById(`target-select-${idx}`);
+      targetSel.innerHTML = '<option value="">Select Table</option>';
+      targetSel.disabled = rowType !== "feature";
+      if (
+        rowType === "feature" &&
+        (mainTables.length > 0 || childTables.length > 0)
+      ) {
+        mainTables.concat(childTables).forEach((tbl) => {
+          const opt = document.createElement("option");
+          opt.value = tbl.name;
+          opt.text = tbl.name;
+          targetSel.appendChild(opt);
+        });
+      }
+    });
   }
 
-  function submitExcelAction(actionType) {
-    document.getElementById("excel_action").value = actionType;
-    const form = document.getElementById("excel-preview-form");
-    if (!document.getElementById("selected_cell_value").value) {
-      alert("Please select a cell from the first column.");
-      return;
-    }
-    switch (actionType) {
-      case "main":
-        form.action = "<%= admin_create_main_tables_path %>";
-        break;
-      case "child":
-        form.action = "<%= admin_create_child_tables_path %>";
-        break;
-      case "feature":
-        form.action = "<%= admin_create_features_path %>";
-        break;
-    }
-    form.submit();
-  }
+  document.querySelectorAll(".row-type-select").forEach((sel) => {
+    sel.addEventListener("change", updateTableSelectors);
+  });
+
+  document.addEventListener("DOMContentLoaded", updateTableSelectors);
 </script>

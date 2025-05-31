@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  post 'handle_excel_actions',       to: 'dynamic_tables#handle_excel_actions', as: :handle_excel_actions   
   get  '/admin/upload_excel',        to: 'dynamic_tables#upload_excel',        as: :admin_upload_excel
   post '/admin/preview_excel',       to: 'dynamic_tables#preview_excel',       as: :admin_preview_excel
   post '/admin/submit_preview',      to: 'dynamic_tables#submit_preview',      as: :admin_submit_preview

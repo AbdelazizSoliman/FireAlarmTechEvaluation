@@ -1,4 +1,3 @@
-# config/routes.rb
 Rails.application.routes.draw do
   get  '/admin/upload_excel',        to: 'dynamic_tables#upload_excel',        as: :admin_upload_excel
   post '/admin/preview_excel',       to: 'dynamic_tables#preview_excel',       as: :admin_preview_excel

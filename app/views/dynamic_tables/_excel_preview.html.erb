@@ -1,30 +1,39 @@
-<%= form_with url: admin_submit_preview_path, method: :post, data: { turbo: false } do |form| %>
+<%= form_with url: admin_submit_preview_path, method: :post, data: { turbo: false }, id: 'excel-preview-form' do |form| %>
   <table class="table-auto border-collapse border w-full text-center">
     <% @grid.each do |row| %>
       <tr>
         <% row.each do |cell| %>
-          <% ref = ("A".ord + cell[:col] - 1).chr + cell[:row].to_s %>
+          <% if cell[:col].present? && cell[:row].present? %>
+            <% ref = ("A".ord + cell[:col].to_i - 1).chr + cell[:row].to_s %>
+          <% else %>
+            <% ref = "" %>
+          <% end %>
           <td
             data-ref="<%= ref %>"
             class="border px-2 py-1 cursor-pointer select-none"
           >
             <%= form.check_box "selected_cells[row_#{cell[:row]}_col_#{cell[:col]}]", { checked: cell[:selected], class: 'checkmark' }, 1, 0 %>
             <%= cell[:value] %>
+            <% unless cell[:col].present? && cell[:row].present? %>
+              <div style="color:red;">
+                Missing col/row in cell: <%= cell.inspect %>
+              </div>
+            <% end %>
           </td>
         <% end %>
       </tr>
     <% end %>
   </table>
 
-  <div class="mt-4 text-right">
-    <%= form.submit "Submit Selection", class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
-    <%= button_to "Create Main Tables", admin_create_main_tables_path, method: :post, class: 'px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700' %>
-    <%= button_to "Create Child Tables", admin_create_child_tables_path, method: :post, class: 'px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700', data: { turbo: false } %>
-    <%= button_to "Create Features", admin_create_features_path, method: :post, class: 'px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700', data: { turbo: false } %>
-    <%= button_to "Test Tables", admin_test_tables_path(table_name: params[:table_name]), method: :get, class: 'px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700' %>
+  <div class="mt-4 text-right flex justify-end space-x-2">
+    <%= form.submit "Submit Selection", class: 'inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 opacity-100' %>
+    <%= button_to "Create Main Tables", admin_create_main_tables_path, method: :post, class: 'inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 opacity-100', data: { turbo: false } %>
+    <%= button_to "Create Child Tables", admin_create_child_tables_path, method: :post, class: 'inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 opacity-100', data: { turbo: false } %>
+    <%= button_to "Create Features", admin_create_features_path, method: :post, class: 'inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 opacity-100', data: { turbo: false } %>
+    <%= button_to "Test Tables", admin_test_tables_path(table_name: params[:table_name]), method: :get, class: 'inline-block px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 opacity-100', data: { turbo: false } %>
   </div>
 
-  <% if @grid.any? { |row| row.any? { |cell| cell[:value].match?(/^\d+-/) } } %>
+  <% if @grid.any? { |row| row.any? { |cell| cell[:value].to_s.match?(/^\d+-/) } } %>
     <div class="mt-4">
       <label for="parent_table" class="block font-medium"
         >Select Parent Table for Child Tables:</label
@@ -37,7 +46,12 @@
 <script>
   document.querySelectorAll(".checkmark").forEach((checkbox) => {
     checkbox.addEventListener("change", function () {
-      document.querySelector("form").submit();
+      const form = document.querySelector("#excel-preview-form");
+      if (form) {
+        form.submit();
+      } else {
+        console.error("Excel preview form not found!");
+      }
     });
   });
 </script>

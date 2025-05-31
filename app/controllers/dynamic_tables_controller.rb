@@ -74,39 +74,40 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/preview_excel
- def preview_excel
-  uploaded = params[:excel_file]
-  Rails.logger.info "[PREVIEW] got params[:excel_file]=#{uploaded.inspect}"
-  unless uploaded
-    flash[:error] = "❗ No file uploaded"
-    redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id] || params[:subsystem_filter])
-    return
-  end
-
-  path = uploaded.tempfile.path
-  spreadsheet = Roo::Spreadsheet.open(path)
-  sheet = spreadsheet.sheet(0)
-
-  @grid = sheet.each_with_index.map do |row, i|
-    row.each_with_index.map do |cell, j|
-      { value: cell.to_s, row: i + 1, col: j + 1, selected: false }
+  def preview_excel
+    uploaded = params[:excel_file]
+    Rails.logger.info "[PREVIEW] got params[:excel_file]=#{uploaded.inspect}"
+    unless uploaded
+      flash[:error] = "❗ No file uploaded"
+      redirect_to admin_upload_excel_path(subsystem_filter: params[:subsystem_id] || params[:subsystem_filter])
+      return
     end
+
+    path = uploaded.tempfile.path
+    spreadsheet = Roo::Spreadsheet.open(path)
+    sheet = spreadsheet.sheet(0)
+
+    @grid = sheet.each_with_index.map do |row, i|
+      row.each_with_index.map do |cell, j|
+        { value: cell.to_s, row: i + 1, col: j + 1, selected: false }
+      end
+    end
+    Rails.logger.info "[PREVIEW] Generated grid: #{@grid.inspect}"
+
+    # Store the grid in TempExcelGrid instead of session
+    TempExcelGrid.create!(
+      session_id: session.id.to_s,
+      grid_data: @grid,
+      subsystem_id: params[:subsystem_id] || params[:subsystem_filter]
+    )
+    session[:subsystem_id] = params[:subsystem_id] || params[:subsystem_filter]
+
+    render 'excel_preview', layout: 'application', formats: [:html]
   end
-  Rails.logger.info "[PREVIEW] Generated grid: #{@grid.inspect}"
-
-  # Store the grid in TempExcelGrid instead of session
-  TempExcelGrid.create!(
-    session_id: session.id.to_s,
-    grid_data: @grid,
-    subsystem_id: params[:subsystem_id] || params[:subsystem_filter]
-  )
-  session[:subsystem_id] = params[:subsystem_id] || params[:subsystem_filter]
-
-  render 'excel_preview', layout: 'application', formats: [:html]
-end
 
   # POST /admin/submit_preview
   def submit_preview
+    Rails.logger.info "[SUBMIT_PREVIEW] Started with params: #{params.inspect}"
     selected_cells = params[:selected_cells] || {}
     temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
     unless temp_grid
@@ -116,30 +117,39 @@ end
     end
 
     grid = temp_grid.grid_data.deep_dup
-
-    # Update grid with selected cells
     selected_cells.each do |key, value|
-      row, col = key.split('_').map(&:to_i)
-      grid[row - 1][col - 1][:selected] = value == '1'
+      # Expect key like "row_1_col_1"
+      row, col = key.match(/row_(\d+)_col_(\d+)/)&.captures&.map(&:to_i) || [nil, nil]
+      unless row && col
+        Rails.logger.error "[SUBMIT_PREVIEW] Invalid key format: #{key}"
+        next
+      end
+      # Ensure the grid indices are within bounds
+      if row - 1 < grid.length && col - 1 < grid[row - 1].length
+        grid[row - 1][col - 1][:selected] = value == '1'
+      else
+        Rails.logger.warn "[SUBMIT_PREVIEW] Out of bounds access: row=#{row}, col=#{col}, grid_size=#{grid.length}x#{grid[0].length}"
+      end
     end
 
     temp_grid.update!(grid_data: grid)
     @grid = grid
 
-    render 'excel_preview'
+    Rails.logger.info "[SUBMIT_PREVIEW] Rendering excel_preview with grid: #{@grid.inspect}"
+    render 'excel_preview', layout: 'application', formats: [:html]
   end
 
   # POST /admin/import_excel_tables
- def import_excel_tables
-  subsystem_id = params[:subsystem_id] || params[:subsystem_filter]
-  if subsystem_id.blank?
-    flash[:error] = "No subsystem selected. Please try again."
-    redirect_to admin_path
-  else
-    flash[:notice] = "Please use the preview and selection process to import tables."
-    redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+  def import_excel_tables
+    subsystem_id = params[:subsystem_id] || params[:subsystem_filter]
+    if subsystem_id.blank?
+      flash[:error] = "No subsystem selected. Please try again."
+      redirect_to admin_path
+    else
+      flash[:notice] = "Please use the preview and selection process to import tables."
+      redirect_to admin_upload_excel_path(subsystem_filter: subsystem_id)
+    end
   end
- end
 
   # POST /admin/create_main_tables
   def create_main_tables

@@ -623,56 +623,61 @@ end
   end
 
   # POST /admin/create_multiple_features
-  def create_multiple_features
-    table_name          = params[:table_name]
-    names               = params[:feature_names]       || []
-    types               = params[:column_types]        || []
-    front_end_features  = params[:features]            || []
-    combobox_values_arr = params[:combobox_values_arr] || []
-    has_costs           = params[:has_costs]           || []
-    rate_keys           = params[:rate_keys]           || []
-    amount_keys         = params[:amount_keys]         || []
-    notes_keys          = params[:notes_keys]          || []
-    sub_fields          = params[:sub_fields]          || []
-    array_defaults      = params[:array_default_empties] || []
+ def create_multiple_features
+  table_name          = params[:table_name]
+  names               = params[:feature_names] || []
+  types               = params[:column_types] || []
+  front_end_features  = params[:features] || []
+  combobox_values_arr = params[:combobox_values_arr] || []
+  has_costs           = params[:has_costs] || []
+  rate_keys           = params[:rate_keys] || []
+  amount_keys         = params[:amount_keys] || []
+  notes_keys          = params[:notes_keys] || []
+  sub_fields          = params[:sub_fields] || []
+  array_defaults      = params[:array_default_empties] || []
 
-    created = []
+  created = []
 
-    names.each_with_index do |raw, idx|
-      col = to_db_name(raw)
-      next unless col.present? && %w[string integer boolean decimal text text[] date].include?(types[idx])
+  names.each_with_index do |raw, idx|
+    col = to_db_name(raw)
+    next unless col.present?
 
-      migration_opts = {}
-      col_type       = if types[idx] == 'text[]'
-                         migration_opts = { array: true, default: (array_defaults[idx] == '1' ? [] : nil) }
-                         :text
-                       else
-                         types[idx].to_sym
-                       end
+    feature_type = front_end_features[idx]
 
-      ActiveRecord::Migration.add_column(table_name.to_sym, col.to_sym, col_type, **migration_opts)
+    # Corrected logic for checkbox type to use text[]
+    col_type = if feature_type == 'checkboxes'
+                 :text
+               elsif types[idx] == 'text[]'
+                 :text
+               else
+                 types[idx].to_sym
+               end
 
-      md = ColumnMetadata.create!(
-        table_name:   table_name,
-        column_name:  col,
-        feature:      front_end_features[idx].presence,
-        has_cost:     has_costs[idx].present?,
-        sub_field:    sub_fields[idx],
-        rate_key:     rate_keys[idx],
-        amount_key:   amount_keys[idx],
-        notes_key:    notes_keys[idx],
-        options:      begin
-                        vals = combobox_values_arr[idx].to_s.split(',').map(&:strip)
-                        vals.any? ? { allowed_values: vals } : {}
-                      end
-      )
+    migration_opts = feature_type == 'checkboxes' || types[idx] == 'text[]' ? { array: true, default: [] } : {}
 
-      created << col
-    rescue => e
-      flash[:error] ||= ""
-      flash[:error] += "Failed feature #{col}: #{e.message}. "
-    end
+    ActiveRecord::Migration.add_column(table_name.to_sym, col.to_sym, col_type, **migration_opts)
+
+    ColumnMetadata.create!(
+      table_name:  table_name,
+      column_name: col,
+      feature:     feature_type.presence,
+      has_cost:    has_costs[idx].present?,
+      sub_field:   sub_fields[idx],
+      rate_key:    rate_keys[idx],
+      amount_key:  amount_keys[idx],
+      notes_key:   notes_keys[idx],
+      options:     {
+        allowed_values: combobox_values_arr[idx].to_s.split(',').map(&:strip).reject(&:blank?)
+      }
+    )
+
+    created << col
+  rescue => e
+    flash[:error] ||= ""
+    flash[:error] += "Failed feature #{col}: #{e.message}. "
   end
+end
+
 
   # GET /admin/feature_row
   def feature_row

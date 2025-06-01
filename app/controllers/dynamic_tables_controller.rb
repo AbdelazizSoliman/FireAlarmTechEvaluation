@@ -73,6 +73,103 @@ class DynamicTablesController < ApplicationController
     @subsystem_id = params[:subsystem_filter]
   end
 
+  # POST /admin/submit_excel_selection
+def submit_excel_selection
+  temp_grid   = TempExcelGrid.find_by(session_id: session.id.to_s)
+  mode        = params[:mode]
+  selected    = params[:selected_cells]&.map(&:to_i) || []
+  subsystem_id = session[:subsystem_id]
+
+  raise "No temp grid!" unless temp_grid&.grid_data.present?
+
+  grid_data = JSON.parse(temp_grid.grid_data.to_json) # Ensure correct data format
+
+  ActiveRecord::Base.transaction do
+    case mode
+    when 'main'
+      selected.each do |i|
+        cell_value = grid_data[i][0]['value'].presence&.strip
+        next if cell_value.blank?
+
+        tbl = cell_value.parameterize.underscore
+        next if ActiveRecord::Base.connection.data_source_exists?(tbl)
+
+        ActiveRecord::Migration.create_table(tbl) do |t|
+          t.bigint :subsystem_id, null: false
+          t.timestamps
+        end
+
+        TableDefinition.create!(
+          table_name: tbl,
+          subsystem_id: subsystem_id,
+          parent_table: nil,
+          position: TableDefinition.where(subsystem_id: subsystem_id, parent_table: nil).maximum(:position).to_i + 1
+        )
+      end
+
+    when 'child'
+      parent_table = params[:parent_table]
+      raise "No parent table selected!" if parent_table.blank?
+
+      selected.each do |i|
+        cell_value = grid_data[i][0]['value'].presence&.strip
+        next if cell_value.blank?
+
+        tbl = cell_value.parameterize.underscore
+        next if ActiveRecord::Base.connection.data_source_exists?(tbl)
+
+        ActiveRecord::Migration.create_table(tbl) do |t|
+          t.references :parent, null: false, foreign_key: { to_table: parent_table }
+          t.bigint :subsystem_id, null: false
+          t.timestamps
+        end
+
+        TableDefinition.create!(
+          table_name: tbl,
+          subsystem_id: subsystem_id,
+          parent_table: parent_table
+        )
+      end
+
+    when 'feature'
+      target_table = params[:target_table]
+      raise "No target table selected!" if target_table.blank?
+
+      selected.each do |i|
+        cell_value = grid_data[i][0]['value'].presence&.strip
+        next if cell_value.blank?
+
+        col = cell_value.parameterize.underscore
+        next if ActiveRecord::Base.connection.column_exists?(target_table, col)
+
+        type = params[:feature_types][i.to_s]
+        col_type = case type
+                   when 'combobox' then :string
+                   when 'checkbox' then :boolean
+                   else :string
+                   end
+
+        ActiveRecord::Migration.add_column(target_table, col, col_type)
+
+        ColumnMetadata.create!(
+          table_name: target_table,
+          column_name: col,
+          feature: (type == "none" ? nil : type)
+        )
+      end
+    end
+  end
+
+  temp_grid.destroy
+  flash[:success] = "Import complete."
+  redirect_to admin_path(subsystem_filter: subsystem_id)
+rescue => e
+  flash[:error] = "Import failed: #{e.message}"
+  redirect_to admin_path(subsystem_filter: subsystem_id)
+end
+
+
+
   # POST /admin/handle_excel_actions
   def handle_excel_actions
   temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
@@ -156,6 +253,8 @@ end
     )
     session[:subsystem_id] = params[:subsystem_id] || params[:subsystem_filter]
 
+    @main_tables = TableDefinition.where(subsystem_id: params[:subsystem_id] || params[:subsystem_filter], parent_table: nil)
+    @child_tables = TableDefinition.where(subsystem_id: params[:subsystem_id] || params[:subsystem_filter]).where.not(parent_table: nil)
     render 'excel_preview', layout: 'application', formats: [:html]
   end
 

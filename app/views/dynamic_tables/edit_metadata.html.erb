@@ -11,192 +11,216 @@
               ),
               method: :patch,
               local: true do |f| %>
-
-   <div class="mb-4">
-    <%= f.label :feature, "Feature" %><br>
-    <%= f.select :feature,
-                 options_for_select(
-                   ['text', 'number', 'combobox', 'checkboxes', 'checkbox'],
-                   @metadata.feature
-                 ),
-                 include_blank: true,
-                 class: "mt-1 block w-full" %>
+  <div class="mb-4">
+    <%= f.label :feature, "Feature" %><br />
+    <%=
+      f.select :feature,
+      options_for_select(
+        ['text', 'number', 'combobox', 'checkboxes', 'checkbox'],
+        @metadata.feature
+      ),
+      include_blank: true,
+      class: "mt-1 block w-full"
+    %>
   </div>
 
   <div class="mb-4">
-    <%= f.label :has_cost, "Has Cost" %><br>
+    <%= f.label :has_cost, "Has Cost" %><br />
     <%= f.check_box :has_cost %>
   </div>
 
   <div class="mb-4">
-    <%= f.label :standard_value, "Standard Value" %><br>
-    <%= f.number_field :standard_value,
-                       step: :any,
-                       class: "mt-1 block w-full" %>
+    <%= f.label :standard_value, "Standard Value" %><br />
+    <%=
+      f.number_field :standard_value,
+      step: :any,
+      class: "mt-1 block w-full"
+    %>
   </div>
 
   <div class="mb-4">
-    <%= f.label :tolerance, "Tolerance (%)" %><br>
-    <%= f.number_field :tolerance,
-                       step: :any,
-                       class: "mt-1 block w-full" %>
+    <%= f.label :tolerance, "Tolerance (%)" %><br />
+    <%=
+      f.number_field :tolerance,
+      step: :any,
+      class: "mt-1 block w-full"
+    %>
   </div>
 
   <div class="mb-4">
-    <%= f.label :options, "Combobox/Checkbox Values (comma-separated)" %><br>
-    <%= f.text_field :options,
-                     value: Array(@metadata.options&.dig("allowed_values")).join(", "),
-                     name: 'column_metadata[options][allowed_values]',
-                     class: "mt-1 block w-full" %>
+    <%= f.label :options, "Combobox/Checkbox Values (comma-separated)" %><br />
+    <%=
+      f.text_field :options,
+      value: Array(@metadata.options&.dig("allowed_values")).join(", "),
+      name: 'column_metadata[options][allowed_values]',
+      class: "mt-1 block w-full"
+    %>
   </div>
 
- <div class="mb-4">
-  <%= f.label :mandatory_values, "Mandatory Selections (comma-separated)" %><br>
+  <div class="mb-4">
+    <%= f.label :mandatory_values, "Mandatory Selections (comma-separated)" %><br />
 
-  <% raw_vals = @metadata.options['mandatory_values'] %>
-  <% arr_vals = case raw_vals
-       when String then raw_vals.split(',').map(&:strip)
-       when Array  then raw_vals
-       else             []
-     end %>
-
-  <%= text_field_tag 'column_metadata[options][mandatory_values]',
-                     arr_vals.join(', '),
-                     class: "mt-1 block w-full" %>
-</div>
-
-
-
-  <!-- app/views/dynamic_tables/edit_metadata.html.erb -->
-
-<% if @metadata.feature == "combobox" %>
-  <fieldset class="mt-6 p-4 border rounded bg-gray-50">
-    <legend class="font-semibold">Combo-box Standards</legend>
-
-    <% 
-      raw_vals = @metadata.options["allowed_values"]
-      allowed_values = raw_vals.is_a?(String) ? raw_vals.split(',').map(&:strip) : Array(raw_vals)
+    <% raw_vals = @metadata.options['mandatory_values'] %>
+    <%
+      arr_vals = case raw_vals
+        when String then raw_vals.split(',').map(&:strip)
+        when Array  then raw_vals
+        else             []
+      end
     %>
 
-    <% allowed_values.each do |val| %>
-      <% std = @metadata.options.dig("combo_standards", val) || {} %>
-      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4 items-end combo-standard-row">
+    <%=
+      text_field_tag 'column_metadata[options][mandatory_values]',
+      arr_vals.join(', '),
+      class: "mt-1 block w-full"
+    %>
+  </div>
 
-        <!-- ANSWER -->
-        <div>
-          <label class="block text-sm font-medium">Answer</label>
-          <div class="mt-1"><%= val %></div>
+  <% if @metadata.feature == "combobox" %>
+    <fieldset class="mt-6 p-4 border rounded bg-gray-50">
+      <legend class="font-semibold">Combo-box Standards</legend>
+
+      <%
+        raw_vals = @metadata.options["allowed_values"]
+             allowed_values = raw_vals.is_a?(String) ? raw_vals.split(',').map(&:strip) : Array(raw_vals)
+      %>
+
+      <% allowed_values.each do |val| %>
+        <% std = @metadata.options.dig("combo_standards", val) || {} %>
+        <div
+          class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4 items-end combo-standard-row"
+        >
+          <!-- ANSWER -->
+          <div>
+            <label class="block text-sm font-medium">Answer</label>
+            <div class="mt-1"><%= val %></div>
+          </div>
+
+          <!-- REQUIREMENT -->
+          <div>
+            <%= label_tag "column_metadata[options][combo_standards][#{val}][requirement]", "Requirement" %><br />
+            <%=
+              select_tag "column_metadata[options][combo_standards][#{val}][requirement]",
+              options_for_select(
+                [
+                  ["Not Required/Not Comply",    "not required/not comply"],
+                  ["Not Required",               "not required"],
+                  ["Above Required",             "above required"],
+                  ["Required/Comply",            "required/comply"],
+                  ["Above Required/Extra Grade", "above required/extra grade"],
+                  ["Above Required/No Need",     "above required/no need"]
+                ],
+                std["requirement"]
+              ),
+              include_blank: false,
+              class: "mt-1 block w-full border-gray-300 rounded combo-requirement"
+            %>
+          </div>
+
+          <!-- CASE -->
+          <div>
+            <%= label_tag "column_metadata[options][combo_standards][#{val}][case]", "Case" %><br />
+            <%=
+              select_tag "column_metadata[options][combo_standards][#{val}][case]",
+              options_for_select(
+                [
+                  ["Case 01","Case 01"],
+                  ["Case 02","Case 02"],
+                  ["Case 03","Case 03"],
+                  ["Case 04","Case 04"],
+                  ["Case 05","Case 05"],
+                  ["Case 06","Case 06"]
+                ],
+                std["case"]
+              ),
+              include_blank: true,
+              class: "mt-1 block w-full border-gray-300 rounded combo-case"
+            %>
+          </div>
+
+          <!-- CONDITION/LOGIC -->
+          <div>
+            <%= label_tag "column_metadata[options][combo_standards][#{val}][logic]", "Condition/Logic" %><br />
+            <%=
+              select_tag "column_metadata[options][combo_standards][#{val}][logic]",
+              options_for_select(
+                [
+                  ["isn't meet the project requirements","isn't meet the project requirements"],
+                  ["meets the project requirements","meets the project requirements"],
+                  ["higher than the project requirements","higher than the project requirements"]
+                ],
+                std["logic"]
+              ),
+              include_blank: true,
+              class: "mt-1 block w-full border-gray-300 rounded combo-logic"
+            %>
+          </div>
         </div>
+      <% end %>
+    </fieldset>
 
-        <!-- REQUIREMENT -->
-        <div>
-          <%= label_tag "column_metadata[options][combo_standards][#{val}][requirement]", "Requirement" %><br>
-          <%= select_tag "column_metadata[options][combo_standards][#{val}][requirement]",
-                options_for_select(
-                  [
-                    ["Not Required/Not Comply",    "not required/not comply"],
-                    ["Not Required",               "not required"],
-                    ["Above Required",             "above required"],
-                    ["Required/Comply",            "required/comply"],
-                    ["Above Required/Extra Grade", "above required/extra grade"],
-                    ["Above Required/No Need",     "above required/no need"]
-                  ],
-                  std["requirement"]
-                ),
-                include_blank: false,
-                class: "mt-1 block w-full border-gray-300 rounded combo-requirement"
-          %>
-        </div>
+    <!-- Auto-fill script -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const mapping = {
+          "not required/not comply": [
+            "Case 01",
+            "isn't meet the project requirements",
+          ],
+          "not required": ["Case 02", "isn't meet the project requirements"],
+          "above required": ["Case 03", "meets the project requirements"],
+          "required/comply": ["Case 04", "meets the project requirements"],
+          "above required/extra grade": [
+            "Case 05",
+            "meets the project requirements",
+          ],
+          "above required/no need": [
+            "Case 06",
+            "higher than the project requirements",
+          ],
+        };
 
-        <!-- CASE -->
-        <div>
-          <%= label_tag "column_metadata[options][combo_standards][#{val}][case]", "Case" %><br>
-          <%= select_tag "column_metadata[options][combo_standards][#{val}][case]",
-                options_for_select(
-                  [
-                    ["Case 01","Case 01"],
-                    ["Case 02","Case 02"],
-                    ["Case 03","Case 03"],
-                    ["Case 04","Case 04"],
-                    ["Case 05","Case 05"],
-                    ["Case 06","Case 06"]
-                  ],
-                  std["case"]
-                ),
-                include_blank: true,
-                class: "mt-1 block w-full border-gray-300 rounded combo-case"
-          %>
-        </div>
+        document.querySelectorAll(".combo-requirement").forEach((select) => {
+          const row = select.closest(".combo-standard-row");
+          const caseSel = row.querySelector(".combo-case");
+          const logicSel = row.querySelector(".combo-logic");
 
-        <!-- CONDITION/LOGIC -->
-        <div>
-          <%= label_tag "column_metadata[options][combo_standards][#{val}][logic]", "Condition/Logic" %><br>
-          <%= select_tag "column_metadata[options][combo_standards][#{val}][logic]",
-                options_for_select(
-                  [
-                    ["isn't meet the project requirements","isn't meet the project requirements"],
-                    ["meets the project requirements","meets the project requirements"],
-                    ["higher than the project requirements","higher than the project requirements"]
-                  ],
-                  std["logic"]
-                ),
-                include_blank: true,
-                class: "mt-1 block w-full border-gray-300 rounded combo-logic"
-          %>
-        </div>
-      </div>
-    <% end %>
-  </fieldset>
+          // on change, set case & logic
+          select.addEventListener("change", () => {
+            const key = select.value.toLowerCase();
+            if (mapping[key]) {
+              caseSel.value = mapping[key][0];
+              logicSel.value = mapping[key][1];
+            }
+          });
 
-  <!-- Auto-fill script -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const mapping = {
-        "not required/not comply":    ["Case 01", "isn't meet the project requirements"],
-        "not required":               ["Case 02", "isn't meet the project requirements"],
-        "above required":             ["Case 03", "meets the project requirements"],
-        "required/comply":            ["Case 04", "meets the project requirements"],
-        "above required/extra grade": ["Case 05", "meets the project requirements"],
-        "above required/no need":     ["Case 06", "higher than the project requirements"]
-      };
-
-      document.querySelectorAll(".combo-requirement").forEach(select => {
-        const row = select.closest(".combo-standard-row");
-        const caseSel = row.querySelector(".combo-case");
-        const logicSel = row.querySelector(".combo-logic");
-
-        // on change, set case & logic
-        select.addEventListener("change", () => {
-          const key = select.value.toLowerCase();
-          if (mapping[key]) {
-            caseSel.value  = mapping[key][0];
-            logicSel.value = mapping[key][1];
-          }
+          // initialize on load if there's a default
+          select.dispatchEvent(new Event("change"));
         });
-
-        // initialize on load if there's a default
-        select.dispatchEvent(new Event("change"));
       });
-    });
-  </script>
-<% end %>
-
-
+    </script>
+  <% end %>
 
   <div class="mt-6">
-    <%= f.submit "Save Metadata",
-                 class: "px-4 py-2 bg-indigo-600 text-white rounded" %>
-    <%= link_to "Cancel", admin_path(table_name: @table_name, **filter_params),
-                class: "ml-4 text-gray-600 hover:underline" %>
+    <%=
+      f.submit "Save Metadata",
+      class: "px-4 py-2 bg-indigo-600 text-white rounded"
+    %>
+    <%=
+      link_to "Cancel", admin_path(table_name: @table_name, **filter_params),
+      class: "ml-4 text-gray-600 hover:underline"
+    %>
   </div>
 <% end %>
 
-<%= link_to '← Back to Admin',
-    admin_path(
-      project_filter:       params[:project_filter],
-      project_scope_filter: params[:project_scope_filter],
-      system_filter:        params[:system_filter],
-      subsystem_filter:     params[:subsystem_filter],
-      table_name:           @table_name
-    ),
-    class: "text-gray-600 hover:underline" %>
+<%=
+  link_to '← Back to Admin',
+  admin_path(
+    project_filter:       params[:project_filter],
+    project_scope_filter: params[:project_scope_filter],
+    system_filter:        params[:system_filter],
+    subsystem_filter:     params[:subsystem_filter],
+    table_name:           @table_name
+  ),
+  class: "text-gray-600 hover:underline"
+%>

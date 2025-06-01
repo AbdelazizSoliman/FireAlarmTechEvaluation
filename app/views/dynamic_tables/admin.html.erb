@@ -258,12 +258,7 @@
 
         <!-- 5. Existing Features Table -->
         <% if @table_name.present? %>
-          <section class="mb-8">
-            <h3 class="text-lg font-semibold">
-              Existing Features in <%= @table_name.humanize %>
-            </h3>
-
-            <% if @subtables.any? %>
+  <% if @subtables.any? %>
     <section class="mb-6">
       <h4 class="text-md font-semibold">
         Sub-Tables of <%= @table_name.humanize %>
@@ -279,6 +274,7 @@
       </ul>
     </section>
   <% end %>
+
 
             <% if @existing_columns.any? %>
               <table class="min-w-full mt-4">

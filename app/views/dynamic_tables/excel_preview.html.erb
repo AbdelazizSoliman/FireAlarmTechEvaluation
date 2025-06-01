@@ -2,20 +2,232 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
     <title>Excel Preview</title>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <style>
+      .selectable {
+        cursor: pointer;
+        background: #fafafa;
+      }
+      .checked {
+        background: #d1fae5;
+      }
+      .action-btn {
+        margin-right: 8px;
+      }
+    </style>
   </head>
-  <body class="bg-gray-50 min-h-screen p-8">
-    <div class="max-w-5xl mx-auto">
+  <body class="bg-gray-50 min-h-screen font-sans antialiased">
+    <div class="max-w-6xl mx-auto py-10 px-4">
       <h1 class="text-2xl font-bold mb-6">Excel Preview</h1>
 
-      <% if flash[:error] %>
-        <div class="mb-4 p-3 bg-red-100 text-red-800"><%= flash[:error] %></div>
+      <!-- ACTION BUTTONS -->
+      <div class="mb-6 flex gap-3">
+        <button
+          class="action-btn px-4 py-2 bg-blue-600 text-white rounded"
+          onclick="setSelectionMode('main')"
+        >
+          Create Main Table(s)
+        </button>
+        <button
+          class="action-btn px-4 py-2 bg-green-600 text-white rounded"
+          onclick="setSelectionMode('child')"
+        >
+          Create Child Table(s)
+        </button>
+        <button
+          class="action-btn px-4 py-2 bg-yellow-600 text-white rounded"
+          onclick="setSelectionMode('feature')"
+        >
+          Create Feature(s)
+        </button>
+      </div>
+
+      <%= form_with url: admin_submit_excel_selection_path, method: :post, id: 'excel-selection-form', data: { turbo: false } do %>
+        <input type="hidden" name="mode" id="selection_mode" value="" />
+        <input type="hidden" name="parent_table" id="parent_table" value="" />
+        <input type="hidden" name="target_table" id="target_table" value="" />
+
+        <!-- Parent dropdown for Child Table creation -->
+        <div id="parent-table-dropdown" class="mb-4 hidden">
+          <label class="font-semibold mr-2"
+            >Parent Table for Child Table(s):</label
+          >
+          <select id="parent-table-select" class="border rounded px-2 py-1">
+            <option value="">-- Select Parent --</option>
+            <% @main_tables&.each do |tbl| %><option
+                value="<%= tbl.table_name %>"
+              >
+                <%= tbl.table_name.humanize %>
+              </option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- Target table dropdown for Feature creation -->
+        <div id="target-table-dropdown" class="mb-4 hidden">
+          <label class="font-semibold mr-2">Table for Feature(s):</label>
+          <select id="target-table-select" class="border rounded px-2 py-1">
+            <option value="">-- Select Table --</option>
+            <% @main_tables&.each do |tbl| %>
+              <option value="<%= tbl.table_name %>">
+                <%= tbl.table_name.humanize %>
+              </option>
+              <% @child_tables&.where(parent_table: tbl.table_name).each do |ct| %><option
+                  value="<%= ct.table_name %>"
+                >
+                  &nbsp;&nbsp;↳ <%= ct.table_name.humanize %>
+                </option>
+              <% end %>
+            <% end %>
+          </select>
+        </div>
+
+        <table class="min-w-full border mt-4 bg-white">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-3 py-2 border">Row</th>
+              <th class="px-3 py-2 border">Cell Value</th>
+              <th
+                class="px-3 py-2 border selectable"
+                id="feature-type-th"
+                style="display:none;"
+              >
+                Feature Type
+              </th>
+              <th class="px-3 py-2 border selectable"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @grid.each_with_index do |row, i| %>
+              <% cell = row[0] %>
+              <tr>
+                <td class="px-3 py-2 border"><%= i+1 %></td>
+                <td class="px-3 py-2 border">
+                  <%= cell[:value].presence || "—" %>
+                </td>
+                <!-- Feature type dropdown shown only in feature mode -->
+                <td
+                  class="px-3 py-2 border"
+                  style="display:none;"
+                  data-feature-type
+                >
+                  <select
+                    name="feature_types[<%= i %>]"
+                    class="feature-type-dropdown border rounded px-1 py-0.5"
+                  >
+                    <option value="none">None</option>
+                    <option value="combobox">Combobox</option>
+                    <option value="checkbox">Checkbox</option>
+                  </select>
+                </td>
+                <td class="px-3 py-2 border text-center">
+                  <input
+                    type="checkbox"
+                    name="selected_cells[]"
+                    value="<%= i %>"
+                    class="row-selector hidden"
+                  />
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <div class="mt-4">
+          <button
+            type="submit"
+            id="submit-selection-btn"
+            class="hidden px-4 py-2 bg-indigo-700 text-white rounded"
+          >
+            Submit
+          </button>
+          <%= link_to "Cancel", admin_path(subsystem_filter: session[:subsystem_id]), class: "ml-2 text-gray-500" %>
+        </div>
       <% end %>
 
-      <%= render 'excel_preview' %>
+      <script>
+        let selectionMode = null;
+
+        function setSelectionMode(mode) {
+          selectionMode = mode;
+          document.getElementById("selection_mode").value = mode;
+
+          // Show checkboxes
+          document.querySelectorAll(".row-selector").forEach((cb) => {
+            cb.classList.remove("hidden");
+            cb.checked = false;
+          });
+
+          // Show/hide dropdowns
+          document
+            .getElementById("parent-table-dropdown")
+            .classList.toggle("hidden", mode !== "child");
+          document
+            .getElementById("target-table-dropdown")
+            .classList.toggle("hidden", mode !== "feature");
+
+          // Show/hide feature type column
+          document
+            .querySelectorAll("[data-feature-type]")
+            .forEach(
+              (td) => (td.style.display = mode === "feature" ? "" : "none")
+            );
+          document.getElementById("feature-type-th").style.display =
+            mode === "feature" ? "" : "none";
+
+          // Show submit button
+          document
+            .getElementById("submit-selection-btn")
+            .classList.remove("hidden");
+        }
+
+        // Parent/target dropdown handlers
+        document
+          .getElementById("parent-table-select")
+          ?.addEventListener("change", function () {
+            document.getElementById("parent_table").value = this.value;
+          });
+        document
+          .getElementById("target-table-select")
+          ?.addEventListener("change", function () {
+            document.getElementById("target_table").value = this.value;
+          });
+
+        // On submit, validate at least one checkbox
+        document.getElementById("excel-selection-form").onsubmit = function (
+          e
+        ) {
+          if (!selectionMode) {
+            alert("Please select an action first!");
+            e.preventDefault();
+            return false;
+          }
+          const checked = Array.from(
+            document.querySelectorAll(".row-selector")
+          ).some((cb) => cb.checked);
+          if (!checked) {
+            alert("Please select at least one cell!");
+            e.preventDefault();
+            return false;
+          }
+          if (
+            selectionMode === "child" &&
+            !document.getElementById("parent_table").value
+          ) {
+            alert("Please select a parent table for the child table(s)!");
+            e.preventDefault();
+            return false;
+          }
+          if (
+            selectionMode === "feature" &&
+            !document.getElementById("target_table").value
+          ) {
+            alert("Please select a table for the feature(s)!");
+            e.preventDefault();
+            return false;
+          }
+        };
+      </script>
     </div>
   </body>
 </html>

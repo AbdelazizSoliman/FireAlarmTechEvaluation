@@ -7,6 +7,7 @@
         <th>Type</th>
         <th>If Child: Parent Table</th>
         <th>If Feature: Target Table</th>
+        <th>If Feature: Feature Type</th>
       </tr>
     </thead>
     <tbody>
@@ -43,7 +44,6 @@
               disabled
             >
               <option value="">Select Parent</option>
-              <!-- Options will be filled by JS -->
             </select>
           </td>
           <td>
@@ -55,7 +55,19 @@
               disabled
             >
               <option value="">Select Table</option>
-              <!-- Options will be filled by JS -->
+            </select>
+          </td>
+          <td>
+            <!-- Feature type: text (None), combobox, or checkbox -->
+            <select
+              name="rows[<%= i %>][feature_type]"
+              class="feature-type-select"
+              id="feature-type-<%= i %>"
+              disabled
+            >
+              <option value="text">None</option>
+              <option value="combobox">Combobox</option>
+              <option value="checkbox">Checkboxes</option>
             </select>
           </td>
         </tr>
@@ -78,9 +90,7 @@
   const mainTables = [];
   const childTables = [];
 
-  // Called whenever a type is selected for a row
   function updateTableSelectors() {
-    // 1. Re-scan the sheet to find main and child tables
     mainTables.length = 0;
     childTables.length = 0;
 
@@ -89,11 +99,13 @@
       const cellValue = document.querySelector(
         `input[name="rows[${idx}][value]"]`
       ).value;
-      if (rowType === "main_table") mainTables.push({ idx, name: cellValue });
-      if (rowType === "child_table") childTables.push({ idx, name: cellValue });
+      // Only non-empty cell values should be candidates
+      if (rowType === "main_table" && cellValue)
+        mainTables.push({ idx, name: cellValue });
+      if (rowType === "child_table" && cellValue)
+        childTables.push({ idx, name: cellValue });
     });
 
-    // 2. Update all parent/target selectors
     document.querySelectorAll(".row-type-select").forEach((sel, idx) => {
       const rowType = sel.value;
 
@@ -125,6 +137,10 @@
           targetSel.appendChild(opt);
         });
       }
+
+      // Feature type dropdown enabled only for features
+      const featureTypeSel = document.getElementById(`feature-type-${idx}`);
+      featureTypeSel.disabled = rowType !== "feature";
     });
   }
 

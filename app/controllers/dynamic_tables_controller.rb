@@ -5,8 +5,8 @@ class DynamicTablesController < ApplicationController
   require_dependency 'dynamic_table_manager'
   helper_method :filter_params
 
-  before_action :set_table_name, only: [:add_column]
-  before_action :ensure_subsystem, only: [:upload_excel, :preview_excel, :import_excel_tables, :create_main_tables, :create_child_tables, :create_features, :test_tables]
+  # before_action :set_table_name, only: [:add_column]
+  # before_action :ensure_subsystem, only: [:upload_excel, :preview_excel, :import_excel_tables, :create_main_tables, :create_child_tables, :create_features, :test_tables]
 
   # GET /admin
   def admin
@@ -74,7 +74,7 @@ class DynamicTablesController < ApplicationController
   end
 
   # POST /admin/handle_excel_actions
- def handle_excel_actions
+  def handle_excel_actions
   temp_grid = TempExcelGrid.find_by(session_id: session.id.to_s)
   subsystem_id = session[:subsystem_id]
 
@@ -107,7 +107,8 @@ class DynamicTablesController < ApplicationController
     params[:table_name] = safe_table_name(target_table, subsystem_id)
     params[:feature_names] = feats.map { |f| to_db_name(f["value"]) }
     params[:column_types] = ['string'] * feats.length
-    params[:features] = [''] * feats.length
+    # Save feature type: text (for None), combobox, or checkbox
+    params[:features] = feats.map { |f| (f["feature_type"].blank? || f["feature_type"] == "text") ? "text" : f["feature_type"] }
     params[:combobox_values_arr] = [''] * feats.length
     params[:has_costs] = ['0'] * feats.length
     params[:rate_keys] = [''] * feats.length
@@ -123,6 +124,7 @@ class DynamicTablesController < ApplicationController
   flash[:success] = "All tables and features have been created."
   redirect_to admin_path(subsystem_filter: subsystem_id)
 end
+
 
 
   # POST /admin/preview_excel

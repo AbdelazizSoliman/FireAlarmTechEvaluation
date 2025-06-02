@@ -10,8 +10,17 @@ namespace :sync do
     excluded_non_subsystem_tables = %w[
       users projects admins notifications suppliers sessions
     ]
+    
+        excluded_static_tables = %w[
+      evaluation_results evaluation_criteria delivery_to
+      table_definitions subsystem_suppliers
+    ]
 
-    all_db_tables = ActiveRecord::Base.connection.tables - system_tables - excluded_non_subsystem_tables
+    all_db_tables = ActiveRecord::Base.connection.tables -
+                    system_tables -
+                    excluded_non_subsystem_tables -
+                    excluded_static_tables
+
 
     all_db_tables.each do |table|
       columns = ActiveRecord::Base.connection.columns(table).map(&:name)

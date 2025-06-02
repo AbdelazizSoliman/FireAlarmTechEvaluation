@@ -565,6 +565,7 @@ end
         ActiveRecord::Base.connection.create_table(tbl, force: :cascade) do |t|
           t.bigint  :subsystem_id, null: false
           t.bigint  :supplier_id,  null: false
+          t.bigint  :parent_id
           t.timestamps
           t.index   [:subsystem_id],                         name: "idx_#{tbl}_on_subsystem"
           t.index   [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"
@@ -612,6 +613,7 @@ end
           t.references :parent, null: false, foreign_key: { to_table: parent }
           t.bigint     :subsystem_id, null: false
           t.bigint     :supplier_id,  null: false
+          t.bigint     :parent_id
           t.timestamps
           t.index      [:subsystem_id],                            name: "idx_#{tbl}_on_subsystem"
           t.index      [:supplier_id, :subsystem_id], unique: true, name: "idx_#{tbl}_sup_sub"

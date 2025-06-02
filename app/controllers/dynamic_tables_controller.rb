@@ -142,7 +142,7 @@ def submit_excel_selection
         cell_value = grid_data[i][0]['value'].to_s.strip
         next if cell_value.blank?
 
-        col_name = cell_value.parameterize.underscore
+        col_name     = cell_value.parameterize.underscore
         next if ActiveRecord::Base.connection.column_exists?(target_table, col_name)
 
         feature_type = feature_types[i.to_s]
@@ -160,13 +160,15 @@ def submit_excel_selection
           else [:string, {}]
           end
 
+        # Add column to table
         ActiveRecord::Migration.add_column(target_table, col_name, db_col_type, **col_options)
 
+        # Save metadata
         ColumnMetadata.create!(
-          table_name:   target_table,
-          column_name:  col_name,
-          feature:      (feature_type == "text" ? nil : feature_type),
-          options:      { allowed_values: allowed_vals }
+          table_name:  target_table,
+          column_name: col_name,
+          feature:     (feature_type == "checkbox" ? "checkboxes" : (feature_type == "text" ? nil : feature_type)),
+          options:     { allowed_values: allowed_vals }
         )
       end
     end
@@ -179,6 +181,7 @@ rescue => e
   flash[:error] = "Import failed: #{e.message}"
   redirect_to admin_path(subsystem_filter: subsystem_id)
 end
+
 
 
 

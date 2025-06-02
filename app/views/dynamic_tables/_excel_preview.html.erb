@@ -8,6 +8,8 @@
         <th>If Child: Parent Table</th>
         <th>If Feature: Target Table</th>
         <th>If Feature: Feature Type</th>
+        <th>Allowed Values</th>
+        <th>Column Type</th>
       </tr>
     </thead>
     <tbody>
@@ -36,7 +38,6 @@
             </select>
           </td>
           <td>
-            <!-- Parent selection for child tables -->
             <select
               name="rows[<%= i %>][parent]"
               class="parent-table-select"
@@ -47,7 +48,6 @@
             </select>
           </td>
           <td>
-            <!-- Target table selection for features -->
             <select
               name="rows[<%= i %>][target]"
               class="target-table-select"
@@ -58,9 +58,8 @@
             </select>
           </td>
           <td>
-            <!-- Feature type: text (None), combobox, or checkbox -->
             <select
-              name="rows[<%= i %>][feature_type]"
+              name="feature_types[<%= i %>]"
               class="feature-type-select"
               id="feature-type-<%= i %>"
               disabled
@@ -68,6 +67,32 @@
               <option value="text">None</option>
               <option value="combobox">Combobox</option>
               <option value="checkbox">Checkboxes</option>
+            </select>
+          </td>
+          <td>
+            <input
+              type="text"
+              name="allowed_values[<%= i %>]"
+              placeholder="Comma separated values"
+              class="allowed-values-input"
+              id="allowed-values-<%= i %>"
+              disabled
+            />
+          </td>
+          <td>
+            <select
+              name="column_types[<%= i %>]"
+              class="column-type-select"
+              id="column-type-<%= i %>"
+              disabled
+            >
+              <option value="string">string</option>
+              <option value="integer">integer</option>
+              <option value="boolean">boolean</option>
+              <option value="decimal">decimal</option>
+              <option value="text">text</option>
+              <option value="text_array">text[]</option>
+              <option value="date">date</option>
             </select>
           </td>
         </tr>
@@ -86,7 +111,6 @@
 <% end %>
 
 <script>
-  // Collect available main/child tables as admin chooses them, then fill in parent/target selectors dynamically
   const mainTables = [];
   const childTables = [];
 
@@ -99,7 +123,7 @@
       const cellValue = document.querySelector(
         `input[name="rows[${idx}][value]"]`
       ).value;
-      // Only non-empty cell values should be candidates
+
       if (rowType === "main_table" && cellValue)
         mainTables.push({ idx, name: cellValue });
       if (rowType === "child_table" && cellValue)
@@ -109,7 +133,6 @@
     document.querySelectorAll(".row-type-select").forEach((sel, idx) => {
       const rowType = sel.value;
 
-      // Child table parent dropdown
       const parentSel = document.getElementById(`parent-select-${idx}`);
       parentSel.innerHTML = '<option value="">Select Parent</option>';
       parentSel.disabled = rowType !== "child_table";
@@ -122,14 +145,10 @@
         });
       }
 
-      // Feature target table dropdown
       const targetSel = document.getElementById(`target-select-${idx}`);
       targetSel.innerHTML = '<option value="">Select Table</option>';
       targetSel.disabled = rowType !== "feature";
-      if (
-        rowType === "feature" &&
-        (mainTables.length > 0 || childTables.length > 0)
-      ) {
+      if (rowType === "feature") {
         mainTables.concat(childTables).forEach((tbl) => {
           const opt = document.createElement("option");
           opt.value = tbl.name;
@@ -138,9 +157,21 @@
         });
       }
 
-      // Feature type dropdown enabled only for features
       const featureTypeSel = document.getElementById(`feature-type-${idx}`);
+      const allowedValuesInput = document.getElementById(
+        `allowed-values-${idx}`
+      );
+      const columnTypeSel = document.getElementById(`column-type-${idx}`);
+
       featureTypeSel.disabled = rowType !== "feature";
+      allowedValuesInput.disabled = true;
+      columnTypeSel.disabled = rowType !== "feature";
+
+      featureTypeSel.addEventListener("change", function () {
+        allowedValuesInput.disabled = !["combobox", "checkbox"].includes(
+          this.value
+        );
+      });
     });
   }
 

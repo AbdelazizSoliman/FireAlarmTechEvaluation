@@ -89,11 +89,25 @@
               <th class="px-3 py-2 border">Row</th>
               <th class="px-3 py-2 border">Cell Value</th>
               <th
-                class="px-3 py-2 border selectable"
+                class="px-3 py-2 border"
                 id="feature-type-th"
                 style="display:none;"
               >
                 Feature Type
+              </th>
+              <th
+                class="px-3 py-2 border"
+                id="allowed-values-th"
+                style="display:none;"
+              >
+                Allowed Values
+              </th>
+              <th
+                class="px-3 py-2 border"
+                id="column-type-th"
+                style="display:none;"
+              >
+                Column Type
               </th>
               <th class="px-3 py-2 border selectable"></th>
             </tr>
@@ -106,7 +120,6 @@
                 <td class="px-3 py-2 border">
                   <%= cell[:value].presence || "—" %>
                 </td>
-                <!-- Feature type dropdown shown only in feature mode -->
                 <td
                   class="px-3 py-2 border"
                   style="display:none;"
@@ -116,9 +129,39 @@
                     name="feature_types[<%= i %>]"
                     class="feature-type-dropdown border rounded px-1 py-0.5"
                   >
-                    <option value="none">None</option>
+                    <option value="text">None</option>
                     <option value="combobox">Combobox</option>
                     <option value="checkbox">Checkbox</option>
+                  </select>
+                </td>
+                <td
+                  class="px-3 py-2 border"
+                  style="display:none;"
+                  data-allowed-values
+                >
+                  <input
+                    type="text"
+                    name="allowed_values[<%= i %>]"
+                    placeholder="Comma separated values"
+                    class="allowed-values-input border rounded px-1 py-0.5"
+                  />
+                </td>
+                <td
+                  class="px-3 py-2 border"
+                  style="display:none;"
+                  data-column-type
+                >
+                  <select
+                    name="column_types[<%= i %>]"
+                    class="column-type-select border rounded px-1 py-0.5"
+                  >
+                    <option value="string">string</option>
+                    <option value="integer">integer</option>
+                    <option value="boolean">boolean</option>
+                    <option value="decimal">decimal</option>
+                    <option value="text">text</option>
+                    <option value="text_array">text[]</option>
+                    <option value="date">date</option>
                   </select>
                 </td>
                 <td class="px-3 py-2 border text-center">
@@ -133,6 +176,7 @@
             <% end %>
           </tbody>
         </table>
+
         <div class="mt-4">
           <button
             type="submit"
@@ -152,13 +196,11 @@
           selectionMode = mode;
           document.getElementById("selection_mode").value = mode;
 
-          // Show checkboxes
           document.querySelectorAll(".row-selector").forEach((cb) => {
             cb.classList.remove("hidden");
             cb.checked = false;
           });
 
-          // Show/hide dropdowns
           document
             .getElementById("parent-table-dropdown")
             .classList.toggle("hidden", mode !== "child");
@@ -166,22 +208,27 @@
             .getElementById("target-table-dropdown")
             .classList.toggle("hidden", mode !== "feature");
 
-          // Show/hide feature type column
           document
-            .querySelectorAll("[data-feature-type]")
-            .forEach(
-              (td) => (td.style.display = mode === "feature" ? "" : "none")
-            );
-          document.getElementById("feature-type-th").style.display =
-            mode === "feature" ? "" : "none";
+            .querySelectorAll("[data-feature-type], #feature-type-th")
+            .forEach((el) => {
+              el.style.display = mode === "feature" ? "" : "none";
+            });
+          document
+            .querySelectorAll("[data-allowed-values], #allowed-values-th")
+            .forEach((el) => {
+              el.style.display = mode === "feature" ? "" : "none";
+            });
+          document
+            .querySelectorAll("[data-column-type], #column-type-th")
+            .forEach((el) => {
+              el.style.display = mode === "feature" ? "" : "none";
+            });
 
-          // Show submit button
           document
             .getElementById("submit-selection-btn")
             .classList.remove("hidden");
         }
 
-        // Parent/target dropdown handlers
         document
           .getElementById("parent-table-select")
           ?.addEventListener("change", function () {
@@ -193,7 +240,6 @@
             document.getElementById("target_table").value = this.value;
           });
 
-        // On submit, validate at least one checkbox
         document.getElementById("excel-selection-form").onsubmit = function (
           e
         ) {

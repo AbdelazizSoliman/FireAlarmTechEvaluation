@@ -75,20 +75,23 @@ class DynamicTablesController < ApplicationController
 
   # POST /admin/submit_excel_selection
 def submit_excel_selection
-  temp_grid   = TempExcelGrid.find_by(session_id: session.id.to_s)
-  mode        = params[:mode]
-  selected    = params[:selected_cells]&.map(&:to_i) || []
+  temp_grid    = TempExcelGrid.find_by(session_id: session.id.to_s)
+  mode         = params[:mode]
+  selected     = params[:selected_cells]&.map(&:to_i) || []
   subsystem_id = session[:subsystem_id]
 
   raise "No temp grid!" unless temp_grid&.grid_data.present?
 
-  grid_data = JSON.parse(temp_grid.grid_data.to_json) # Ensure correct data format
+  grid_data      = JSON.parse(temp_grid.grid_data.to_json)
+  feature_types  = params[:feature_types] || {}
+  allowed_values = params[:allowed_values] || {}
+  column_types   = params[:column_types] || {}
 
   ActiveRecord::Base.transaction do
     case mode
     when 'main'
       selected.each do |i|
-        cell_value = grid_data[i][0]['value'].presence&.strip
+        cell_value = grid_data[i][0]['value'].to_s.strip
         next if cell_value.blank?
 
         tbl = cell_value.parameterize.underscore
@@ -112,7 +115,7 @@ def submit_excel_selection
       raise "No parent table selected!" if parent_table.blank?
 
       selected.each do |i|
-        cell_value = grid_data[i][0]['value'].presence&.strip
+        cell_value = grid_data[i][0]['value'].to_s.strip
         next if cell_value.blank?
 
         tbl = cell_value.parameterize.underscore
@@ -136,25 +139,34 @@ def submit_excel_selection
       raise "No target table selected!" if target_table.blank?
 
       selected.each do |i|
-        cell_value = grid_data[i][0]['value'].presence&.strip
+        cell_value = grid_data[i][0]['value'].to_s.strip
         next if cell_value.blank?
 
-        col = cell_value.parameterize.underscore
-        next if ActiveRecord::Base.connection.column_exists?(target_table, col)
+        col_name = cell_value.parameterize.underscore
+        next if ActiveRecord::Base.connection.column_exists?(target_table, col_name)
 
-        type = params[:feature_types][i.to_s]
-        col_type = case type
-                   when 'combobox' then :string
-                   when 'checkbox' then :boolean
-                   else :string
-                   end
+        feature_type = feature_types[i.to_s]
+        allowed_vals = allowed_values[i.to_s].to_s.split(',').map(&:strip).reject(&:blank?)
+        column_type  = column_types[i.to_s]
 
-        ActiveRecord::Migration.add_column(target_table, col, col_type)
+        db_col_type, col_options =
+          case column_type
+          when 'string'     then [:string, {}]
+          when 'boolean'    then [:boolean, {}]
+          when 'decimal'    then [:decimal, {}]
+          when 'text_array' then [:text, { array: true, default: [], null: false }]
+          when 'text'       then [:text, {}]
+          when 'date'       then [:date, {}]
+          else [:string, {}]
+          end
+
+        ActiveRecord::Migration.add_column(target_table, col_name, db_col_type, **col_options)
 
         ColumnMetadata.create!(
-          table_name: target_table,
-          column_name: col,
-          feature: (type == "none" ? nil : type)
+          table_name:   target_table,
+          column_name:  col_name,
+          feature:      (feature_type == "text" ? nil : feature_type),
+          options:      { allowed_values: allowed_vals }
         )
       end
     end
@@ -852,5 +864,15 @@ def safe_table_name(base_name, subsystem_id)
   name
 end
 
+def default_column_type(feature_type)
+  case feature_type
+  when 'checkbox'
+    'text_array'
+  when 'combobox'
+    'string'
+  else
+    'text'
+  end
+end
 
 end

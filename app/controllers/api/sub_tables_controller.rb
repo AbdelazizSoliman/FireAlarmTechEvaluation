@@ -1,6 +1,6 @@
 module Api
   class SubTablesController < Api::ApplicationController
-    skip_before_action :verify_authenticity_token
+    # skip_before_action :verify_authenticity_token
 
     def index
       parent_table = params[:parent_table]

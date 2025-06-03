@@ -1,6 +1,6 @@
 module Api
   class SubsystemsController < Api::ApplicationController
-    skip_before_action :verify_authenticity_token
+    # skip_before_action :verify_authenticity_token
 
     COMPARISON_FIELDS = {
       fire_alarm_control_panels: {

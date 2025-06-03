@@ -180,22 +180,30 @@
           ],
         };
 
-        document.querySelectorAll(".combo-requirement").forEach((select) => {
-          const row = select.closest(".combo-standard-row");
-          const caseSel = row.querySelector(".combo-case");
-          const logicSel = row.querySelector(".combo-logic");
+        const rows = document.querySelectorAll(".combo-standard-row");
 
-          // on change, set case & logic
-          select.addEventListener("change", () => {
-            const key = select.value.toLowerCase();
-            if (mapping[key]) {
-              caseSel.value = mapping[key][0];
-              logicSel.value = mapping[key][1];
+        rows.forEach((row) => {
+          const requirementSelect = row.querySelector(".combo-requirement");
+          const caseSelect = row.querySelector(".combo-case");
+          const logicSelect = row.querySelector(".combo-logic");
+
+          if (!requirementSelect || !caseSelect || !logicSelect) return;
+
+          // Initial fill
+          const initialKey = requirementSelect.value.toLowerCase();
+          if (mapping[initialKey]) {
+            caseSelect.value = mapping[initialKey][0];
+            logicSelect.value = mapping[initialKey][1];
+          }
+
+          // On change
+          requirementSelect.addEventListener("change", () => {
+            const selected = requirementSelect.value.toLowerCase();
+            if (mapping[selected]) {
+              caseSelect.value = mapping[selected][0];
+              logicSelect.value = mapping[selected][1];
             }
           });
-
-          // initialize on load if there's a default
-          select.dispatchEvent(new Event("change"));
         });
       });
     </script>

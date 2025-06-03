@@ -97,10 +97,12 @@ def submit_excel_selection
         tbl = cell_value.parameterize.underscore
         next if ActiveRecord::Base.connection.data_source_exists?(tbl)
 
-        ActiveRecord::Migration.create_table(tbl) do |t|
-          t.bigint :subsystem_id, null: false
-          t.timestamps
-        end
+       ActiveRecord::Migration.create_table(tbl) do |t|
+  t.bigint :subsystem_id, null: false
+  t.bigint :supplier_id,  null: false
+  t.timestamps
+end
+
 
         TableDefinition.create!(
           table_name: tbl,
@@ -122,10 +124,12 @@ def submit_excel_selection
         next if ActiveRecord::Base.connection.data_source_exists?(tbl)
 
         ActiveRecord::Migration.create_table(tbl) do |t|
-          t.references :parent, null: false, foreign_key: { to_table: parent_table }
-          t.bigint :subsystem_id, null: false
-          t.timestamps
-        end
+  t.references :parent, null: false, foreign_key: { to_table: parent_table }
+  t.bigint :subsystem_id, null: false
+  t.bigint :supplier_id,  null: false
+  t.timestamps
+end
+
 
         TableDefinition.create!(
           table_name: tbl,

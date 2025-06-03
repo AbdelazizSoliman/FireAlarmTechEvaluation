@@ -1,32 +1,26 @@
-# app/controllers/api/application_controller.rb
 module Api
   class ApplicationController < ActionController::API
-    # Use this as your base for all API controllers
+    # JWT Auth Helper
+    protected
 
-    # If you want to secure all API endpoints by default:
-    # before_action :authenticate_supplier!
-    # Add skip_before_action :authenticate_supplier! to login/register controllers
-
-    # Handle CORS preflight for API (if not done by Rack Middleware)
-    before_action :set_cors_headers
-
-    # Optionally force all responses to JSON
-    before_action :force_json
-
-    def force_json
-      request.format = :json
+    def authenticate_supplier!
+      auth_header = request.headers['Authorization']
+      unless auth_header&.start_with?('Bearer ')
+        render json: { error: 'Unauthorized (missing or malformed token)' }, status: :unauthorized and return
+      end
+      token = auth_header.split(' ').last
+      begin
+        decoded = JWT.decode(token, Rails.application.secret_key_base, true, { algorithm: 'HS256' })
+        supplier_id = decoded[0]['sub']
+        @current_supplier = ::Supplier.find_by(id: supplier_id)
+        render json: { error: 'Unauthorized (supplier not found)' }, status: :unauthorized and return unless @current_supplier
+      rescue JWT::DecodeError
+        render json: { error: 'Invalid token' }, status: :unauthorized and return
+      end
     end
 
-    private
-
-    def set_cors_headers
-      headers['Access-Control-Allow-Origin'] = '*' # Or set to specific domain
-      headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD'
-      headers['Access-Control-Allow-Headers'] = 'Origin, Content-Type, Accept, Authorization'
-      headers['Access-Control-Allow-Credentials'] = 'true'
+    def current_supplier
+      @current_supplier
     end
-
-    # Your JWT authenticate_supplier! can be included here or as a concern if you want
-    # Otherwise, add it to controllers that need it
   end
 end

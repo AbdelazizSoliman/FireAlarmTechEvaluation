@@ -8,7 +8,6 @@ module Api
         else
           subsystems = Subsystem.all
         end
-
         render json: subsystems
       end
     end

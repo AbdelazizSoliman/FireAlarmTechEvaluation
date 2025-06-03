@@ -8,7 +8,6 @@ module Api
         else
           project_scopes = ProjectScope.all
         end
-
         render json: project_scopes
       end
     end

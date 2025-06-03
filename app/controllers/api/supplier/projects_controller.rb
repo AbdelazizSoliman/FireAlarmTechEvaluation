@@ -1,6 +1,6 @@
 module Api
   module Supplier
-    class ProjectsController < ApplicationController
+    class ProjectsController < Api::ApplicationController
       def index
         projects = Project.all
         render json: projects

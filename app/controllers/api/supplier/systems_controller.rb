@@ -1,6 +1,6 @@
 module Api
     module Supplier
-      class SystemsController < ApplicationController
+      class SystemsController < Api::ApplicationController
         def index
           if params[:project_scope_ids].present?
             project_scope_ids = params[:project_scope_ids].map(&:to_i)

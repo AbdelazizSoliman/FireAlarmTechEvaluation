@@ -1,7 +1,12 @@
 module Api
     module Supplier
-      class SessionsController < ApplicationController
+    class SessionsController < Api::ApplicationController
         skip_before_action :verify_authenticity_token
+         before_action :force_json
+
+         def force_json
+        request.format = :json
+      end
 
       def create
   email = params[:email] || params.dig(:session, :email)

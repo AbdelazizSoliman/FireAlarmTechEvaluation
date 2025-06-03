@@ -1,6 +1,6 @@
 module Api
   module Supplier
-    class SubsystemsController < ApplicationController
+    class SubsystemsController < Api::ApplicationController
       def index
         if params[:system_ids].present?
           system_ids = params[:system_ids].map(&:to_i)

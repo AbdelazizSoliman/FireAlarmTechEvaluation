@@ -1,5 +1,5 @@
 module Api
-  class NotificationsController < ApplicationController
+  class NotificationsController < Api::ApplicationController
     before_action :set_notification, only: %i[manage_membership approve_supplier reject_supplier]
     before_action :set_supplier, only: %i[manage_membership approve_supplier reject_supplier]
 

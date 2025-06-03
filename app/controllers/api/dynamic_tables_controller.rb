@@ -1,5 +1,5 @@
 module Api
-  class DynamicTablesController < ApplicationController
+  class DynamicTablesController < Api::ApplicationController
     skip_forgery_protection
 
     # GET /api/subsystems/:subsystem_id/table_order

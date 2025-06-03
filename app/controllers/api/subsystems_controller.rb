@@ -1,5 +1,5 @@
 module Api
-  class SubsystemsController < ApplicationController
+  class SubsystemsController < Api::ApplicationController
     skip_before_action :verify_authenticity_token
 
     COMPARISON_FIELDS = {

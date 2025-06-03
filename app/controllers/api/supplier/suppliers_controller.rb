@@ -1,6 +1,6 @@
 module Api
   module Supplier
-    class SuppliersController < ApplicationController
+    class SuppliersController < Api::ApplicationController
       skip_before_action :verify_authenticity_token
 
       def subsystem_tables

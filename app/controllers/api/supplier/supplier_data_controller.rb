@@ -1,7 +1,7 @@
 # supplier_api/app/controllers/api/supplier/supplier_data_controller.rb
 module Api
   module Supplier
-    class SupplierDataController < ApplicationController
+    class SupplierDataController < Api::ApplicationController
       def index
         supplier = current_supplier
         if supplier

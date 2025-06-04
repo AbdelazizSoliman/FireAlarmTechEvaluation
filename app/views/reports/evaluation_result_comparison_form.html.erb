@@ -3,7 +3,7 @@
     Evaluation Result Comparison
   </h1>
 
-  <%= form_with url: evaluation_results_comparison_path, method: :get, local: true, class: "..." do |f| %>
+  <%= form_with url: evaluation_result_comparison_form_reports_path, method: :get, local: true, class: "space-y-6 mb-6" do |f| %>
     <div class="flex items-center space-x-4">
       <div>
         <%= f.label :subsystem_id, "Select Subsystem:", class: "block font-semibold" %>
@@ -16,11 +16,8 @@
   <% end %>
 
   <% if @suppliers_with_subsystems.any? %>
-    <form
-      method="get"
-      action="<%= evaluation_results_comparison_path %>"
-      data-turbo="false"
-    >
+    <form method="get" action="<%= evaluation_results_comparison_path %>" data-turbo="false">
+
       <input
         type="hidden"
         name="subsystem_id"

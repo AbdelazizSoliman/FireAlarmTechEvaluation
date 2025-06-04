@@ -23,6 +23,8 @@ class Supplier < ApplicationRecord
   has_many :telephone_systems
   has_many :detectors_field_devices
   has_many :connection_betweens
+  has_many :evaluation_results
+
 
   validates :receive_evaluation_report, inclusion: { in: [true, false] }, if: :status_approved?
 

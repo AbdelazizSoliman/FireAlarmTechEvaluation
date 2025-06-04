@@ -1,0 +1,46 @@
+<div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-7xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">
+    Evaluation Result Comparison — <%= @subsystem.name %>
+  </h1>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm border border-gray-300">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border px-3 py-2 text-left">Attribute</th>
+          <th class="border px-3 py-2 text-left">Required</th>
+          <th class="border px-3 py-2 text-left">Tolerance</th>
+          <% @supplier_names.each_value do |sup| %>
+            <th class="border px-3 py-2 text-left">
+              <%= sup.supplier_name %> (Submitted)
+            </th>
+            <th class="border px-3 py-2 text-center">Status</th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% @results_by_attr.each do |attr_key, supplier_results| %>
+          <% md = @metadata_by_attr[attr_key] %>
+          <tr class="<%= cycle('bg-white', 'bg-gray-50') %>">
+            <td class="border px-3 py-2 font-medium"><%= attr_key %></td>
+            <td class="border px-3 py-2"><%= md&.standard_value || '—' %></td>
+            <td class="border px-3 py-2"><%= md&.tolerance || '—' %></td>
+            <% @supplier_names.each_key do |sid| %>
+              <% res = supplier_results[sid] %>
+              <td class="border px-3 py-2">
+                <%= res&.submitted_value || '—' %>
+              </td>
+              <td class="border px-3 py-2 text-center uppercase font-semibold">
+                <%= res&.status || '—' %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-6">
+    <%= link_to "← Back to Reports", reports_path, class: "text-blue-600 hover:underline" %>
+  </div>
+</div>

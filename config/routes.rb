@@ -1,6 +1,5 @@
 Rails.application.routes.draw do
   # config/routes.rb
-  # config/routes.rb
   post '/admin/submit_excel_selection', to: 'dynamic_tables#submit_excel_selection', as: :admin_submit_excel_selection
   post 'handle_excel_actions',       to: 'dynamic_tables#handle_excel_actions', as: :handle_excel_actions   
   get  '/admin/upload_excel',        to: 'dynamic_tables#upload_excel',        as: :admin_upload_excel
@@ -112,7 +111,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :reports, only: [:index] do
+   resources :reports, only: [:index] do
     collection do
       get :evaluation_tech_report
       get :evaluation_data
@@ -137,6 +136,7 @@ Rails.application.routes.draw do
     collection do
       post :evaluate     # kicks off the service
       get  :download     # streams Excel
+      get  :comparison
     end
   end
 

@@ -1,0 +1,76 @@
+<div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-4xl mx-auto">
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+    Evaluation Result Comparison
+  </h1>
+
+  <%= form_with url: compare_evaluation_results_path, method: :get, local: true, class: "space-y-6 mb-6" do |f| %>
+    <div class="flex items-center space-x-4">
+      <div>
+        <%= f.label :subsystem_id, "Select Subsystem:", class: "block font-semibold" %>
+        <%= f.select :subsystem_id, options_from_collection_for_select(@subsystems, :id, :name, params[:subsystem_id]), { include_blank: "All Subsystems" }, class: "border rounded px-3 py-2" %>
+      </div>
+      <div>
+        <%= f.submit "Filter Suppliers", class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @suppliers_with_subsystems.any? %>
+    <form
+      method="get"
+      action="<%= compare_evaluation_results_path %>"
+      data-turbo="false"
+    >
+      <input
+        type="hidden"
+        name="subsystem_id"
+        value="<%= params[:subsystem_id] %>"
+      />
+      <table
+        class="min-w-full bg-white rounded-lg shadow-md overflow-hidden mb-6"
+      >
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+              Select
+            </th>
+            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+              Supplier Name
+            </th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-700">
+          <% @suppliers_with_subsystems.each do |supplier| %>
+            <tr class="border-t">
+              <td class="px-6 py-3">
+                <input
+                  type="checkbox"
+                  name="selected_suppliers[]"
+                  value="<%= supplier.id %>"
+                  id="sup_<%= supplier.id %>"
+                />
+              </td>
+              <td class="px-6 py-3 font-medium">
+                <label
+                  for="sup_<%= supplier.id %>"
+                ><%= supplier.supplier_name %></label>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <div>
+        <button
+          type="submit"
+          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Show Comparison
+        </button>
+      </div>
+    </form>
+  <% else %>
+    <p class="text-center text-gray-500">
+      No suppliers found for the selected subsystem.
+    </p>
+  <% end %>
+</div>

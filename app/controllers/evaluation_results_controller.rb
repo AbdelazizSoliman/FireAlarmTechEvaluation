@@ -221,28 +221,34 @@ class EvaluationResultsController < ApplicationController
 
   # GET /evaluation_results/comparison
   def compare
-    @subsystem = Subsystem.find(params[:subsystem_id])
-    @suppliers = Supplier.where(id: params[:selected_suppliers])
+  @subsystem = Subsystem.find(params[:subsystem_id])
+  @suppliers = Supplier.where(id: params[:selected_suppliers])
 
-    @results_by_attr = {}
-    @metadata_by_attr = {}
+  @results_by_attr = {}
+  @metadata_by_attr = {}
 
-    @suppliers.each do |supplier|
-      results = EvaluationResult
-        .where(supplier_id: supplier.id, subsystem_id: @subsystem.id)
-        .select { |r| ColumnMetadata.exists?(table_name: r.table_name, column_name: r.column_name) }
-
-      results.each do |r|
-        key = "\#{r.table_name}.\#{r.column_name}"
-        @results_by_attr[key] ||= {}
-        @results_by_attr[key][supplier.id] = r
-
-        unless @metadata_by_attr.key?(key)
-          @metadata_by_attr[key] = ColumnMetadata.find_by(table_name: r.table_name, column_name: r.column_name)
-        end
+  @suppliers.each do |supplier|
+    results = EvaluationResult
+      .where(supplier_id: supplier.id, subsystem_id: @subsystem.id)
+      .select do |r|
+        r.table_name.present? && r.column_name.present? &&
+        ColumnMetadata.exists?(table_name: r.table_name, column_name: r.column_name)
       end
-    end
 
-    @supplier_names = @suppliers.index_by(&:id)
+    results.each do |r|
+      key = "#{r.table_name}.#{r.column_name}"
+
+      @results_by_attr[key] ||= {}
+      @results_by_attr[key][supplier.id] = r
+
+      @metadata_by_attr[key] ||= ColumnMetadata.find_by(
+        table_name: r.table_name,
+        column_name: r.column_name
+      )
+    end
   end
+
+  @supplier_names = @suppliers.index_by(&:id)
+end
+
 end

@@ -20,18 +20,27 @@
       </thead>
       <tbody>
         <% @results_by_attr.each do |attr_key, supplier_results| %>
+          <% table_name, column_name = attr_key.split('.') %>
           <% md = @metadata_by_attr[attr_key] %>
+
           <tr class="<%= cycle('bg-white', 'bg-gray-50') %>">
-            <td class="border px-3 py-2 font-medium"><%= attr_key %></td>
-            <td class="border px-3 py-2"><%= md&.standard_value || '—' %></td>
-            <td class="border px-3 py-2"><%= md&.tolerance || '—' %></td>
+            <td class="border px-3 py-2 font-medium">
+              <%= "#{table_name.titleize} — #{column_name.humanize}" %>
+            </td>
+            <td class="border px-3 py-2">
+              <%= md&.standard_value.presence || '—' %>
+            </td>
+            <td class="border px-3 py-2">
+              <%= md&.tolerance.presence || '—' %>
+            </td>
+
             <% @supplier_names.each_key do |sid| %>
               <% res = supplier_results[sid] %>
               <td class="border px-3 py-2">
-                <%= res&.submitted_value || '—' %>
+                <%= res&.submitted_value.presence || '—' %>
               </td>
               <td class="border px-3 py-2 text-center uppercase font-semibold">
-                <%= res&.status || '—' %>
+                <%= res&.status.presence || '—' %>
               </td>
             <% end %>
           </tr>

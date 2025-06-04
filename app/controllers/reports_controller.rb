@@ -243,4 +243,14 @@ class ReportsController < ApplicationController
   def system_cols
     %w[id created_at updated_at supplier_id subsystem_id]
   end
+
+  def evaluation_result_comparison_form
+  @subsystems = Subsystem.order(:name)
+  @suppliers_with_subsystems = if params[:subsystem_id].present?
+    Supplier.joins(:evaluation_results).where(evaluation_results: { subsystem_id: params[:subsystem_id] }).distinct
+  else
+    []
+  end
+end
+
 end

@@ -124,7 +124,7 @@ Rails.application.routes.draw do
       get :apple_to_apple_comparison
       get :show_comparison_report
       get :generate_comparison_report
-
+      get :evaluation_result_comparison_form
       get :sow
       get :missing_items
       get :differences

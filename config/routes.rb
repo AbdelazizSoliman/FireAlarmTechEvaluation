@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
   # config/routes.rb
+  get 'evaluation_results/comparison', to: 'evaluation_results#compare', as: 'evaluation_results_comparison'
+
   post '/admin/submit_excel_selection', to: 'dynamic_tables#submit_excel_selection', as: :admin_submit_excel_selection
   post 'handle_excel_actions',       to: 'dynamic_tables#handle_excel_actions', as: :handle_excel_actions   
   get  '/admin/upload_excel',        to: 'dynamic_tables#upload_excel',        as: :admin_upload_excel

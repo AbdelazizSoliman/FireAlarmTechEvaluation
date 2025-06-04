@@ -216,11 +216,7 @@ class EvaluationResultsController < ApplicationController
 
     send_file tmp.path,
               filename: "evaluation_\#{@supplier.supplier_name}_\#{@subsystem.name}.xlsx",
-              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-              disposition: 'attachment'
-  ensure
-    tmp.close
-    tmp.unlink
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
   # GET /evaluation_results/comparison
